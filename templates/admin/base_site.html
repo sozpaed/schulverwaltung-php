@@ -1,0 +1,127 @@
+{% extends "admin/base_site.html" %}
+
+{% block userlinks %}
+{{ block.super }}
+<a href="{% url 'two_factor:profile' %}">Sicherheitseinstellungen</a> /
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* === 1. FARBCODIERUNG SIDEBAR (Linkes Menü) === */
+    #nav-sidebar a[href*="/grundschule/"],
+    #nav-sidebar a[href*="/marketingkanal/"],
+    #nav-sidebar a[href*="/religion/"],
+    #nav-sidebar a[href*="/staatsangehoerigkeit/"] {
+        color: #005b9f !important;
+        border-left: 3px solid #005b9f;
+        padding-left: 13px;
+        background-color: #f4f8fa;
+    }
+    #nav-sidebar a[href*="/schueler/"],
+    #nav-sidebar a[href*="/erziehungsberechtigter/"],
+    #nav-sidebar a[href*="/gespraech/"] {
+        color: #1a7e36 !important;
+        border-left: 3px solid #1a7e36;
+        padding-left: 13px;
+        font-weight: bold;
+    }
+
+    /* === 2. FARBCODIERUNG STARTSEITE (Dashboard Mitte) === */
+    /* Textfarben der Links in der Tabelle */
+    tr.model-grundschule th a,
+    tr.model-marketingkanal th a,
+    tr.model-religion th a,
+    tr.model-staatsangehoerigkeit th a {
+        color: #005b9f !important;
+    }
+    tr.model-schueler th a,
+    tr.model-erziehungsberechtigter th a,
+    tr.model-gespraech th a {
+        color: #1a7e36 !important;
+        font-weight: bold;
+    }
+    
+    /* Hintergrund für die Listen-Zeilen */
+    tr.model-grundschule,
+    tr.model-marketingkanal,
+    tr.model-religion,
+    tr.model-staatsangehoerigkeit {
+        background-color: #f4f8fa;
+    }
+
+    /* Styling für unsere neuen Gruppierungs-Überschriften */
+    .custom-group-header {
+        background-color: #e8e8e8;
+        padding: 8px 16px !important;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #ccc;
+    }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function groupModels(tableBody, columnCount) {
+            if (!tableBody || tableBody.querySelector('.custom-group-header')) {
+                return;
+            }
+
+            const rows = {
+                schueler: tableBody.querySelector('.model-schueler'),
+                eltern: tableBody.querySelector('.model-erziehungsberechtigter'),
+                gespraech: tableBody.querySelector('.model-gespraech'),
+                grundschule: tableBody.querySelector('.model-grundschule'),
+                religion: tableBody.querySelector('.model-religion'),
+                staatsangehoerigkeit: tableBody.querySelector('.model-staatsangehoerigkeit'),
+                marketing: tableBody.querySelector('.model-marketingkanal')
+            };
+            if (
+                Object.values(rows).some(function(row) { return !row; }) ||
+                tableBody.children.length !== Object.keys(rows).length
+            ) {
+                return;
+            }
+
+            const groupedRows = document.createDocumentFragment();
+            function addHeader(label, color) {
+                const header = document.createElement('tr');
+                const cell = document.createElement('th');
+                cell.colSpan = columnCount;
+                cell.className = 'custom-group-header';
+                cell.style.color = color;
+                cell.textContent = label;
+                header.appendChild(cell);
+                groupedRows.appendChild(header);
+            }
+
+            addHeader('Stammdaten (Hauptdaten)', '#1a7e36');
+            groupedRows.appendChild(rows.schueler);
+            groupedRows.appendChild(rows.eltern);
+            groupedRows.appendChild(rows.gespraech);
+
+            addHeader('Listen (Optionen)', '#005b9f');
+            groupedRows.appendChild(rows.grundschule);
+            groupedRows.appendChild(rows.religion);
+            groupedRows.appendChild(rows.staatsangehoerigkeit);
+            groupedRows.appendChild(rows.marketing);
+            tableBody.replaceChildren(groupedRows);
+        }
+
+        groupModels(
+            document.querySelector('#nav-sidebar .app-gespraeche table tbody'),
+            2
+        );
+        if (document.body.classList.contains('dashboard')) {
+            groupModels(
+                document.querySelector('#content-main .app-gespraeche table tbody'),
+                3
+            );
+        }
+    });
+</script>
+{% endblock %}

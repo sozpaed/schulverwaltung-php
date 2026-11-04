@@ -1,0 +1,7 @@
+/* Pflichtfelder im Django-Admin mit rotem Sternchen kennzeichnen. */
+.form-row label.required::after,
+.inline-group th.required::after {
+    content: " *";
+    color: #ba2121;
+    font-weight: bold;
+}
