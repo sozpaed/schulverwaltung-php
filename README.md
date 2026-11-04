@@ -4,6 +4,11 @@ Interne Verwaltung der Aufnahmegespräche (Schüler/innen, Erziehungsberechtigte
 
 > **Nur interne Nutzung.** Dieses Repository enthält ausschließlich Code. Echte Schüler- oder Elterndaten, Datenbank-Dumps, Backups und Zugangsdaten gehören **nie** ins Repository.
 
+Eine frameworkfreie PHP-/MariaDB-Neuimplementierung entsteht parallel im Ordner
+[`php/`](./php/). Der Django-Bestand bleibt währenddessen erhalten. Der aktuelle
+Stand ist zunächst das neue Datenbankschema; die PHP-Oberfläche ist noch nicht
+implementiert.
+
 ## Technik
 
 | Komponente | Version / Hinweis |
