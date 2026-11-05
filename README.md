@@ -6,8 +6,13 @@ Interne Verwaltung der Aufnahmegespräche (Schüler/innen, Erziehungsberechtigte
 
 Eine frameworkfreie PHP-/MariaDB-Neuimplementierung entsteht parallel im Ordner
 [`php/`](./php/). Der Django-Bestand bleibt währenddessen erhalten. Der aktuelle
-Stand ist zunächst das neue Datenbankschema; die PHP-Oberfläche ist noch nicht
-implementiert.
+Stand umfasst Anmeldung, eine Schülerübersicht mit Suche, Neuanlage und
+Bearbeitung, eine Schülerdetailansicht sowie das Erfassen und Bearbeiten von
+Erziehungsberechtigten und Aufnahmegesprächen mit separaten Listenansichten.
+Staatsangehörigkeiten, Religionen,
+Grundschulen und Marketingkanäle können in eigenen Ansichten gepflegt und direkt
+aus den zugehörigen Eingabeformularen ergänzt werden. Weitere
+Verwaltungsfunktionen werden schrittweise ergänzt.
 
 ## Technik
 

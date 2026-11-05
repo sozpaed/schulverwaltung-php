@@ -1,0 +1,173 @@
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../../src/bootstrap.php';
+
+if ($user === null) {
+    header('Location: /');
+    exit;
+}
+
+$searchValue = $_GET['q'] ?? '';
+$pageInput = $_GET['seite'] ?? 1;
+if (!is_string($searchValue) || (!is_string($pageInput) && !is_int($pageInput))) {
+    http_response_code(400);
+    exit('Ungültige Suchanfrage.');
+}
+
+$searchValue = trim($searchValue);
+if (preg_match('//u', $searchValue) !== 1) {
+    http_response_code(400);
+    exit('Die Suchanfrage enthält ungültige Zeichen.');
+}
+
+preg_match('/\A.{0,100}/us', $searchValue, $searchMatches);
+$search = $searchMatches[0];
+$page = filter_var($pageInput, FILTER_VALIDATE_INT);
+if ($page === false || $page < 1) {
+    http_response_code(400);
+    exit('Ungültige Seitennummer.');
+}
+
+$likeSearch = '%' . $search . '%';
+$countStatement = $database->prepare(
+    'SELECT COUNT(*)
+     FROM erziehungsberechtigte e
+     JOIN schueler s ON s.id = e.schueler_id
+     WHERE (:search = \'\'
+        OR e.vorname LIKE :guardian_first_name
+        OR e.nachname LIKE :guardian_last_name
+        OR s.vorname LIKE :student_first_name
+        OR s.nachname LIKE :student_last_name
+        OR e.email LIKE :email)'
+);
+$countStatement->execute([
+    'search' => $search,
+    'guardian_first_name' => $likeSearch,
+    'guardian_last_name' => $likeSearch,
+    'student_first_name' => $likeSearch,
+    'student_last_name' => $likeSearch,
+    'email' => $likeSearch,
+]);
+$total = (int) $countStatement->fetchColumn();
+$pageSize = 25;
+$pageCount = max(1, (int) ceil($total / $pageSize));
+if ($page > $pageCount) {
+    http_response_code(404);
+    exit('Diese Seite existiert nicht.');
+}
+
+$statement = $database->prepare(
+    'SELECT e.id, e.schueler_id, e.vorname, e.nachname, e.beziehung,
+            e.erziehungsberechtigt, e.telefon, e.mobil, e.email,
+            s.vorname AS schueler_vorname, s.nachname AS schueler_nachname
+     FROM erziehungsberechtigte e
+     JOIN schueler s ON s.id = e.schueler_id
+     WHERE (:search = \'\'
+        OR e.vorname LIKE :guardian_first_name
+        OR e.nachname LIKE :guardian_last_name
+        OR s.vorname LIKE :student_first_name
+        OR s.nachname LIKE :student_last_name
+        OR e.email LIKE :email)
+     ORDER BY e.nachname, e.vorname, e.id
+     LIMIT :page_size OFFSET :offset'
+);
+$statement->bindValue('search', $search);
+$statement->bindValue('guardian_first_name', $likeSearch);
+$statement->bindValue('guardian_last_name', $likeSearch);
+$statement->bindValue('student_first_name', $likeSearch);
+$statement->bindValue('student_last_name', $likeSearch);
+$statement->bindValue('email', $likeSearch);
+$statement->bindValue('page_size', $pageSize, PDO::PARAM_INT);
+$statement->bindValue('offset', ($page - 1) * $pageSize, PDO::PARAM_INT);
+$statement->execute();
+$guardians = $statement->fetchAll();
+
+$relationships = [
+    'mutter' => 'Mutter',
+    'vater' => 'Vater',
+    'vormund' => 'Vormund',
+    'pflegeeltern' => 'Pflegeeltern',
+    'sonstiges' => 'Sonstiges',
+];
+?>
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erziehungsberechtigte – Schulverwaltung</title>
+</head>
+<body>
+<main>
+    <p><a href="/">Zur Startseite</a></p>
+    <h1>Erziehungsberechtigte und Kontaktpersonen</h1>
+    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <p>Neue Kontaktpersonen werden weiterhin in der jeweiligen Schülerakte angelegt.</p>
+
+    <form method="get">
+        <label for="q">Nach Name, zugehöriger Schülerin/Schüler oder E-Mail suchen</label>
+        <input id="q" name="q" type="search" maxlength="100" value="<?= escape($search) ?>">
+        <button type="submit">Suchen</button>
+        <?php if ($search !== ''): ?>
+            <a href="/erziehungsberechtigte/">Suche zurücksetzen</a>
+        <?php endif; ?>
+    </form>
+
+    <p><?= $total ?> Kontaktpersonen</p>
+    <?php if ($guardians === []): ?>
+        <p>Keine Kontaktpersonen gefunden.</p>
+    <?php else: ?>
+        <table>
+            <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Beziehung</th>
+                <th scope="col">Erziehungsberechtigt</th>
+                <th scope="col">Schülerin/Schüler</th>
+                <th scope="col">Telefon</th>
+                <th scope="col">Mobil</th>
+                <th scope="col">E-Mail</th>
+                <th scope="col">Aktion</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($guardians as $guardian): ?>
+                <tr>
+                    <td><?= escape($guardian['nachname'] . ', ' . $guardian['vorname']) ?></td>
+                    <td><?= escape($relationships[$guardian['beziehung']] ?? 'Unbekannt') ?></td>
+                    <td><?= (bool) $guardian['erziehungsberechtigt'] ? 'Ja' : 'Nein' ?></td>
+                    <td>
+                        <a href="/schueler/zeigen.php?id=<?= (int) $guardian['schueler_id'] ?>">
+                            <?= escape($guardian['schueler_nachname'] . ', ' . $guardian['schueler_vorname']) ?>
+                        </a>
+                    </td>
+                    <td><?= escape($guardian['telefon']) ?></td>
+                    <td><?= escape($guardian['mobil']) ?></td>
+                    <td><?= escape($guardian['email']) ?></td>
+                    <td>
+                        <a href="/schueler/erziehungsberechtigter.php?schueler_id=<?= (int) $guardian['schueler_id'] ?>&amp;id=<?= (int) $guardian['id'] ?>">
+                            Bearbeiten
+                        </a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
+    <?php if ($pageCount > 1): ?>
+        <nav aria-label="Seitennavigation">
+            <?php if ($page > 1): ?>
+                <a href="?q=<?= rawurlencode($search) ?>&amp;seite=<?= $page - 1 ?>">Zurück</a>
+            <?php endif; ?>
+            <span>Seite <?= $page ?> von <?= $pageCount ?></span>
+            <?php if ($page < $pageCount): ?>
+                <a href="?q=<?= rawurlencode($search) ?>&amp;seite=<?= $page + 1 ?>">Weiter</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
+</main>
+</body>
+</html>
