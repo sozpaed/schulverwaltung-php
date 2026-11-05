@@ -252,6 +252,28 @@ main > p:first-of-type a:not(.home-link):hover {
     overflow-wrap: anywhere;
 }
 
+.installation-checks {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    list-style: none;
+}
+
+.installation-checks li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+}
+
+.check-passed {
+    color: var(--success);
+}
+
+.check-failed {
+    color: var(--danger);
+    font-weight: 700;
+}
+
 form {
     margin: 24px 0;
 }

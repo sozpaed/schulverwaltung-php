@@ -11,13 +11,26 @@ final class Database
 {
     public static function connect(): PDO
     {
-        $host = self::requiredEnvironmentVariable('DB_HOST');
-        $database = self::requiredEnvironmentVariable('DB_NAME');
-        $username = self::requiredEnvironmentVariable('DB_USER');
-        $password = getenv('DB_PASSWORD');
+        $configuration = self::configuration();
+        foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $name) {
+            $environmentValue = getenv($name);
+            if ($environmentValue !== false) {
+                $configuration[$name] = $environmentValue;
+            }
+        }
 
-        if ($password === false) {
-            throw new RuntimeException('Die Umgebungsvariable DB_PASSWORD ist nicht gesetzt.');
+        return self::connectWithConfiguration($configuration);
+    }
+
+    public static function connectWithConfiguration(array $configuration): PDO
+    {
+        $host = self::requiredSetting('DB_HOST', $configuration);
+        $database = self::requiredSetting('DB_NAME', $configuration);
+        $username = self::requiredSetting('DB_USER', $configuration);
+        $password = $configuration['DB_PASSWORD'] ?? null;
+
+        if (!is_string($password)) {
+            throw new RuntimeException('DB_PASSWORD fehlt in der Datenbankkonfiguration.');
         }
 
         if (!preg_match('/\A[A-Za-z0-9.:-]+\z/', $host)) {
@@ -28,8 +41,8 @@ final class Database
             throw new RuntimeException('DB_NAME enthält einen ungültigen Wert.');
         }
 
-        $portValue = getenv('DB_PORT');
-        $port = $portValue === false || $portValue === ''
+        $portValue = $configuration['DB_PORT'] ?? null;
+        $port = $portValue === null || $portValue === ''
             ? 3306
             : filter_var(
                 $portValue,
@@ -55,12 +68,30 @@ final class Database
         ]);
     }
 
-    private static function requiredEnvironmentVariable(string $name): string
+    private static function configuration(): array
     {
-        $value = getenv($name);
+        $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php';
+        if (!is_file($path)) {
+            return [];
+        }
 
-        if ($value === false || $value === '') {
-            throw new RuntimeException(sprintf('Die Umgebungsvariable %s ist nicht gesetzt.', $name));
+        $configuration = require $path;
+        if (!is_array($configuration)) {
+            throw new RuntimeException('config.php muss ein PHP-Array zurückgeben.');
+        }
+
+        return $configuration;
+    }
+
+    private static function requiredSetting(string $name, array $configuration): string
+    {
+        $value = $configuration[$name] ?? null;
+
+        if (!is_string($value) || $value === '') {
+            throw new RuntimeException(sprintf(
+                '%s fehlt in config.php und in den Umgebungsvariablen.',
+                $name
+            ));
         }
 
         return $value;

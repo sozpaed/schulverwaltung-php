@@ -42,7 +42,8 @@ zugängliche Stiftsymbole dargestellt.
 ## Technisches Grundgerüst
 
 `src/Database.php` stellt eine PDO-Verbindung zur MariaDB her. Die Verbindung
-liest ihre Einstellungen ausschließlich aus Umgebungsvariablen des PHP-Prozesses:
+liest ihre Einstellungen zuerst aus Umgebungsvariablen des PHP-Prozesses und
+verwendet andernfalls die nicht versionierte `config.php` im Projekt-Hauptverzeichnis:
 
 | Variable | Erforderlich | Beschreibung |
 |---|---|---|
@@ -52,7 +53,14 @@ liest ihre Einstellungen ausschließlich aus Umgebungsvariablen des PHP-Prozesse
 | `DB_USER` | Ja | Datenbankbenutzer |
 | `DB_PASSWORD` | Ja | Passwort des Datenbankbenutzers; darf leer sein |
 
-Die Zugangsdaten gehören nicht ins Repository. Ungültige oder fehlende
+Die Zugangsdaten gehören nicht ins Repository. Als Ausgangspunkt für die
+Konfigurationsdatei dient `config.example.php`: Kopiere diese nach `config.php`
+und trage die Hosting-Zugangsdaten dort ein. `config.php` wird von Git ignoriert
+und liegt außerhalb von `public/`; stelle bei Host Europe `public/` als
+öffentliches Webverzeichnis ein. Der Installationsassistent unter `/setup.php`
+prüft Voraussetzungen, Datenbankverbindung und MariaDB-Version, richtet das
+Schema ein, legt den ersten Administrator an und schreibt `config.php`.
+Ungültige oder fehlende
 Verbindungswerte sowie Verbindungsfehler werden als Fehler gemeldet und nicht
 durch eine Ersatzkonfiguration verdeckt. Die Verbindung verwendet `utf8mb4`,
 Exceptions bei Datenbankfehlern und native vorbereitete Anweisungen.
@@ -80,6 +88,16 @@ Für den lokalen Start aus dem Repository-Hauptverzeichnis:
 ```powershell
 .\start-server.ps1
 ```
+
+Bei einer frischen Hosting-Installation wird eine eigens im Hosting-Panel
+angelegte, leere MariaDB-Datenbank in `public/setup.php` konfiguriert. Der
+Assistent verlangt PHP 8.1 oder neuer und MariaDB 10.5 oder neuer. Er verändert
+oder löscht keine vorhandenen Tabellen und setzt deshalb eine leere Datenbank voraus. Nach erfolgreicher Einrichtung führt
+`setup.php` zurück zur Anmeldung und sperrt sich über die vorhandene
+`config.php`; ändere anschließend die Schreibrechte der Konfigurationsdatei nach
+Möglichkeit auf nur lesbar für den PHP-Prozess. Die Zugangsdaten werden bei der
+Übertragung ausschließlich über HTTPS geschützt, daher muss HTTPS vor der
+Installation aktiv sein.
 
 Das Skript setzt die lokale Datenbankkonfiguration, fragt das MariaDB-Passwort
 verdeckt ab, prüft `pdo_mysql` und `openssl` und startet PHP auf `127.0.0.1:8000`.

@@ -8,6 +8,7 @@ use Schulverwaltung\Database;
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/TwoFactor.php';
+require_once __DIR__ . '/helpers.php';
 
 ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
@@ -22,11 +23,6 @@ session_start();
 
 $database = Database::connect();
 $user = Auth::user($database);
-
-function escape(string $value): string
-{
-    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
 
 function renderAccountMenu(array $user): string
 {

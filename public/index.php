@@ -4,6 +4,19 @@ declare(strict_types=1);
 
 use Schulverwaltung\Auth;
 
+$databaseEnvironmentIsConfigured = true;
+foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $setting) {
+    if (getenv($setting) === false) {
+        $databaseEnvironmentIsConfigured = false;
+        break;
+    }
+}
+
+if (!is_file(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php') && !$databaseEnvironmentIsConfigured) {
+    header('Location: /setup.php');
+    exit;
+}
+
 require_once __DIR__ . '/../src/bootstrap.php';
 
 $error = '';
