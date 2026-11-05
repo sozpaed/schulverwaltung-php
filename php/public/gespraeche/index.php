@@ -93,13 +93,19 @@ $recommendations = [
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/app.css">
     <title>Gespräche – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/">Zur Startseite</a></p>
     <h1>Aufnahmegespräche</h1>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
     <p>Ein neues Gespräch wird in der zugehörigen Schülerakte angelegt.</p>
 
     <form method="get">
@@ -139,9 +145,10 @@ $recommendations = [
                     <td><?= escape($recommendations[$conversation['aufnahmeempfehlung']] ?? 'Unbekannt') ?></td>
                     <td><?= escape($conversation['username'] ?? 'Unbekannt') ?></td>
                     <td>
-                        <a href="/schueler/gespraech.php?schueler_id=<?= (int) $conversation['schueler_id'] ?>&amp;id=<?= (int) $conversation['id'] ?>">
-                            Bearbeiten
-                        </a>
+                        <?= renderEditLink(
+                            '/schueler/gespraech.php?schueler_id=' . (int) $conversation['schueler_id'] . '&id=' . (int) $conversation['id'],
+                            'Gespräch bearbeiten'
+                        ) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

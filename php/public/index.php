@@ -19,8 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (($_POST['action'] ?? '') === 'login') {
         $username = trim((string) ($_POST['username'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
+        $twoFactorCode = $_POST['totp_code'] ?? null;
 
-        if (Auth::attempt($database, $username, $password)) {
+        if (Auth::attempt($database, $username, $password, $twoFactorCode)) {
             header('Location: /');
             exit;
         }
@@ -39,6 +40,7 @@ $csrfToken = Auth::csrfToken();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/app.css">
     <title><?= $user === null ? 'Anmelden' : 'Schulverwaltung' ?></title>
 </head>
 <body>
@@ -61,26 +63,32 @@ $csrfToken = Auth::csrfToken();
                 <input id="password" name="password" type="password"
                        autocomplete="current-password" required>
             </p>
+            <p>
+                <label for="totp_code">Authenticator-Code (falls 2FA eingerichtet ist)</label>
+                <input id="totp_code" name="totp_code" type="text" inputmode="numeric"
+                       pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+            </p>
             <button type="submit">Anmelden</button>
         </form>
     <?php else: ?>
         <h1>Schulverwaltung</h1>
-        <p>Angemeldet als <?= escape($user['username']) ?>.</p>
-        <p><a href="/schueler/">Schülerinnen und Schüler verwalten</a></p>
-        <p><a href="/gespraeche/">Gespräche verwalten</a></p>
-        <p><a href="/erziehungsberechtigte/">Erziehungsberechtigte verwalten</a></p>
-        <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
-        <?php if ($user['is_superuser']): ?>
-            <p><a href="/admin/">Benutzerverwaltung</a></p>
-        <?php endif; ?>
-        <?php if ($user['can_export']): ?>
-            <p><a href="/exporte/">Daten exportieren</a></p>
-        <?php endif; ?>
-        <form method="post">
-            <input type="hidden" name="action" value="logout">
-            <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-            <button type="submit">Abmelden</button>
-        </form>
+        <?= renderAccountMenu($user) ?>
+        <nav class="dashboard-links" aria-label="Hauptnavigation">
+            <ul class="dashboard-links-primary">
+                <li><a href="/schueler/">Schülerinnen und Schüler verwalten</a></li>
+                <li><a href="/gespraeche/">Gespräche verwalten</a></li>
+                <li><a href="/erziehungsberechtigte/">Erziehungsberechtigte verwalten</a></li>
+            </ul>
+            <ul class="dashboard-links-secondary">
+                <li><a href="/kataloge/">Auswahllisten pflegen</a></li>
+                <?php if ($user['is_superuser']): ?>
+                    <li><a href="/admin/">Benutzerverwaltung</a></li>
+                <?php endif; ?>
+                <?php if ($user['can_export']): ?>
+                    <li><a href="/exporte/">Daten exportieren</a></li>
+                <?php endif; ?>
+            </ul>
+        </nav>
     <?php endif; ?>
 </main>
 </body>

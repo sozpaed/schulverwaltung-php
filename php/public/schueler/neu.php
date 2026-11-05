@@ -310,6 +310,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrfToken = Auth::csrfToken();
+$enteredGrades = [];
+foreach (['deutsch', 'mathematik', 'sachkunde'] as $field) {
+    if (preg_match('/\A[1-6]\z/', $input[$field]) === 1) {
+        $enteredGrades[] = (int) $input[$field];
+    }
+}
+$average = $enteredGrades === []
+    ? null
+    : number_format(array_sum($enteredGrades) / count($enteredGrades), 2, ',', '.');
 ?>
 <!doctype html>
 <html lang="de">
@@ -317,15 +326,22 @@ $csrfToken = Auth::csrfToken();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?= escape($csrfToken) ?>">
+    <link rel="stylesheet" href="/assets/app.css">
     <script src="/assets/catalog-add.js" defer></script>
+    <script src="/assets/grade-average.js" defer></script>
     <title><?= $editId === null ? 'Schülerin oder Schüler anlegen' : 'Schülerdatensatz bearbeiten' ?> – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/schueler/">Zur Schülerübersicht</a></p>
     <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
     <h1><?= $editId === null ? 'Schülerin oder Schüler anlegen' : 'Schülerdatensatz bearbeiten' ?></h1>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
 
     <?php if ($errors !== []): ?>
         <div role="alert">
@@ -353,10 +369,12 @@ $csrfToken = Auth::csrfToken();
                     <input id="geburtsdatum" name="geburtsdatum" type="date" required value="<?= escape($input['geburtsdatum']) ?>"></p>
                 <p><label for="strasse">Straße und Hausnummer</label>
                     <input id="strasse" name="strasse" maxlength="200" required value="<?= escape($input['strasse']) ?>"></p>
-                <p><label for="plz">Postleitzahl</label>
-                    <input id="plz" name="plz" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required value="<?= escape($input['plz']) ?>"></p>
-                <p><label for="ort">Wohnort</label>
-                    <input id="ort" name="ort" maxlength="100" required value="<?= escape($input['ort']) ?>"></p>
+                <div class="form-grid form-grid--postal">
+                    <p><label for="plz">Postleitzahl</label>
+                        <input id="plz" name="plz" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required value="<?= escape($input['plz']) ?>"></p>
+                    <p><label for="ort">Wohnort</label>
+                        <input id="ort" name="ort" maxlength="100" required value="<?= escape($input['ort']) ?>"></p>
+                </div>
                 <p><label for="geburtsort">Geburtsort</label>
                     <input id="geburtsort" name="geburtsort" maxlength="100" required value="<?= escape($input['geburtsort']) ?>"></p>
                 <p><label for="religion_id">Religion</label>
@@ -397,24 +415,38 @@ $csrfToken = Auth::csrfToken();
                     <label for="neue-grundschule">Grundschule direkt ergänzen</label>
                     <input id="neue-grundschule" name="name" maxlength="200" placeholder="Name">
                     <label for="neuer-grundschulort">Ort (optional)</label>
-                    <input id="neuer-grundschulort" name="ort" maxlength="100">
+                    <input id="neuer-grundschulort" name="katalog_ort" maxlength="100">
                     <button type="button" data-catalog-submit>Hinzufügen</button>
                     <span data-catalog-status role="status" aria-live="polite"></span>
                 </div>
-                <p><label for="anzahl_geschwister">Anzahl Geschwister</label>
-                    <input id="anzahl_geschwister" name="anzahl_geschwister" type="number" min="0" max="4294967295" required value="<?= escape($input['anzahl_geschwister']) ?>"></p>
-                <p><label for="davon_an_der_marienschule">Davon an der Marienschule</label>
-                    <input id="davon_an_der_marienschule" name="davon_an_der_marienschule" type="number" min="0" max="4294967295" required value="<?= escape($input['davon_an_der_marienschule']) ?>"></p>
+                <div class="form-grid form-grid--two">
+                    <p><label for="anzahl_geschwister">Anzahl Geschwister</label>
+                        <input id="anzahl_geschwister" name="anzahl_geschwister" type="number" min="0" max="4294967295" required value="<?= escape($input['anzahl_geschwister']) ?>"></p>
+                    <p><label for="davon_an_der_marienschule">Davon an der Marienschule</label>
+                        <input id="davon_an_der_marienschule" name="davon_an_der_marienschule" type="number" min="0" max="4294967295" required value="<?= escape($input['davon_an_der_marienschule']) ?>"></p>
+                </div>
                 <p><label for="freundin">Freundin/Freund</label>
                     <input id="freundin" name="freundin" maxlength="100" value="<?= escape($input['freundin']) ?>"></p>
             </fieldset>
 
             <fieldset>
                 <legend>Noten (optional)</legend>
-                <?php foreach (['deutsch' => 'Deutsch', 'mathematik' => 'Mathematik', 'sachkunde' => 'Sachkunde', 'av' => 'Arbeitsverhalten', 'sv' => 'Sozialverhalten'] as $field => $label): ?>
+                <div class="form-grid form-grid--four">
+                <?php foreach (['deutsch' => 'Deutsch', 'mathematik' => 'Mathematik', 'sachkunde' => 'Sachkunde'] as $field => $label): ?>
                     <p><label for="<?= $field ?>"><?= $label ?></label>
                         <input id="<?= $field ?>" name="<?= $field ?>" type="number" min="1" max="6" value="<?= escape($input[$field]) ?>"></p>
                 <?php endforeach; ?>
+                    <p class="grade-average">
+                        <label for="durchschnitt">Durchschnitt</label>
+                        <output id="durchschnitt" aria-live="polite"><?= escape($average ?? '–') ?></output>
+                    </p>
+                </div>
+                <div class="form-grid form-grid--two">
+                <?php foreach (['av' => 'Arbeitsverhalten', 'sv' => 'Sozialverhalten'] as $field => $label): ?>
+                    <p><label for="<?= $field ?>"><?= $label ?></label>
+                        <input id="<?= $field ?>" name="<?= $field ?>" type="number" min="1" max="6" value="<?= escape($input[$field]) ?>"></p>
+                <?php endforeach; ?>
+                </div>
             </fieldset>
 
             <fieldset>

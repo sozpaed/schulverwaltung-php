@@ -1,0 +1,4 @@
+ALTER TABLE app_users
+    ADD COLUMN totp_secret VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    ADD COLUMN totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    ADD COLUMN totp_last_counter BIGINT UNSIGNED NULL;

@@ -5,6 +5,9 @@ CREATE TABLE app_users (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     is_superuser TINYINT(1) NOT NULL DEFAULT 0,
     can_export TINYINT(1) NOT NULL DEFAULT 0,
+    totp_secret VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    totp_last_counter BIGINT UNSIGNED NULL,
     erstellt_am DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     aktualisiert_am DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -58,6 +61,16 @@ CREATE TABLE schueler (
     deutsch TINYINT UNSIGNED NULL,
     mathematik TINYINT UNSIGNED NULL,
     sachkunde TINYINT UNSIGNED NULL,
+    durchschnitt DECIMAL(4,2) AS (
+        CASE
+            WHEN deutsch IS NULL AND mathematik IS NULL AND sachkunde IS NULL THEN NULL
+            ELSE ROUND(
+                (COALESCE(deutsch, 0) + COALESCE(mathematik, 0) + COALESCE(sachkunde, 0)) /
+                ((deutsch IS NOT NULL) + (mathematik IS NOT NULL) + (sachkunde IS NOT NULL)),
+                2
+            )
+        END
+    ) PERSISTENT,
     av TINYINT UNSIGNED NULL,
     sv TINYINT UNSIGNED NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'in_pruefung',

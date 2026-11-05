@@ -8,7 +8,7 @@ document.querySelectorAll('[data-catalog-add]').forEach((control) => {
     button.addEventListener('click', async () => {
         const status = control.querySelector('[data-catalog-status]');
         const name = control.querySelector('[name="name"]');
-        const location = control.querySelector('[name="ort"]');
+        const location = control.querySelector('[name="katalog_ort"], [name="ort"]');
         const target = document.getElementById(control.dataset.selectId);
 
         if (!(status instanceof HTMLElement)
@@ -67,7 +67,7 @@ document.querySelectorAll('[data-catalog-add]').forEach((control) => {
                 input.checked = true;
                 label.htmlFor = inputId;
                 label.textContent = result.label;
-                item.append(label, input);
+                item.append(input, label);
                 target.append(item);
                 input.focus();
             }

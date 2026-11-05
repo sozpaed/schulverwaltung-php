@@ -97,13 +97,19 @@ $relationships = [
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/app.css">
     <title>Erziehungsberechtigte – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/">Zur Startseite</a></p>
     <h1>Erziehungsberechtigte und Kontaktpersonen</h1>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
     <p>Neue Kontaktpersonen werden weiterhin in der jeweiligen Schülerakte angelegt.</p>
 
     <form method="get">
@@ -147,9 +153,10 @@ $relationships = [
                     <td><?= escape($guardian['mobil']) ?></td>
                     <td><?= escape($guardian['email']) ?></td>
                     <td>
-                        <a href="/schueler/erziehungsberechtigter.php?schueler_id=<?= (int) $guardian['schueler_id'] ?>&amp;id=<?= (int) $guardian['id'] ?>">
-                            Bearbeiten
-                        </a>
+                        <?= renderEditLink(
+                            '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $guardian['schueler_id'] . '&id=' . (int) $guardian['id'],
+                            'Kontaktperson bearbeiten'
+                        ) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

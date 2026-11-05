@@ -18,13 +18,21 @@ if ($null -ne $phpCommand) {
 
 $phpDirectory = Split-Path -Parent $php
 $pdoMysqlExtension = Join-Path $phpDirectory 'ext\php_pdo_mysql.dll'
+$openSslExtension = Join-Path $phpDirectory 'ext\php_openssl.dll'
 if (-not (Test-Path $pdoMysqlExtension)) {
     throw "Die PDO-MySQL-Erweiterung wurde nicht gefunden: $pdoMysqlExtension"
 }
+if (-not (Test-Path $openSslExtension)) {
+    throw "Die OpenSSL-Erweiterung wurde nicht gefunden: $openSslExtension"
+}
 
-$modules = & $php -d "extension_dir=$phpDirectory\ext" -d 'extension=pdo_mysql' -m
-if ($LASTEXITCODE -ne 0 -or $modules -notcontains 'pdo_mysql') {
-    throw 'Die PHP-Erweiterung pdo_mysql konnte nicht geladen werden.'
+$modules = & $php `
+    -d "extension_dir=$phpDirectory\ext" `
+    -d 'extension=pdo_mysql' `
+    -d 'extension=openssl' `
+    -m
+if ($LASTEXITCODE -ne 0 -or $modules -notcontains 'pdo_mysql' -or $modules -notcontains 'openssl') {
+    throw 'Die PHP-Erweiterungen pdo_mysql oder openssl konnten nicht geladen werden.'
 }
 
 $env:DB_HOST = '127.0.0.1'
@@ -43,6 +51,7 @@ try {
     & $php `
         -d "extension_dir=$phpDirectory\ext" `
         -d 'extension=pdo_mysql' `
+        -d 'extension=openssl' `
         -S '127.0.0.1:8000' `
         -t (Join-Path $PSScriptRoot 'public')
 } finally {

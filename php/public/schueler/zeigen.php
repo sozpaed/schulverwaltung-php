@@ -79,17 +79,23 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/app.css">
     <title><?= escape($student['nachname'] . ', ' . $student['vorname']) ?> – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/schueler/">Zur Schülerübersicht</a></p>
     <h1><?= escape($student['vorname'] . ' ' . $student['nachname']) ?></h1>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
 
     <section>
         <h2>Schülerdaten</h2>
-        <p><a href="/schueler/bearbeiten.php?id=<?= (int) $student['id'] ?>">Schülerdaten bearbeiten</a></p>
+        <p><?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerdaten bearbeiten') ?></p>
         <dl>
             <dt>Geburtsdatum</dt><dd><?= escape($student['geburtsdatum']) ?></dd>
             <dt>Adresse</dt><dd><?= escape($student['strasse'] . ', ' . $student['plz'] . ' ' . $student['ort']) ?></dd>
@@ -132,7 +138,10 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
                         <td><?= escape($conversationSchoolFormLabels[$conversation['gewuenschte_schulform']] ?? 'Unbekannt') ?></td>
                         <td><?= escape($conversation['aufnahmeempfehlung'] === '' ? 'Offen' : ucfirst($conversation['aufnahmeempfehlung'])) ?></td>
                         <td><?= escape($conversation['username'] ?? 'Unbekannt') ?></td>
-                        <td><a href="/schueler/gespraech.php?schueler_id=<?= (int) $student['id'] ?>&amp;id=<?= (int) $conversation['id'] ?>">Bearbeiten</a></td>
+                        <td><?= renderEditLink(
+                            '/schueler/gespraech.php?schueler_id=' . (int) $student['id'] . '&id=' . (int) $conversation['id'],
+                            'Gespräch bearbeiten'
+                        ) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -167,7 +176,10 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
                         <td><?= escape($guardian['telefon']) ?></td>
                         <td><?= escape($guardian['mobil']) ?></td>
                         <td><?= escape($guardian['email']) ?></td>
-                        <td><a href="/schueler/erziehungsberechtigter.php?schueler_id=<?= (int) $student['id'] ?>&amp;id=<?= (int) $guardian['id'] ?>">Bearbeiten</a></td>
+                        <td><?= renderEditLink(
+                            '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $student['id'] . '&id=' . (int) $guardian['id'],
+                            'Kontaktperson bearbeiten'
+                        ) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

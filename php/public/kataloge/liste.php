@@ -31,13 +31,19 @@ $entries = $database
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/app.css">
     <title><?= escape($definition['title']) ?> – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/kataloge/">Zurück zu den Auswahllisten</a></p>
     <h1><?= escape($definition['title']) ?></h1>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
     <p><a href="/kataloge/bearbeiten.php?typ=<?= rawurlencode($type) ?>">Eintrag hinzufügen</a></p>
 
     <?php if ($entries === []): ?>
@@ -61,9 +67,10 @@ $entries = $database
                         <td><?= escape($entry['ort']) ?></td>
                     <?php endif; ?>
                     <td>
-                        <a href="/kataloge/bearbeiten.php?typ=<?= rawurlencode($type) ?>&amp;id=<?= (int) $entry['id'] ?>">
-                            <?= escape($definition['singular']) ?> bearbeiten
-                        </a>
+                        <?= renderEditLink(
+                            '/kataloge/bearbeiten.php?typ=' . rawurlencode($type) . '&id=' . (int) $entry['id'],
+                            $definition['singular'] . ' bearbeiten'
+                        ) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

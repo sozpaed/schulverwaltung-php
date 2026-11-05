@@ -94,13 +94,19 @@ $csrfToken = Auth::csrfToken();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/app.css">
     <title>Schülerinnen und Schüler – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/">Zur Startseite</a></p>
     <h1>Schülerinnen und Schüler</h1>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
     <p><a href="/schueler/neu.php">Schülerin oder Schüler anlegen</a></p>
 
     <form method="get">
@@ -137,7 +143,7 @@ $csrfToken = Auth::csrfToken();
                     <td><?= escape($statusLabels[$student['status']] ?? 'Unbekannt') ?></td>
                     <td><?= escape($student['grundschule'] ?? '') ?></td>
                     <td><?= escape($student['ort']) ?></td>
-                    <td><a href="/schueler/bearbeiten.php?id=<?= (int) $student['id'] ?>">Bearbeiten</a></td>
+                    <td><?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerdaten bearbeiten') ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

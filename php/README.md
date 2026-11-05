@@ -1,9 +1,7 @@
 # PHP-Neuimplementierung
 
-Dieser Ordner ist der Beginn einer eigenständigen, frameworkfreien PHP-Version.
+Dieser Ordner enthält eine eigenständige, frameworkfreie PHP-Version.
 Der Django-Bestand im Repository bleibt während der Entwicklung unverändert.
-Die bisherige 2FA-Funktion wird nicht übernommen; sie war nur für Tests
-eingerichtet.
 
 ## Datenbankschema
 
@@ -13,17 +11,31 @@ und Exportprotokolle an. Die Beziehungen und wesentlichen Wertebereiche
 orientieren sich an `gespraeche/models.py`.
 
 Das Schema enthält keine Test- oder Echtdaten und sollte nur in einer eigens
-angelegten Entwicklungsdatenbank ausgeführt werden. Die PHP-Version bietet
-derzeit Anmeldung sowie eine Schülerübersicht zum Suchen, Anlegen und Bearbeiten;
-weitere Verwaltungsfunktionen folgen schrittweise.
+angelegten Entwicklungsdatenbank ausgeführt werden.
 
 ## Voraussetzungen für den späteren Betrieb
 
-- PHP mit `PDO` und `pdo_mysql`
+- PHP mit `PDO`, `pdo_mysql` und `openssl`
 - MariaDB mit InnoDB-Unterstützung
 - HTTPS im Produktivbetrieb
 
 Es werden vorerst weder Laravel noch Composer-Pakete vorausgesetzt.
+
+## Gestaltung
+
+Alle PHP-Seiten verwenden das gemeinsame Stylesheet `public/assets/app.css`.
+Das responsive Layout verwendet die Hauptfarbe `#e31c79` mit grauen
+Navigationsflächen, vereinheitlicht Formulare, Tabellen und Navigation und
+berücksichtigt Tastaturfokus sowie reduzierte Animationen. In den
+Schülerformularen, Kontaktformularen und Gesprächsformularen sind kurze
+zusammengehörige Eingaben auf breiten Bildschirmen kompakt gruppiert; auf kleinen
+Bildschirmen wechseln diese Gruppen in eine einzelne Spalte. Die Unterseiten
+bieten außerdem ein einheitliches Home-Symbol zur Startseite. Der angemeldete
+Benutzer wird als aufklappbares Profilmenü angezeigt. Es bietet Zugang zu den
+Kontoeinstellungen und zur Abmeldung; auf der Startseite sind die drei
+Hauptbereiche von den darunter angeordneten sekundären Funktionen getrennt.
+Bearbeitungslinks in Übersichten und Detailseiten werden einheitlich als
+zugängliche Stiftsymbole dargestellt.
 
 ## Technisches Grundgerüst
 
@@ -68,7 +80,7 @@ Für den lokalen Start aus dem Repository-Hauptverzeichnis:
 ```
 
 Das Skript setzt die lokale Datenbankkonfiguration, fragt das MariaDB-Passwort
-verdeckt ab, prüft `pdo_mysql` und startet PHP auf `127.0.0.1:8000`. Das
+verdeckt ab, prüft `pdo_mysql` und `openssl` und startet PHP auf `127.0.0.1:8000`. Das
 Terminal geöffnet lassen; mit `Strg+C` wird der Server beendet und die
 Passwort-Umgebungsvariable wieder entfernt. Anschließend ist die Anmeldung unter
 `http://127.0.0.1:8000/` erreichbar.
@@ -76,6 +88,36 @@ Die Entwicklungsumgebung darf nicht öffentlich erreichbar sein. Im Produktivbet
 muss HTTPS verwendet werden. Die Anmeldung prüft aktive Benutzer bei jedem
 geschützten Aufruf erneut; Formulare sind mit CSRF-Tokens geschützt und
 Session-Cookies mit `HttpOnly` und `SameSite=Lax` konfiguriert.
+
+### Kontoeinstellungen und Zwei-Faktor-Anmeldung
+
+Über das Profilmenü können Benutzer ihr Passwort ändern und optional eine
+zeitbasierte Zwei-Faktor-Anmeldung (TOTP) einrichten. Für die Einrichtung wird
+der angezeigte Base32-Schlüssel manuell in eine Authenticator-App eingetragen
+und anschließend mit einem aktuellen App-Code bestätigt; ein QR-Code oder
+zusätzliches PHP-Paket ist nicht erforderlich. Zum Ändern des Passworts ist das
+bisherige Passwort nötig. Das neue Passwort muss mindestens 12 Zeichen lang
+sein und darf höchstens 72 Bytes umfassen. Zum Deaktivieren von 2FA werden
+Passwort und ein aktueller Authenticator-Code verlangt.
+
+Bei einer bestehenden Datenbank muss die Migration
+`database/migrations/20261105_add_totp.sql` einmalig mit MariaDB ausgeführt
+werden, bevor die neuen Einstellungen verwendet werden. Neue Datenbanken
+erhalten die Spalten über `database/schema.sql`.
+
+Für bestehende Datenbanken muss außerdem
+`database/migrations/20261105_add_schueler_durchschnitt.sql` einmalig ausgeführt
+werden. Der Notendurchschnitt ist eine gespeicherte MariaDB-Berechnung aus den
+vorhandenen Fachnoten Deutsch, Mathematik und Sachkunde; leere Noten werden
+ausgelassen. Arbeits- und Sozialverhalten zählen nicht in den Durchschnitt.
+
+Der TOTP-Schlüssel wird verschlüsselt in der Datenbank gespeichert. Der
+zufällige AES-Schlüssel liegt in `php/storage/totp.key`, außerhalb des Webroots;
+dieses Verzeichnis wird durch `php/.gitignore` von Git ausgeschlossen. Die Datei
+muss restriktive Dateiberechtigungen haben und in einer geschützten Sicherung
+aufbewahrt werden. Geht sie verloren, können eingerichtete TOTP-Schlüssel nicht
+mehr entschlüsselt werden. Wird sie kompromittiert, sollten Benutzer 2FA
+zurücksetzen und neu einrichten.
 
 ### Testbenutzer anlegen
 
@@ -99,20 +141,36 @@ Das Passwort muss mindestens 12 Zeichen lang sein; der angegebene Benutzername
 muss noch nicht existieren. Das Werkzeug vergibt keine Superuser- oder
 Exportrechte.
 
-### Benutzer verwalten
+### Ersten Administrator einrichten
 
-Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar. Beim
-ersten Einrichten muss ein Administrator einmalig über die MariaDB-Konsole
-festgelegt werden. Verwende dafür ein bereits angelegtes Konto:
+Nachdem die Entwicklungsdatenbank und das Schema aus `database/schema.sql`
+bereits eingerichtet wurden, kann das erste Administratorkonto aus dem
+Repository-Hauptverzeichnis erstellt oder ein bestehendes aktives Konto zum
+Administrator hochgestuft werden:
 
-```sql
-UPDATE app_users
-SET is_superuser = 1
-WHERE username = 'DEIN_BENUTZERNAME';
+```powershell
+.\php\setup-admin.ps1
 ```
 
-Danach ab- und wieder anmelden. Der Link **Benutzerverwaltung** erscheint auf
-der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
+Das Skript fragt das MariaDB-Passwort verdeckt ab und bietet zwei Möglichkeiten:
+
+1. Ein neues Administratorkonto anlegen. Das Passwort wird zweimal verdeckt
+   eingegeben und mit `password_hash()` gespeichert.
+2. Ein bestehendes aktives Konto zum Administrator machen. Das Passwort bleibt
+   unverändert.
+
+In beiden Fällen werden `is_superuser` und `can_export` gesetzt. Datenbank- und
+Administratorkennwörter werden nur vorübergehend an den PHP-Prozess übergeben
+und nach dem Setup aus den Umgebungsvariablen entfernt. Das Skript führt das
+Schema nicht aus und erstellt weder Datenbank noch MariaDB-Benutzer; diese
+Schritte müssen zuvor separat erledigt sein. Es darf nur von einer
+vertrauenswürdigen Person in der lokalen Entwicklungsumgebung ausgeführt werden.
+
+### Benutzer verwalten
+
+Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar.
+Nach dem ersten Administrator-Setup ab- und wieder anmelden. Der Link
+**Benutzerverwaltung** erscheint auf der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
 deaktiviert und gelöscht sowie Administrator- und Exportrechte vergeben oder
 entzogen werden. Bei der Bearbeitung bleibt das Passwort unverändert, wenn das
 Passwortfeld leer gelassen wird; ein neu gesetztes Passwort muss mindestens 12
@@ -148,6 +206,11 @@ verwenden Semikolons als Trennzeichen und können in Tabellenkalkulationen
 geöffnet werden. Textwerte, die als Tabellenkalkulationsformeln interpretiert
 werden könnten, werden beim Export neutralisiert. Jeder Export wird mit Benutzer,
 Bereich, Datensatzanzahl, Format und Zeitpunkt in `export_protokolle` protokolliert.
+Der Schülerexport enthält zusätzlich die zugeordneten Namen der Erziehungsberechtigten
+in einer kommagetrennten Spalte. Der Export der Erziehungsberechtigten und der
+Gespräche enthält jeweils auch den vollständigen Namen der zugehörigen Schülerin
+oder des zugehörigen Schülers; im Gesprächsexport stehen außerdem die Namen der
+zugeordneten Erziehungsberechtigten kommagetrennt in einer Spalte.
 
 Exportrechte sind standardmäßig deaktiviert und können in der Benutzerverwaltung
 gezielt erteilt oder entzogen werden. Exportdateien enthalten personenbezogene

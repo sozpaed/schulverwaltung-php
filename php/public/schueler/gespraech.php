@@ -324,7 +324,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrfToken = Auth::csrfToken();
-$pageTitle = $conversationId === null ? 'Gespräch erfassen' : 'Gespräch bearbeiten';
+$studentName = $student['vorname'] . ' ' . $student['nachname'];
+$pageTitle = $conversationId === null
+    ? 'Gespräch erfassen für ' . $studentName
+    : 'Gespräch bearbeiten für ' . $studentName;
 ?>
 <!doctype html>
 <html lang="de">
@@ -332,16 +335,21 @@ $pageTitle = $conversationId === null ? 'Gespräch erfassen' : 'Gespräch bearbe
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?= escape($csrfToken) ?>">
+    <link rel="stylesheet" href="/assets/app.css">
     <script src="/assets/catalog-add.js" defer></script>
     <title><?= escape($pageTitle) ?> – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/schueler/zeigen.php?id=<?= (int) $studentId ?>">Zur Schülerakte</a></p>
     <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
     <h1><?= escape($pageTitle) ?></h1>
-    <p>Gespräch für <?= escape($student['vorname'] . ' ' . $student['nachname']) ?>.</p>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
 
     <?php if ($errors !== []): ?>
         <div role="alert">
@@ -382,18 +390,20 @@ $pageTitle = $conversationId === null ? 'Gespräch erfassen' : 'Gespräch bearbe
 
         <fieldset>
             <legend>Erstkontakt und Marketingkanäle</legend>
+            <div class="choice-grid choice-grid--three">
             <?php foreach (array_slice($checkboxFields, 0, 3, true) as $field => $label): ?>
-                <p><label for="<?= $field ?>"><?= escape($label) ?></label>
-                    <input id="<?= $field ?>" name="<?= $field ?>" type="checkbox" value="1" <?= $fields[$field] === '1' ? 'checked' : '' ?>></p>
+                <p><input id="<?= $field ?>" name="<?= $field ?>" type="checkbox" value="1" <?= $fields[$field] === '1' ? 'checked' : '' ?>>
+                    <label for="<?= $field ?>"><?= escape($label) ?></label></p>
             <?php endforeach; ?>
+            </div>
             <fieldset>
                 <legend>Wie auf die Schule aufmerksam geworden?</legend>
-                <div id="marketing-kanal-auswahl">
+                <div id="marketing-kanal-auswahl" class="choice-grid">
                     <?php foreach ($channels as $channel): ?>
-                        <p><label for="kanal-<?= (int) $channel['id'] ?>"><?= escape($channel['name']) ?></label>
-                            <input id="kanal-<?= (int) $channel['id'] ?>" name="marketing_kanal_ids[]" type="checkbox"
+                        <p><input id="kanal-<?= (int) $channel['id'] ?>" name="marketing_kanal_ids[]" type="checkbox"
                                    value="<?= (int) $channel['id'] ?>"
-                                <?= in_array((string) $channel['id'], $selectedChannelIds, true) ? 'checked' : '' ?>></p>
+                                <?= in_array((string) $channel['id'], $selectedChannelIds, true) ? 'checked' : '' ?>>
+                            <label for="kanal-<?= (int) $channel['id'] ?>"><?= escape($channel['name']) ?></label></p>
                     <?php endforeach; ?>
                 </div>
                 <div data-catalog-add data-catalog-type="marketing_kanaele" data-select-id="marketing-kanal-auswahl" data-csrf-token="<?= escape($csrfToken) ?>">
@@ -416,10 +426,12 @@ $pageTitle = $conversationId === null ? 'Gespräch erfassen' : 'Gespräch bearbe
 
         <fieldset>
             <legend>Förderbedarf</legend>
+            <div class="choice-grid choice-grid--three">
             <?php foreach (array_slice($checkboxFields, 3, null, true) as $field => $label): ?>
-                <p><label for="<?= $field ?>"><?= escape($label) ?></label>
-                    <input id="<?= $field ?>" name="<?= $field ?>" type="checkbox" value="1" <?= $fields[$field] === '1' ? 'checked' : '' ?>></p>
+                <p><input id="<?= $field ?>" name="<?= $field ?>" type="checkbox" value="1" <?= $fields[$field] === '1' ? 'checked' : '' ?>>
+                    <label for="<?= $field ?>"><?= escape($label) ?></label></p>
             <?php endforeach; ?>
+            </div>
         </fieldset>
 
         <fieldset>

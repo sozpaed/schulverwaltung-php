@@ -29,12 +29,19 @@ $exports = [
             'Anzahl Geschwister', 'Geschwister an der Marienschule', 'Freundin/Freund',
             'Deutsch', 'Mathematik', 'Sachkunde', 'AV', 'SV', 'Status', 'Schulform',
             'Klasse', 'Warteliste', 'Erstellt am', 'Aktualisiert am',
+            'Erziehungsberechtigte',
         ],
         'query' => 'SELECT s.id, s.vorname, s.nachname, s.geburtsdatum, s.strasse,
                            s.plz, s.ort, s.geburtsort, r.name, sa.name, g.name,
                            s.anzahl_geschwister, s.davon_an_der_marienschule, s.freundin,
                            s.deutsch, s.mathematik, s.sachkunde, s.av, s.sv, s.status,
-                           s.schulform, s.klasse, s.warteliste, s.erstellt_am, s.aktualisiert_am
+                           s.schulform, s.klasse, s.warteliste, s.erstellt_am, s.aktualisiert_am,
+                           (SELECT GROUP_CONCAT(
+                                       CONCAT(e.vorname, \' \', e.nachname)
+                                       ORDER BY e.nachname, e.vorname, e.id
+                                       SEPARATOR \', \')
+                            FROM erziehungsberechtigte e
+                            WHERE e.schueler_id = s.id)
                     FROM schueler s
                     LEFT JOIN religionen r ON r.id = s.religion_id
                     JOIN staatsangehoerigkeiten sa ON sa.id = s.staatsangehoerigkeit_id
@@ -50,14 +57,15 @@ $exports = [
             'Erziehungsberechtigt', 'Straße', 'PLZ', 'Wohnort',
             'Adresse wie Schülerin/Schüler', 'Telefon', 'Mobil', 'E-Mail',
             'Erstellt am', 'Aktualisiert am', 'Vorname Schülerin/Schüler',
-            'Nachname Schülerin/Schüler',
+            'Nachname Schülerin/Schüler', 'Name Schülerin/Schüler',
         ],
         'query' => 'SELECT e.id, e.schueler_id, e.vorname, e.nachname, e.geburtsdatum,
                            r.name, sa.name, e.religion_wie_schuelerin,
                            e.staatsangehoerigkeit_wie_schuelerin, e.beziehung,
                            e.erziehungsberechtigt, e.strasse, e.plz, e.ort,
                            e.adresse_wie_schuelerin, e.telefon, e.mobil, e.email,
-                           e.erstellt_am, e.aktualisiert_am, s.vorname, s.nachname
+                           e.erstellt_am, e.aktualisiert_am, s.vorname, s.nachname,
+                           CONCAT(s.vorname, \' \', s.nachname)
                     FROM erziehungsberechtigte e
                     JOIN schueler s ON s.id = e.schueler_id
                     LEFT JOIN religionen r ON r.id = e.religion_id
@@ -75,7 +83,8 @@ $exports = [
             'Förderbedarf LRS', 'Förderbedarf Dyskalkulie', 'Förderbedarf THA',
             'Elternengagement', 'Aufnahmeempfehlung', 'Erstellt am',
             'Aktualisiert am', 'Schülerin/Schüler Vorname', 'Schülerin/Schüler Nachname',
-            'Protokollant', 'Marketingkanäle',
+            'Name Schülerin/Schüler', 'Protokollant', 'Marketingkanäle',
+            'Erziehungsberechtigte',
         ],
         'query' => 'SELECT g.id, g.schueler_id, g.protokollant_id, g.datum,
                            g.gewuenschte_schulform, g.offenheit_christlicher_ru,
@@ -87,11 +96,18 @@ $exports = [
                            g.foerderbedarf_lrs, g.foerderbedarf_dyskalkulie,
                            g.foerderbedarf_tha, g.elternengagement,
                            g.aufnahmeempfehlung, g.erstellt_am, g.aktualisiert_am,
-                           s.vorname, s.nachname, u.username,
+                           s.vorname, s.nachname, CONCAT(s.vorname, \' \', s.nachname),
+                           u.username,
                            (SELECT GROUP_CONCAT(k.name ORDER BY k.name SEPARATOR \', \')
                             FROM gespraech_marketing_kanaele gm
                             JOIN marketing_kanaele k ON k.id = gm.marketing_kanal_id
-                            WHERE gm.gespraech_id = g.id)
+                            WHERE gm.gespraech_id = g.id),
+                           (SELECT GROUP_CONCAT(
+                                       CONCAT(e.vorname, \' \', e.nachname)
+                                       ORDER BY e.nachname, e.vorname, e.id
+                                       SEPARATOR \', \')
+                            FROM erziehungsberechtigte e
+                            WHERE e.schueler_id = s.id)
                     FROM gespraeche g
                     JOIN schueler s ON s.id = g.schueler_id
                     LEFT JOIN app_users u ON u.id = g.protokollant_id

@@ -285,16 +285,22 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?= escape($csrfToken) ?>">
+    <link rel="stylesheet" href="/assets/app.css">
     <script src="/assets/catalog-add.js" defer></script>
     <title><?= escape($pageTitle) ?> – Schulverwaltung</title>
 </head>
 <body>
 <main>
+    <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+    </a>
     <p><a href="/schueler/zeigen.php?id=<?= (int) $studentId ?>">Zur Schülerakte</a></p>
     <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
     <h1><?= escape($pageTitle) ?></h1>
     <p>Kontaktperson für <?= escape($student['vorname'] . ' ' . $student['nachname']) ?>.</p>
-    <p>Angemeldet als <?= escape($user['username']) ?>.</p>
+    <?= renderAccountMenu($user) ?>
 
     <?php if ($errors !== []): ?>
         <div role="alert">
@@ -336,10 +342,12 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
                 <input id="adresse_wie_schuelerin" name="adresse_wie_schuelerin" type="checkbox" value="1" <?= $input['adresse_wie_schuelerin'] === '1' ? 'checked' : '' ?>></p>
             <p><label for="strasse">Straße und Hausnummer</label>
                 <input id="strasse" name="strasse" maxlength="200" value="<?= escape($input['strasse']) ?>"></p>
-            <p><label for="plz">Postleitzahl</label>
-                <input id="plz" name="plz" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" value="<?= escape($input['plz']) ?>"></p>
-            <p><label for="ort">Ort</label>
-                <input id="ort" name="ort" maxlength="100" value="<?= escape($input['ort']) ?>"></p>
+            <div class="form-grid form-grid--postal">
+                <p><label for="plz">Postleitzahl</label>
+                    <input id="plz" name="plz" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" value="<?= escape($input['plz']) ?>"></p>
+                <p><label for="ort">Ort</label>
+                    <input id="ort" name="ort" maxlength="100" value="<?= escape($input['ort']) ?>"></p>
+            </div>
             <p><label for="telefon">Telefon</label>
                 <input id="telefon" name="telefon" type="tel" maxlength="50" value="<?= escape($input['telefon']) ?>"></p>
             <p><label for="mobil">Mobil</label>

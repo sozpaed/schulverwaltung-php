@@ -8,10 +8,16 @@ use PDO;
 
 final class Auth
 {
-    public static function attempt(PDO $database, string $username, string $password): bool
+    public static function attempt(
+        PDO $database,
+        string $username,
+        string $password,
+        mixed $twoFactorCode
+    ): bool
     {
         $statement = $database->prepare(
-            'SELECT id, username, password_hash, is_active, is_superuser, can_export
+            'SELECT id, username, password_hash, is_active, is_superuser, can_export,
+                    totp_secret, totp_enabled, totp_last_counter
              FROM app_users
              WHERE username = :username'
         );
@@ -24,6 +30,17 @@ final class Auth
             || !password_verify($password, $user['password_hash'])
         ) {
             return false;
+        }
+
+        if ((bool) $user['totp_enabled']) {
+            $secret = TwoFactor::decryptSecret($user['totp_secret'], (int) $user['id']);
+            $counter = TwoFactor::matchingCounter($secret, $twoFactorCode);
+            if (
+                $counter === null
+                || !self::storeTotpCounter($database, (int) $user['id'], $counter)
+            ) {
+                return false;
+            }
         }
 
         session_regenerate_id(true);
@@ -47,7 +64,7 @@ final class Auth
         }
 
         $statement = $database->prepare(
-            'SELECT id, username, is_active, is_superuser, can_export
+            'SELECT id, username, is_active, is_superuser, can_export, totp_enabled
              FROM app_users
              WHERE id = :id'
         );
@@ -64,10 +81,28 @@ final class Auth
             'username' => $user['username'],
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
+            'totp_enabled' => (bool) $user['totp_enabled'],
         ];
         $_SESSION['user'] = $currentUser;
 
         return $currentUser;
+    }
+
+    public static function storeTotpCounter(PDO $database, int $userId, int $counter): bool
+    {
+        $statement = $database->prepare(
+            'UPDATE app_users
+             SET totp_last_counter = :new_counter
+             WHERE id = :id
+               AND (totp_last_counter IS NULL OR totp_last_counter < :previous_counter)'
+        );
+        $statement->execute([
+            'new_counter' => $counter,
+            'previous_counter' => $counter,
+            'id' => $userId,
+        ]);
+
+        return $statement->rowCount() === 1;
     }
 
     public static function logout(): void
