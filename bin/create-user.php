@@ -14,7 +14,7 @@ if (PHP_SAPI !== 'cli') {
 $username = $argv[1] ?? '';
 
 if ($username === '' || strlen($username) > 150) {
-    fwrite(STDERR, "Aufruf: php php/bin/create-user.php BENUTZERNAME\n");
+    fwrite(STDERR, "Aufruf: php bin/create-user.php BENUTZERNAME\n");
     exit(1);
 }
 

@@ -1,0 +1,6 @@
+/storage/
+/legacy/.env
+/legacy/db.sqlite3
+/legacy/.venv/
+/legacy/venv/
+/legacy/**/__pycache__/

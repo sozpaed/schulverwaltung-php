@@ -15,7 +15,7 @@ $action = $argv[1] ?? '';
 $username = $argv[2] ?? '';
 
 if (!in_array($action, ['create', 'promote'], true) || $username === '' || strlen($username) > 150) {
-    fwrite(STDERR, "Aufruf: php php/bin/setup-admin.php create|promote BENUTZERNAME\n");
+    fwrite(STDERR, "Aufruf: php bin/setup-admin.php create|promote BENUTZERNAME\n");
     exit(1);
 }
 

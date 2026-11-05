@@ -1,235 +1,233 @@
-# Schulverwaltung – Aufnahmegespräche
+# PHP-Neuimplementierung
 
-Interne Verwaltung der Aufnahmegespräche (Schüler/innen, Erziehungsberechtigte, Gespräche) auf Basis von Django und dem Django-Admin. Es gibt keine eigene Oberfläche: Listen, Formulare und Login stammen vom Django-Admin.
+Das Repository-Hauptverzeichnis enthält die aktive, frameworkfreie
+PHP-/MariaDB-Anwendung. Der frühere Django-Bestand liegt archiviert in
+[`legacy/`](./legacy/) und wird nicht mehr als aktive Anwendung weiterentwickelt.
 
-> **Nur interne Nutzung.** Dieses Repository enthält ausschließlich Code. Echte Schüler- oder Elterndaten, Datenbank-Dumps, Backups und Zugangsdaten gehören **nie** ins Repository.
+## Datenbankschema
 
-Eine frameworkfreie PHP-/MariaDB-Neuimplementierung entsteht parallel im Ordner
-[`php/`](./php/). Der Django-Bestand bleibt währenddessen erhalten. Der aktuelle
-Stand umfasst Anmeldung, eine Schülerübersicht mit Suche, Neuanlage und
-Bearbeitung, eine Schülerdetailansicht sowie das Erfassen und Bearbeiten von
-Erziehungsberechtigten und Aufnahmegesprächen mit separaten Listenansichten.
-Staatsangehörigkeiten, Religionen,
-Grundschulen und Marketingkanäle können in eigenen Ansichten gepflegt und direkt
-aus den zugehörigen Eingabeformularen ergänzt werden. Weitere
-Verwaltungsfunktionen werden schrittweise ergänzt.
+`database/schema.sql` legt das MariaDB-Schema für Benutzer, Schüler,
+Erziehungsberechtigte, Gespräche, Auswahlkataloge, Gesprächs-Marketingkanäle
+und Exportprotokolle an. Die Beziehungen und wesentlichen Wertebereiche
+orientieren sich am archivierten Django-Modell in
+`legacy/gespraeche/models.py`.
 
-## Technik
+Das Schema enthält keine Test- oder Echtdaten und sollte nur in einer eigens
+angelegten Entwicklungsdatenbank ausgeführt werden.
 
-| Komponente | Version / Hinweis |
-|---|---|
-| Django | 5.2 |
-| Datenbank | PostgreSQL mit `DB_NAME` in `.env`; sonst SQLite |
-| Anwendungsserver | Gunicorn (systemd-Dienst `schulverwaltung`) |
-| Reverse Proxy | Nginx (optional, mit HTTPS) |
-| Static Files | WhiteNoise |
-| Konfiguration | `python-decouple` (`.env`) |
-| Server | Linux (z. B. Linux Mint, Ubuntu, Debian, Fedora/RHEL) |
+## Voraussetzungen für den späteren Betrieb
 
-## Projektstruktur
+- PHP mit `PDO`, `pdo_mysql` und `openssl`
+- MariaDB mit InnoDB-Unterstützung
+- HTTPS im Produktivbetrieb
 
-```
-schulverwaltung/             Repository- und Projektordner
-├── manage.py
-├── requirements.txt
-├── .env.example             Konfigurationsvorlage ohne echte Zugangsdaten
-├── update.sh                Aktualisierung auf dem Server
-├── backup_db.sh             Datenbank-Backup und Cronjob-Einrichtung
-├── restore_db.sh            Kontrollierte Wiederherstellung SQLite/PostgreSQL
-├── db_umzug.sh              Hilfsskript SQLite-zu-PostgreSQL-Umzug mit temporärem Datenexport
-├── schulverwaltung/         Django-Projekteinstellungen
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── gespraeche/              Fachanwendung
-│   ├── models.py            Datenmodelle
-│   ├── admin.py             Admin-Oberflächen
-│   ├── resources.py         Import-/Exportdefinitionen
-│   ├── export_admin.py      separate Export-Hilfsklassen (nicht eingebunden)
-│   ├── migrations/          versionierte Datenbankschemata
-│   ├── static/              App-spezifische statische Dateien
-│   └── views.py             keine eigenen Ansichten; Zugriff über den Admin
-└── templates/admin/         Anpassungen des Django-Admin-Templates
-```
+Es werden vorerst weder Laravel noch Composer-Pakete vorausgesetzt.
 
-## Datenmodell
+## Gestaltung
 
-- **Schueler** – Stammdaten, Schulform, Klasse, Status (z. B. „In Prüfung", „Angenommen"), Warteliste
-- **Erziehungsberechtigter** – gehört zu einem Schüler (1:n), Kontaktdaten und Beziehung
-- **Gespraech** – gehört zu einem Schüler (1:n), mit Protokollant (Django-User), Notizen, Förderbedarf und Aufnahmeempfehlung
-- **Grundschule**, **Religion**, **Staatsangehoerigkeit** und **MarketingKanal** – zentrale Auswahllisten, die in Schüler-, Erziehungsberechtigten- und Gesprächsdaten wiederverwendet werden
+Alle PHP-Seiten verwenden das gemeinsame Stylesheet `public/assets/app.css`.
+Das responsive Layout verwendet die Hauptfarbe `#e31c79` mit grauen
+Navigationsflächen, vereinheitlicht Formulare, Tabellen und Navigation und
+berücksichtigt Tastaturfokus sowie reduzierte Animationen. In den
+Schülerformularen, Kontaktformularen und Gesprächsformularen sind kurze
+zusammengehörige Eingaben auf breiten Bildschirmen kompakt gruppiert; auf kleinen
+Bildschirmen wechseln diese Gruppen in eine einzelne Spalte. Die Unterseiten
+bieten außerdem ein einheitliches Home-Symbol zur Startseite. Der angemeldete
+Benutzer wird als aufklappbares Profilmenü angezeigt. Es bietet Zugang zu den
+Kontoeinstellungen und zur Abmeldung; auf der Startseite sind die drei
+Hauptbereiche von den darunter angeordneten sekundären Funktionen getrennt.
+Bearbeitungslinks in Übersichten und Detailseiten werden einheitlich als
+zugängliche Stiftsymbole dargestellt.
 
-Die drei Hauptmodelle können über die Django-Admin-Oberfläche mit `django-import-export` importiert und exportiert werden. Für Schülerimporte stehen die Vorlagen `import_schueler_template.csv` (neue Datensätze) und `update_schueler_template.csv` (bestehende Datensätze) bereit. Für Erziehungsberechtigte gibt es `import_erziehungsberechtigte_template.csv` und `update_erziehungsberechtigte_template.csv`. Alle Vorlagen verwenden Semikolons als Trennzeichen. Beim Import im jeweiligen Admin ist das passende Format für Neuanlage ohne ID oder Update mit ID auszuwählen. Ein Update verlangt eine gültige Datenbank-ID und legt keine neuen Datensätze an. In den Erziehungsberechtigten-Dateien bezeichnet `schueler` die Datenbank-ID der zugehörigen Schülerin bzw. des zugehörigen Schülers; `beziehung` verwendet die Werte `mutter`, `vater`, `vormund`, `pflegeeltern` oder `sonstiges`. Leere Zellen können vorhandene Werte überschreiben oder leeren; deshalb vor dem Bestätigen die Importvorschau kontrollieren. Der Import von Grundschule, Religion und Staatsangehörigkeit ordnet Werte über deren Namen zu und legt fehlende Katalogeinträge an. Exporte enthalten personenbezogene Daten und müssen entsprechend geschützt werden.
+## Technisches Grundgerüst
 
-## Lokale Entwicklung
+`src/Database.php` stellt eine PDO-Verbindung zur MariaDB her. Die Verbindung
+liest ihre Einstellungen ausschließlich aus Umgebungsvariablen des PHP-Prozesses:
 
-```bash
-# Repository klonen
-git clone https://github.com/sozpaed/schulverwaltung.git
-cd schulverwaltung
+| Variable | Erforderlich | Beschreibung |
+|---|---|---|
+| `DB_HOST` | Ja | Hostname oder IP-Adresse des MariaDB-Servers |
+| `DB_PORT` | Nein | Port des Servers, standardmäßig `3306` |
+| `DB_NAME` | Ja | Name der Entwicklungsdatenbank |
+| `DB_USER` | Ja | Datenbankbenutzer |
+| `DB_PASSWORD` | Ja | Passwort des Datenbankbenutzers; darf leer sein |
 
-# Virtuelle Umgebung anlegen und aktivieren
-python3 -m venv schulverwaltung-venv
-source schulverwaltung-venv/bin/activate        # Windows: schulverwaltung-venv\Scripts\activate
+Die Zugangsdaten gehören nicht ins Repository. Ungültige oder fehlende
+Verbindungswerte sowie Verbindungsfehler werden als Fehler gemeldet und nicht
+durch eine Ersatzkonfiguration verdeckt. Die Verbindung verwendet `utf8mb4`,
+Exceptions bei Datenbankfehlern und native vorbereitete Anweisungen.
 
-# Abhängigkeiten installieren
-pip install -r requirements.txt
+## Lokaler Start
 
-# Konfiguration anlegen
-cp .env.example .env                            # danach .env mit eigenen Werten füllen
-# Für lokale Entwicklung DEBUG=True setzen und SECRET_KEY ersetzen.
-# Ohne DB_NAME verwendet Django die lokale Datei db.sqlite3.
+Der aktuelle Stand enthält einen einfachen Anmeldeablauf. Zum Start werden eine
+MariaDB-Datenbank mit dem Schema aus `database/schema.sql` und mindestens ein
+aktiver Benutzer in `app_users` benötigt. Benutzerpasswörter müssen mit
+PHP-`password_hash()` gehasht sein; Klartextpasswörter dürfen nicht in der
+Datenbank gespeichert werden.
 
-# Datenbank vorbereiten und starten
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+Das Schema enthält zunächst keine Katalogdaten. Für die Schülererfassung muss
+mindestens die Staatsangehörigkeit „Deutschland“ vorhanden sein. Die minimale,
+wiederholt ausführbare Entwicklungsbefüllung kann in der MariaDB-Konsole mit
+dem Anwendungsbenutzer eingespielt werden:
+
+```sql
+USE schulverwaltung_dev;
+SOURCE C:/dev/schulverwaltung-php/schulverwaltung-php/database/seed.sql;
 ```
 
-Der Admin ist anschließend unter `http://127.0.0.1:8000/admin/` erreichbar.
-Die Zwei-Faktor-Authentifizierung ist optional. Benutzer können sie nach der
-Anmeldung über **Sicherheitseinstellungen** im Admin-Kopfbereich einrichten
-oder deaktivieren. Für eingerichtete Konten ist bei der Anmeldung zusätzlich
-zum Passwort ein App-Code erforderlich. Erzeuge nach der Einrichtung im
-Zwei-Faktor-Profil Wiederherstellungscodes und bewahre sie sicher auf. Als
-Ausstellername zeigt die App „MSO-Anmeldeverwaltung“ an. Bereits eingerichtete
-App-Einträge übernehmen Namensänderungen nicht automatisch; dafür muss das
-Konto in der App neu eingerichtet werden.
+Für den lokalen Start aus dem Repository-Hauptverzeichnis:
 
-> Für die Entwicklung nur mit **Testdaten** arbeiten, nie mit echten Daten.
-
-## Konfiguration (`.env`)
-
-Die Datei `.env` wird nicht versioniert. Als Vorlage dient `.env.example`:
-
-```
-SECRET_KEY=<hier-einen-neuen-Schlüssel-generieren>
-DEBUG=False
-ALLOWED_HOSTS=127.0.0.1,localhost
-CSRF_TRUSTED_ORIGINS=
-USE_HTTPS=False
-
-# Nur auf dem Server für PostgreSQL setzen; leer bedeutet SQLite.
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-DB_HOST=localhost
-DB_PORT=5432
+```powershell
+.\start-server.ps1
 ```
 
-Einen neuen Secret Key erzeugen:
+Das Skript setzt die lokale Datenbankkonfiguration, fragt das MariaDB-Passwort
+verdeckt ab, prüft `pdo_mysql` und `openssl` und startet PHP auf `127.0.0.1:8000`.
+Das Terminal geöffnet lassen; mit `Strg+C` wird der Server beendet und die
+Passwort-Umgebungsvariable wieder entfernt. Anschließend ist die Anmeldung unter
+`http://127.0.0.1:8000/` erreichbar.
+Die Entwicklungsumgebung darf nicht öffentlich erreichbar sein. Im Produktivbetrieb
+muss HTTPS verwendet werden. Die Anmeldung prüft aktive Benutzer bei jedem
+geschützten Aufruf erneut; Formulare sind mit CSRF-Tokens geschützt und
+Session-Cookies mit `HttpOnly` und `SameSite=Lax` konfiguriert.
 
-```bash
-python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+### Kontoeinstellungen und Zwei-Faktor-Anmeldung
+
+Über das Profilmenü können Benutzer ihr Passwort ändern und optional eine
+zeitbasierte Zwei-Faktor-Anmeldung (TOTP) einrichten. Für die Einrichtung wird
+der angezeigte Base32-Schlüssel manuell in eine Authenticator-App eingetragen
+und anschließend mit einem aktuellen App-Code bestätigt; ein QR-Code oder
+zusätzliches PHP-Paket ist nicht erforderlich. Zum Ändern des Passworts ist das
+bisherige Passwort nötig. Das neue Passwort muss mindestens 12 Zeichen lang
+sein und darf höchstens 72 Bytes umfassen. Zum Deaktivieren von 2FA werden
+Passwort und ein aktueller Authenticator-Code verlangt.
+
+Bei einer bestehenden Datenbank muss die Migration
+`database/migrations/20261105_add_totp.sql` einmalig mit MariaDB ausgeführt
+werden, bevor die neuen Einstellungen verwendet werden. Neue Datenbanken
+erhalten die Spalten über `database/schema.sql`.
+
+Für bestehende Datenbanken muss außerdem
+`database/migrations/20261105_add_schueler_durchschnitt.sql` einmalig ausgeführt
+werden. Der Notendurchschnitt ist eine gespeicherte MariaDB-Berechnung aus den
+vorhandenen Fachnoten Deutsch, Mathematik und Sachkunde; leere Noten werden
+ausgelassen. Arbeits- und Sozialverhalten zählen nicht in den Durchschnitt.
+
+Der TOTP-Schlüssel wird verschlüsselt in der Datenbank gespeichert. Der
+zufällige AES-Schlüssel liegt in `storage/totp.key`, außerhalb des Webroots;
+dieses Verzeichnis wird durch `.gitignore` von Git ausgeschlossen. Die Datei
+muss restriktive Dateiberechtigungen haben und in einer geschützten Sicherung
+aufbewahrt werden. Geht sie verloren, können eingerichtete TOTP-Schlüssel nicht
+mehr entschlüsselt werden. Wird sie kompromittiert, sollten Benutzer 2FA
+zurücksetzen und neu einrichten.
+
+### Testbenutzer anlegen
+
+Das Kommandozeilenwerkzeug legt einen aktiven Benutzer an und speichert nur einen
+von PHP erzeugten Passwort-Hash. Unter PowerShell das Passwort verdeckt abfragen
+und dem PHP-Prozess nur vorübergehend als Umgebungsvariable übergeben:
+
+```powershell
+$secure = Read-Host 'Passwort für den neuen Benutzer' -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+try {
+    $env:APP_USER_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+    php bin/create-user.php testadmin
+} finally {
+    Remove-Item Env:APP_USER_PASSWORD -ErrorAction SilentlyContinue
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+}
 ```
 
-Auf dem Server `DEBUG=False` lassen und `ALLOWED_HOSTS` auf die tatsächlich
-verwendeten Hostnamen beschränken. Für HTTPS `CSRF_TRUSTED_ORIGINS` mit den
-vollständigen `https://`-Ursprüngen befüllen und `USE_HTTPS=True` erst aktivieren,
-wenn Nginx HTTPS terminiert und den konfigurierten Proxy-Header setzt.
-Dateirechte auf dem Server: `chmod 600 .env`
+Das Passwort muss mindestens 12 Zeichen lang sein; der angegebene Benutzername
+muss noch nicht existieren. Das Werkzeug vergibt keine Superuser- oder
+Exportrechte.
 
-## Deployment auf dem Server
+### Ersten Administrator einrichten
 
-Eine separate Deployment-Anleitung ist derzeit nicht im Repository enthalten.
-Das Update-Skript geht von einer virtuellen Umgebung `.venv/` und einem
-systemd-Dienst `schulverwaltung.service` aus. Vor dem Einsatz die Pfade,
-Zugangsdaten und Dienstkonfiguration auf dem Server prüfen.
-Vor `migrate` erstellt `update.sh` mit `backup_db.sh` ein Datenbank-Backup.
-Schlägt das Backup fehl – etwa weil das konfigurierte externe Medium nicht
-eingehängt oder nicht beschreibbar ist –, wird das Update vor der Migration
-abgebrochen. Das Backup-Medium muss daher auch beim manuellen Update verfügbar
-sein.
+Nachdem die Entwicklungsdatenbank und das Schema aus `database/schema.sql`
+bereits eingerichtet wurden, kann das erste Administratorkonto aus dem
+Repository-Hauptverzeichnis erstellt oder ein bestehendes aktives Konto zum
+Administrator hochgestuft werden:
 
-### Update einspielen
-
-```bash
-./update.sh
+```powershell
+.\setup-admin.ps1
 ```
 
-Das Skript wechselt ins Repository, lädt Änderungen mit `git pull --ff-only`,
-aktiviert `.venv/`, installiert Abhängigkeiten, führt Migrationen und
-`collectstatic` aus und startet anschließend den systemd-Dienst neu.
+Das Skript fragt das MariaDB-Passwort verdeckt ab und bietet zwei Möglichkeiten:
 
-### Datenbankumzug
+1. Ein neues Administratorkonto anlegen. Das Passwort wird zweimal verdeckt
+   eingegeben und mit `password_hash()` gespeichert.
+2. Ein bestehendes aktives Konto zum Administrator machen. Das Passwort bleibt
+   unverändert.
 
-`db_umzug.sh` speichert den temporären Klartext-Export außerhalb des
-Projektordners in einem nur für den aktuellen Benutzer zugänglichen
-temporären Verzeichnis. Die Datei wird beim Beenden des Skripts entfernt,
-auch wenn der Umzug mit einem Fehler endet.
+In beiden Fällen werden `is_superuser` und `can_export` gesetzt. Datenbank- und
+Administratorkennwörter werden nur vorübergehend an den PHP-Prozess übergeben
+und nach dem Setup aus den Umgebungsvariablen entfernt. Das Skript führt das
+Schema nicht aus und erstellt weder Datenbank noch MariaDB-Benutzer; diese
+Schritte müssen zuvor separat erledigt sein. Es darf nur von einer
+vertrauenswürdigen Person in der lokalen Entwicklungsumgebung ausgeführt werden.
 
-### Backup der Datenbank
+### Benutzer verwalten
 
-Das interaktive Skript richtet ein regelmäßiges Backup auf einem bereits
-eingehängten Medium ein und erstellt sofort eine erste Sicherung:
+Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar.
+Nach dem ersten Administrator-Setup ab- und wieder anmelden. Der Link
+**Benutzerverwaltung** erscheint auf der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
+deaktiviert und gelöscht sowie Administrator- und Exportrechte vergeben oder
+entzogen werden. Bei der Bearbeitung bleibt das Passwort unverändert, wenn das
+Passwortfeld leer gelassen wird; ein neu gesetztes Passwort muss mindestens 12
+Zeichen und darf höchstens 72 Bytes umfassen. Aus Sicherheitsgründen kann ein Administrator weder das
+eigene Konto deaktivieren noch sich selbst die Administratorrechte entziehen
+oder löschen. Der letzte aktive Administrator kann ebenfalls nicht deaktiviert,
+herabgestuft oder gelöscht werden. Beim Löschen eines Benutzerkontos bleiben
+Gesprächsprotokolle und Exportprotokolle erhalten; die jeweilige
+Benutzerzuordnung wird entfernt.
 
-```bash
-./backup_db.sh
-```
+Nach der Anmeldung führen separate Links zu den geschützten, durchsuchbaren und
+paginierte Übersichten für Schülerinnen und Schüler, Aufnahmegespräche sowie
+Erziehungsberechtigte. Suchbegriffe werden
+parametrisiert an die Datenbank übergeben und alle angezeigten Daten HTML-escaped.
+Über **Schülerin oder Schüler anlegen** lassen sich neue Datensätze mit
+serverseitiger Prüfung, Katalogauswahl und CSRF-Schutz erfassen. Vorhandene
+Datensätze lassen sich aus der Übersicht heraus bearbeiten; dieselben
+Validierungen gelten beim Speichern. Ein Klick auf den Schülernamen öffnet die
+Detailansicht mit Stammdaten und Kontaktpersonen; Erziehungsberechtigte können
+dort hinzugefügt und bearbeitet werden. Optionale Übernahmefelder synchronisieren
+Adresse, Religion oder Staatsangehörigkeit aus dem Schülerdatensatz.
+Aufnahmegespräche lassen sich ebenfalls in der Schülerakte erfassen und
+bearbeiten sowie über die zentrale Gesprächsliste suchen und bearbeiten.
+Marketingkanäle können mehreren Gesprächen zugeordnet werden.
 
-Es fragt den Einhängepunkt, den Intervall und die lokale Uhrzeit ab und bietet
-optional GPG-Verschlüsselung an. Wöchentliche Backups laufen montags, monatliche
-am ersten Tag des Monats. Die Sicherungen liegen in `Schulverwaltung-Backups`
-auf dem Medium. SQLite wird konsistent als Datenbankdatei gesichert; PostgreSQL
-wird als nativer `pg_dump`-Dump gespeichert.
-Der Benutzer-Cronjob prüft vor jedem Lauf, dass dasselbe Medium eingehängt ist,
-und schreibt ein Protokoll nach `~/.local/state/schulverwaltung/`.
-Mit `./backup_db.sh --backup-now` lässt sich jederzeit ein zusätzliches Backup
-auslösen. Bei Auswahl der Verschlüsselung prüft das Skript GnuPG und fragt bei
-Bedarf vor der Installation mit Administratorrechten. Unterstützt werden dnf,
-apt-get, yum, zypper und pacman. Der zufällig generierte Schlüssel liegt standardmäßig in
-`~/.config/schulverwaltung/.backup-key.txt` mit Dateirechten nur für den
-aktuellen Benutzer. Das Skript verlangt einen Pfad außerhalb des Backup-Mediums.
-Ein versteckter Dateiname ist kein Schutz: Den Schlüssel separat und sicher
-aufbewahren und zusätzlich eine geschützte Kopie für den Wiederherstellungsfall
-anlegen. Ohne den Schlüssel sind verschlüsselte Backups nicht wiederherstellbar.
-Die Standardablage auf demselben Rechner schützt nicht vor dem gleichzeitigen
-Diebstahl von Rechner und Backup-Medium; für diesen Fall den Schlüssel getrennt
-auf einem anderen sicheren Medium verwahren.
-Bei verschlüsselten Backups wird die unverschlüsselte Datenbankdatei nur
-vorübergehend in einem privaten lokalen temporären Ordner erstellt und danach
-entfernt. Alte Backups werden nicht automatisch gelöscht; den freien Speicher
-regelmäßig prüfen. Daten und Schlüssel angemessen schützen.
+### Daten exportieren
 
-Ein GPG-Backup kann mit dem gespeicherten Schlüssel entschlüsselt werden:
+Angemeldete Benutzer mit dem Recht `can_export` können unter **Daten exportieren**
+alle Schülerinnen und Schüler, Erziehungsberechtigten oder Gespräche jeweils als
+separate CSV-Datei exportieren. Der Export enthält alle Datensätze des gewählten
+Bereichs, unabhängig von Suchfiltern der Listen. Die Dateien sind UTF-8-kodiert,
+verwenden Semikolons als Trennzeichen und können in Tabellenkalkulationen
+geöffnet werden. Textwerte, die als Tabellenkalkulationsformeln interpretiert
+werden könnten, werden beim Export neutralisiert. Jeder Export wird mit Benutzer,
+Bereich, Datensatzanzahl, Format und Zeitpunkt in `export_protokolle` protokolliert.
+Der Schülerexport enthält zusätzlich die zugeordneten Namen der Erziehungsberechtigten
+in einer kommagetrennten Spalte. Der Export der Erziehungsberechtigten und der
+Gespräche enthält jeweils auch den vollständigen Namen der zugehörigen Schülerin
+oder des zugehörigen Schülers; im Gesprächsexport stehen außerdem die Namen der
+zugeordneten Erziehungsberechtigten kommagetrennt in einer Spalte.
 
-```bash
-gpg --batch --pinentry-mode loopback \
-  --passphrase-file ~/.config/schulverwaltung/.backup-key.txt \
-  --output wiederhergestellte-datenbank.sqlite3 \
-  --decrypt /pfad/zum/backup.sqlite3.gpg
-```
+Exportrechte sind standardmäßig deaktiviert und können in der Benutzerverwaltung
+gezielt erteilt oder entzogen werden. Exportdateien enthalten personenbezogene
+und teils sensible Angaben und müssen entsprechend geschützt gespeichert und
+weitergegeben werden.
 
-Bei PostgreSQL lautet die entschlüsselte Datei auf `.dump`; sie kann mit
-`pg_restore` in eine PostgreSQL-Datenbank eingespielt werden.
+### Auswahllisten pflegen
 
-### Datenbank wiederherstellen
+Unter **Auswahllisten pflegen** können Staatsangehörigkeiten, Religionen,
+Grundschulen und Marketingkanäle jeweils auf einer eigenen Seite angesehen,
+hinzugefügt und bearbeitet werden. Die Einträge lassen sich zusätzlich direkt aus den Schüler- und Erziehungsberechtigtenformularen
+sowie die Marketingkanäle aus dem Gesprächsformular ergänzen. Neue Einträge werden
+sofort in der zugehörigen Auswahl übernommen. Katalogeinträge können derzeit
+nicht gelöscht werden, damit bestehende Zuordnungen erhalten bleiben.
 
-Die Wiederherstellung überschreibt Daten. Das Skript kontrolliert zuerst Typ
-und Integrität des Backups, verlangt eine ausdrückliche Bestätigung und erstellt
-vorher ein Sicherheitsbackup des aktuellen Datenstands. Das konfigurierte
-Backup-Medium muss dafür eingehängt sein. Ein laufender
-`schulverwaltung.service` wird während des Vorgangs angehalten und nach
-erfolgreicher Prüfung wieder gestartet:
-
-```bash
-./restore_db.sh /pfad/zum/backup.dump.gpg
-```
-
-Ohne Argument fragt das Skript interaktiv nach der Backup-Datei. SQLite-Backups
-(`.sqlite3`, optional `.gpg`) werden atomar eingespielt. PostgreSQL-Backups
-(`.dump`, optional `.gpg`) werden mit `pg_restore --clean` in die in `.env`
-konfigurierte Datenbank eingespielt; der Restore läuft in einer Transaktion,
-damit ein fehlgeschlagener Einspielversuch zurückgerollt wird. Dafür müssen
-`pg_restore` und die passenden Datenbankrechte verfügbar sein. Für
-verschlüsselte Dateien wird der GPG-Schlüssel abgefragt; standardmäßig schlägt
-das Skript den eingerichteten Schlüsselpfad vor.
-
-## Datenschutz und Sicherheit
-
-- Zugriff nur über HTTPS; bei Erreichbarkeit über das Internet ist das zwingend.
-- `DEBUG = False` im Produktivbetrieb; vor jedem Livegang `python manage.py check --deploy` ausführen.
-- Die Zwei-Faktor-Authentifizierung ist optional; für eingerichtete Konten wird sie beim Login verlangt. Wiederherstellungscodes sicher und getrennt vom Passwort aufbewahren.
-- Nur Personen mit dienstlicher Notwendigkeit erhalten einen Benutzer; Rechte im Admin gezielt vergeben.
-- Aufbewahrungs- und Löschfristen für Bewerberdaten einhalten (abgelehnte Bewerbungen, Verzichte).
-- Keine Passwörter, Schlüssel, Exporte oder Datenbank-Dumps committen (siehe `.gitignore`).
+Die PHP-Verbindung und Anmeldung verwenden `app_users`. Das archivierte Django-Passwortformat
+ist nicht mit PHPs `password_verify()` kompatibel; Benutzerkonten und Passwörter
+müssen beim späteren Umstieg daher kontrolliert neu angelegt oder migriert werden.
