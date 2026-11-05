@@ -1,16 +1,13 @@
 # PHP-Neuimplementierung
 
 Das Repository-Hauptverzeichnis enthält die aktive, frameworkfreie
-PHP-/MariaDB-Anwendung. Der frühere Django-Bestand liegt archiviert in
-[`legacy/`](./legacy/) und wird nicht mehr als aktive Anwendung weiterentwickelt.
+PHP-/MariaDB-Anwendung.
 
 ## Datenbankschema
 
 `database/schema.sql` legt das MariaDB-Schema für Benutzer, Schüler,
 Erziehungsberechtigte, Gespräche, Auswahlkataloge, Gesprächs-Marketingkanäle
-und Exportprotokolle an. Die Beziehungen und wesentlichen Wertebereiche
-orientieren sich am archivierten Django-Modell in
-`legacy/gespraeche/models.py`.
+und Exportprotokolle an.
 
 Das Schema enthält keine Test- oder Echtdaten und sollte nur in einer eigens
 angelegten Entwicklungsdatenbank ausgeführt werden.
@@ -53,13 +50,19 @@ verwendet andernfalls die nicht versionierte `config.php` im Projekt-Hauptverzei
 | `DB_USER` | Ja | Datenbankbenutzer |
 | `DB_PASSWORD` | Ja | Passwort des Datenbankbenutzers; darf leer sein |
 
-Die Zugangsdaten gehören nicht ins Repository. Als Ausgangspunkt für die
-Konfigurationsdatei dient `config.example.php`: Kopiere diese nach `config.php`
-und trage die Hosting-Zugangsdaten dort ein. `config.php` wird von Git ignoriert
-und liegt außerhalb von `public/`; stelle bei Host Europe `public/` als
-öffentliches Webverzeichnis ein. Der Installationsassistent unter `/setup.php`
-prüft Voraussetzungen, Datenbankverbindung und MariaDB-Version, richtet das
-Schema ein, legt den ersten Administrator an und schreibt `config.php`.
+Die Zugangsdaten gehören nicht ins Repository. Für eine frische Installation
+musst du keine Konfigurationsdatei kopieren: Rufe `/setup.php` auf und gib die
+Datenbank- und Administratordaten dort ein. Der Assistent legt `config.php`
+automatisch im Projekt-Hauptverzeichnis an, außerhalb von `public/`. `config.php`
+wird von Git ignoriert. Stelle bei Host Europe `public/` als öffentliches
+Webverzeichnis ein.
+
+`config.example.php` ist nur eine Vorlage für eine manuelle Konfiguration, etwa
+für die lokale Entwicklung. Wenn du sie nach `config.php` kopierst, wird der
+Installationsassistent übersprungen; die Datenbank und das Schema müssen dann
+selbst eingerichtet werden. Der Assistent prüft Voraussetzungen,
+Datenbankverbindung und MariaDB-Version, richtet das Schema ein und legt den
+ersten Administrator an.
 Ungültige oder fehlende
 Verbindungswerte sowie Verbindungsfehler werden als Fehler gemeldet und nicht
 durch eine Ersatzkonfiguration verdeckt. Die Verbindung verwendet `utf8mb4`,
@@ -92,7 +95,8 @@ Für den lokalen Start aus dem Repository-Hauptverzeichnis:
 Bei einer frischen Hosting-Installation wird eine eigens im Hosting-Panel
 angelegte, leere MariaDB-Datenbank in `public/setup.php` konfiguriert. Der
 Assistent verlangt PHP 8.1 oder neuer und MariaDB 10.5 oder neuer. Er verändert
-oder löscht keine vorhandenen Tabellen und setzt deshalb eine leere Datenbank voraus. Nach erfolgreicher Einrichtung führt
+oder löscht keine vorhandenen Tabellen und setzt deshalb eine leere Datenbank
+voraus. Nach erfolgreicher Einrichtung führt
 `setup.php` zurück zur Anmeldung und sperrt sich über die vorhandene
 `config.php`; ändere anschließend die Schreibrechte der Konfigurationsdatei nach
 Möglichkeit auf nur lesbar für den PHP-Prozess. Die Zugangsdaten werden bei der
