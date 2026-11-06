@@ -6,6 +6,7 @@ use Schulverwaltung\Auth;
 use Schulverwaltung\Database;
 
 $projectRoot = dirname(__DIR__);
+require_once $projectRoot . '/src/security_headers.php';
 $configPath = $projectRoot . DIRECTORY_SEPARATOR . 'config.php';
 $databaseEnvironmentIsConfigured = true;
 foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $setting) {
@@ -16,7 +17,7 @@ foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $setting) {
 }
 
 if (is_file($configPath) || $databaseEnvironmentIsConfigured) {
-    header('Location: /');
+    http_response_code(404);
     exit;
 }
 
@@ -26,15 +27,13 @@ require_once $projectRoot . '/src/helpers.php';
 
 ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
+session_cache_limiter('');
 session_set_cookie_params([
     'httponly' => true,
     'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     'samesite' => 'Lax',
 ]);
 session_start();
-
-header('Cache-Control: no-store, private');
-header('X-Content-Type-Options: nosniff');
 
 $checks = [
     'PHP 8.1 oder neuer' => PHP_VERSION_ID >= 80100,

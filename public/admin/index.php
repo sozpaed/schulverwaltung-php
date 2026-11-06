@@ -36,6 +36,7 @@ $csrfToken = Auth::csrfToken();
     <h1>Benutzerverwaltung</h1>
     <?= renderAccountMenu($user) ?>
     <p><a href="/admin/neu.php">Benutzer anlegen</a></p>
+    <p><a href="/admin/anmeldungen.php">Anmeldeprotokoll anzeigen</a></p>
     <?php if ($users === []): ?>
         <p>Es sind keine Benutzer vorhanden.</p>
     <?php else: ?>

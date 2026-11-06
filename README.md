@@ -241,8 +241,8 @@ angelegte, leere Datenbank in `public/setup.php` konfiguriert. Der
 Assistent verlangt PHP 8.1 oder neuer sowie MariaDB 10.5 oder neuer oder MySQL
 8.4. Er verändert
 oder löscht keine vorhandenen Tabellen und setzt deshalb eine leere Datenbank
-voraus. Nach erfolgreicher Einrichtung führt
-`setup.php` zurück zur Anmeldung und sperrt sich über die vorhandene
+voraus. Nach erfolgreicher Einrichtung antwortet
+`setup.php` mit Status 404 und sperrt sich über die vorhandene
 `config.php`; ändere anschließend die Schreibrechte der Konfigurationsdatei nach
 Möglichkeit auf nur lesbar für den PHP-Prozess. Die Zugangsdaten werden bei der
 Übertragung ausschließlich über HTTPS geschützt, daher muss HTTPS vor der
@@ -263,6 +263,50 @@ Die Entwicklungsumgebung darf nicht öffentlich erreichbar sein. Im Produktivbet
 muss HTTPS verwendet werden. Die Anmeldung prüft aktive Benutzer bei jedem
 geschützten Aufruf erneut; Formulare sind mit CSRF-Tokens geschützt und
 Session-Cookies mit `HttpOnly` und `SameSite=Lax` konfiguriert.
+
+### Sicherheits-Header
+
+Apache leitet HTTP auf HTTPS um und setzt Sicherheits-Header einschließlich
+Content-Security-Policy und HSTS (ein Jahr, ohne Subdomains). Dynamische
+PHP-Antworten werden nicht zwischengespeichert und setzen die Header auch ohne
+`mod_headers`; statische Dateien, Apache-Fehler und Weiterleitungen benötigen
+dafür `mod_headers`. Die Weiterleitung benötigt `mod_rewrite` und aktivierte
+`.htaccess`-Regeln. HTTPS und ein gültiges Zertifikat müssen vor der
+Bereitstellung funktionieren: Browser merken sich HSTS für ein Jahr.
+
+Die Proxy-Ausnahme für `X-Forwarded-Proto` darf nur verwendet werden, wenn der
+vorgeschaltete Hoster vom Client gesendete Werte entfernt oder überschreibt und
+den Apache nicht direkt aus dem Internet erreichbar macht. Andernfalls kann
+ein Client die HTTPS-Weiterleitung umgehen. Ist kein solcher vertrauenswürdiger
+Proxy vorhanden, die entsprechende `RewriteCond` in `public/.htaccess` entfernen.
+Auf dem Zielsystem HTTP-Weiterleitung, HTTPS und die Header nach dem Deployment
+prüfen.
+
+### Anmeldeschutz
+
+Anmeldeversuche werden mit Benutzername, IP-Adresse, Ergebnis und Grund
+protokolliert. Die letzten 200 Einträge können ausschließlich Administratoren
+in der Benutzerverwaltung einsehen und nach Benutzername filtern. Nach fünf
+Fehlversuchen für einen Benutzernamen oder 20 Fehlversuchen von einer IP-Adresse
+innerhalb von 15 Minuten werden weitere Versuche vorübergehend abgelehnt.
+Gesperrte Versuche verlängern das Zeitfenster nicht. Für die IP-Adresse wird
+ausschließlich `REMOTE_ADDR` verwendet; hinter einem Proxy können daher mehrere
+Personen dieselbe Grenze teilen.
+
+Einträge werden nach 90 Tagen bei einem Prozent der erfolgreichen Anmeldungen
+bereinigt. Für eine verlässliche regelmäßige Bereinigung zusätzlich das
+CLI-Skript `php bin/cleanup.php` täglich per Cronjob ausführen lassen; ohne
+Cronjob kann die tatsächliche Aufbewahrung bei wenigen Anmeldungen länger sein.
+Das Skript verwendet dieselbe Datenbankkonfiguration wie die Anwendung.
+
+Für eine bestehende Datenbank **vor dem Deployment des neuen Codes** eine
+Sicherung erstellen und `database/migrations/20261106_login_versuche.sql`
+einmalig mit einem Datenbankkonto mit CREATE- und FOREIGN-KEY-Rechten ausführen.
+Die GitHub-Bereitstellung führt keine Migrationen aus. Ohne die Tabelle sind
+Anmeldungen nicht möglich. Der Anwendungsbenutzer benötigt SELECT-, INSERT- und
+DELETE-Rechte auf der Tabelle sowie Zugriff auf MySQL-/MariaDB-Benutzersperren
+(`GET_LOCK`, `RELEASE_LOCK`). Bei Installationen mit vorgeschaltetem Proxy die
+angezeigten IP-Adressen und die gemeinsame Sperrwirkung prüfen.
 
 ### Kontoeinstellungen und Zwei-Faktor-Anmeldung
 

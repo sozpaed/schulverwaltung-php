@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Schulverwaltung\Auth;
 
+require_once __DIR__ . '/../src/security_headers.php';
+
 $databaseEnvironmentIsConfigured = true;
 foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $setting) {
     if (getenv($setting) === false) {
@@ -30,16 +32,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /');
         exit;
     } elseif (($_POST['action'] ?? '') === 'login') {
-        $username = trim((string) ($_POST['username'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
+        $username = $_POST['username'] ?? null;
+        $password = $_POST['password'] ?? null;
         $twoFactorCode = $_POST['totp_code'] ?? null;
 
-        if (Auth::attempt($database, $username, $password, $twoFactorCode)) {
-            header('Location: /');
-            exit;
-        }
+        if (!is_string($username) || !is_string($password) || preg_match('//u', $username) !== 1) {
+            http_response_code(400);
+            $error = 'Ungültige Formulardaten.';
+        } else {
+            if (Auth::attempt($database, trim($username), $password, $twoFactorCode)) {
+                header('Location: /');
+                exit;
+            }
 
-        $error = 'Anmeldung fehlgeschlagen. Bitte prüfe Benutzername und Passwort.';
+            $error = 'Anmeldung fehlgeschlagen. Bitte prüfe deine Anmeldedaten. Nach mehreren Fehlversuchen warte bitte kurz und versuche es erneut.';
+        }
     } else {
         http_response_code(400);
         $error = 'Ungültige Formularaktion.';

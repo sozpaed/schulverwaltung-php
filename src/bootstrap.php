@@ -5,13 +5,16 @@ declare(strict_types=1);
 use Schulverwaltung\Auth;
 use Schulverwaltung\Database;
 
+require_once __DIR__ . '/security_headers.php';
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Auth.php';
+require_once __DIR__ . '/LoginThrottle.php';
 require_once __DIR__ . '/TwoFactor.php';
 require_once __DIR__ . '/helpers.php';
 
 ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
+session_cache_limiter('');
 
 session_set_cookie_params([
     'httponly' => true,
