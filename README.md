@@ -84,6 +84,33 @@ Verbindungswerte sowie Verbindungsfehler werden als Fehler gemeldet und nicht
 durch eine Ersatzkonfiguration verdeckt. Die Verbindung verwendet `utf8mb4`,
 Exceptions bei Datenbankfehlern und native vorbereitete Anweisungen.
 
+## Beispiel: Bereitstellung bei einem Hoster (Host Europe)
+
+Die Verzeichnisstruktur beim Hoster kann abweichen. Entscheidend ist: Nur der
+Inhalt von `public/` gehört in das Webverzeichnis. Alles andere liegt eine Ebene
+darüber und ist nicht per Browser erreichbar. Alle Pfade werden relativ zu
+`public/` bestimmt (`dirname(__DIR__)`), daher funktioniert `setup.php` auch dort.
+
+Beispiel für die Domain `verwaltung.meine-domain.de`, deren
+Webverzeichnis `/www/de.meine-domain.verwaltung/web` ist:
+
+| Lokal | Auf dem Server |
+|---|---|
+| Inhalt von `public/` (inkl. `.htaccess`, `assets/`, `setup.php`) | `/www/de.meine-domain.verwaltung/web/` |
+| `src/`, `database/` | `/www/de.meine-domain.verwaltung/` |
+| `config.php` (vom Installer erzeugt) | `/www/de.meine-domain.verwaltung/` |
+| `storage/` (TOTP-Schlüssel, wird automatisch angelegt) | `/www/de.meine-domain.verwaltung/storage/` |
+
+Hinweise:
+
+- Den Ordner `public` nicht als Ganzes hochladen, sondern nur seinen Inhalt
+  nach `web/`. Sonst entsteht `web/public/` und die Pfade stimmen nicht.
+- Nicht hochladen: `.git`, `start-server.ps1`, eine lokale `config.php`.
+- Das Projektverzeichnis (hier `/www/de.meine-domain.verwaltung/`)
+  muss für PHP beschreibbar sein, damit `setup.php` `config.php` anlegen kann.
+- Nach der Installation `setup.php` aus `web/` löschen.
+- Die Domain muss per HTTPS erreichbar sein, PHP 8.3 und MariaDB werden benötigt.
+
 ## Lokaler Start
 
 Der aktuelle Stand enthält einen einfachen Anmeldeablauf. Zum Start werden eine
