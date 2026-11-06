@@ -97,8 +97,8 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
         <h2>Schülerinnendaten</h2>
         <p><?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerinnendaten bearbeiten') ?></p>
         <dl>
-            <dt>Geburtsdatum</dt><dd><?= escape($student['geburtsdatum']) ?></dd>
-            <dt>Adresse</dt><dd><?= escape($student['strasse'] . ', ' . $student['plz'] . ' ' . $student['ort']) ?></dd>
+            <dt>Geburtsdatum</dt><dd><?= escape($student['geburtsdatum'] ?? '') ?></dd>
+            <dt>Adresse</dt><dd><?= escape(implode(', ', array_filter([$student['strasse'], trim(($student['plz'] ?? '') . ' ' . $student['ort'])], static fn ($value) => $value !== ''))) ?></dd>
             <dt>Geburtsort</dt><dd><?= escape($student['geburtsort']) ?></dd>
             <dt>Religion</dt><dd><?= escape($student['religion'] ?? '') ?></dd>
             <dt>Staatsangehörigkeit</dt><dd><?= escape($student['staatsangehoerigkeit'] ?? '') ?></dd>

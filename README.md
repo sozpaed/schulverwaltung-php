@@ -227,10 +227,9 @@ Benutzer in `app_users` benötigt. Benutzerpasswörter müssen mit
 PHP-`password_hash()` gehasht sein; Klartextpasswörter dürfen nicht in der
 Datenbank gespeichert werden.
 
-Das Schema enthält zunächst keine Katalogdaten. Für die Erfassung einer Schülerin muss
-mindestens die Staatsangehörigkeit „Deutschland“ vorhanden sein. Die minimale,
-wiederholt ausführbare Entwicklungsbefüllung kann in der MariaDB-Konsole mit
-dem Anwendungsbenutzer eingespielt werden:
+Das Schema enthält zunächst keine Katalogdaten. Die minimale, wiederholt
+ausführbare Entwicklungsbefüllung ergänzt die Staatsangehörigkeit „Deutschland“
+und kann in der MariaDB-Konsole mit dem Anwendungsbenutzer eingespielt werden:
 
 ```sql
 USE schulverwaltung_dev;
@@ -381,7 +380,26 @@ parametrisiert an die Datenbank übergeben und alle angezeigten Daten HTML-escap
 Über **Schülerin anlegen** lassen sich neue Datensätze mit
 serverseitiger Prüfung, Katalogauswahl und CSRF-Schutz erfassen. Vorhandene
 Datensätze lassen sich aus der Übersicht heraus bearbeiten; dieselben
-Validierungen gelten beim Speichern. Das Zahnradsymbol öffnet die
+Validierungen gelten beim Speichern. Nur Vor- und Nachname sind Pflichtfelder.
+Leere Geschwisterzahlen werden als 0 gespeichert; der Status ist standardmäßig
+„In Prüfung“. Für bestehende Datenbanken muss vor dem Einsatz dieser Änderung
+die Migration `database/migrations/20261106_optional_student_fields.sql` einmalig
+mit entsprechenden ALTER-Rechten ausgeführt werden. Vorher ist eine Sicherung
+anzulegen. Alternativ kann `bin/migrate-optional-student-fields.sh` interaktiv
+über SSH ausgeführt werden. Es benötigt den MySQL-Client `mysql`, eine bereits
+erstellte Sicherungsdatei und einen Benutzer mit ALTER-Rechten. Beispiel:
+
+```sh
+sh bin/migrate-optional-student-fields.sh
+```
+
+Das Skript prüft die Sicherungsdatei nur auf Lesbarkeit und Größe, nicht auf
+Vollständigkeit oder Wiederherstellbarkeit. Es fragt den Zielserver und die
+Datenbank ab und verlangt eine ausdrückliche Bestätigung; das Passwort fragt der
+MySQL-Client separat ab. Bei einem Fehler den Datenbankzustand prüfen, bevor
+ein weiterer Versuch erfolgt. Neue Datenbanken erhalten das Schema direkt über
+den Installer.
+Das Zahnradsymbol öffnet die
 Detailansicht mit Stammdaten und Kontaktpersonen; Erziehungsberechtigte können
 dort hinzugefügt und bearbeitet werden. Optionale Übernahmefelder synchronisieren
 Adresse, Religion oder Staatsangehörigkeit aus dem Datensatz der Schülerin.

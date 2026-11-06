@@ -44,7 +44,7 @@ $exports = [
                             WHERE e.schueler_id = s.id)
                     FROM schueler s
                     LEFT JOIN religionen r ON r.id = s.religion_id
-                    JOIN staatsangehoerigkeiten sa ON sa.id = s.staatsangehoerigkeit_id
+                    LEFT JOIN staatsangehoerigkeiten sa ON sa.id = s.staatsangehoerigkeit_id
                     LEFT JOIN grundschulen g ON g.id = s.grundschule_id
                     ORDER BY s.id',
     ],

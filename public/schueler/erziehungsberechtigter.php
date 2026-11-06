@@ -98,7 +98,7 @@ if ($existingGuardian !== null) {
 
     if ($input['adresse_wie_schuelerin'] === '1') {
         $input['strasse'] = $student['strasse'];
-        $input['plz'] = $student['plz'];
+        $input['plz'] = $student['plz'] ?? '';
         $input['ort'] = $student['ort'];
     }
     if ($input['religion_wie_schuelerin'] === '1') {
@@ -107,7 +107,9 @@ if ($existingGuardian !== null) {
             : (string) $student['religion_id'];
     }
     if ($input['staatsangehoerigkeit_wie_schuelerin'] === '1') {
-        $input['staatsangehoerigkeit_id'] = (string) $student['staatsangehoerigkeit_id'];
+        $input['staatsangehoerigkeit_id'] = $student['staatsangehoerigkeit_id'] === null
+            ? ''
+            : (string) $student['staatsangehoerigkeit_id'];
     }
 }
 
@@ -196,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($input['adresse_wie_schuelerin'] === '1') {
             $input['strasse'] = $student['strasse'];
-            $input['plz'] = $student['plz'];
+            $input['plz'] = $student['plz'] ?? '';
             $input['ort'] = $student['ort'];
         }
         if ($input['religion_wie_schuelerin'] === '1') {
@@ -205,7 +207,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : (string) $student['religion_id'];
         }
         if ($input['staatsangehoerigkeit_wie_schuelerin'] === '1') {
-            $input['staatsangehoerigkeit_id'] = (string) $student['staatsangehoerigkeit_id'];
+            $input['staatsangehoerigkeit_id'] = $student['staatsangehoerigkeit_id'] === null
+                ? null
+                : (string) $student['staatsangehoerigkeit_id'];
         }
 
         if ($errors === []) {

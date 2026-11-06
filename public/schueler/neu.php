@@ -105,7 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Das Formular ist abgelaufen. Bitte lade die Seite neu und versuche es erneut.';
     } else {
         foreach (array_keys($input) as $field) {
-            $value = $_POST[$field] ?? '';
+            $value = $_POST[$field] ?? match ($field) {
+                'anzahl_geschwister', 'davon_an_der_marienschule', 'warteliste' => '0',
+                'status' => 'in_pruefung',
+                default => '',
+            };
 
             if (!is_string($value)) {
                 $errors[] = 'Ungültige Formulardaten.';
@@ -122,9 +126,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $requiredFields = [
             'vorname' => ['Vorname', 100],
             'nachname' => ['Nachname', 100],
-            'strasse' => ['Straße', 200],
-            'ort' => ['Wohnort', 100],
-            'geburtsort' => ['Geburtsort', 100],
         ];
 
         foreach ($requiredFields as $field => [$label, $maximumLength]) {
@@ -134,16 +135,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $dateParts = [];
-        if (
-            preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $input['geburtsdatum'], $dateParts) !== 1
-            || !checkdate((int) ($dateParts[2] ?? 0), (int) ($dateParts[3] ?? 0), (int) ($dateParts[1] ?? 0))
-        ) {
-            $errors[] = 'Bitte gib ein gültiges Geburtsdatum an.';
+        foreach (['strasse' => ['Straße', 200], 'ort' => ['Wohnort', 100], 'geburtsort' => ['Geburtsort', 100]] as $field => [$label, $maximumLength]) {
+            $length = preg_match_all('/./us', $input[$field]);
+            if ($length === false || $length > $maximumLength) {
+                $errors[] = sprintf('%s darf höchstens %d Zeichen enthalten.', $label, $maximumLength);
+            }
         }
 
-        if (preg_match('/\A[0-9]{5}\z/', $input['plz']) !== 1) {
-            $errors[] = 'Die Postleitzahl muss genau fünf Ziffern enthalten.';
+        if ($input['geburtsdatum'] !== '') {
+            $dateParts = [];
+            if (
+                preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $input['geburtsdatum'], $dateParts) !== 1
+                || !checkdate((int) ($dateParts[2] ?? 0), (int) ($dateParts[3] ?? 0), (int) ($dateParts[1] ?? 0))
+            ) {
+                $errors[] = 'Bitte gib ein gültiges Geburtsdatum an oder lasse das Feld leer.';
+            }
+        }
+
+        if ($input['plz'] !== '' && preg_match('/\A[0-9]{5}\z/', $input['plz']) !== 1) {
+            $errors[] = 'Die Postleitzahl muss leer sein oder genau fünf Ziffern enthalten.';
         }
 
         if (
@@ -153,6 +163,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         foreach (['anzahl_geschwister', 'davon_an_der_marienschule'] as $field) {
+            if ($input[$field] === '') {
+                $input[$field] = '0';
+            }
             $number = filter_var(
                 $input[$field],
                 FILTER_VALIDATE_INT,
@@ -190,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         foreach ([
             'religion_id' => ['religionen', true],
-            'staatsangehoerigkeit_id' => ['staatsangehoerigkeiten', false],
+            'staatsangehoerigkeit_id' => ['staatsangehoerigkeiten', true],
             'grundschule_id' => ['grundschulen', true],
         ] as $field => [$table, $optional]) {
             if ($input[$field] === '' && $optional) {
@@ -235,9 +248,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $values = [
                 'vorname' => $input['vorname'],
                 'nachname' => $input['nachname'],
-                'geburtsdatum' => $input['geburtsdatum'],
+                'geburtsdatum' => $input['geburtsdatum'] === '' ? null : $input['geburtsdatum'],
                 'strasse' => $input['strasse'],
-                'plz' => $input['plz'],
+                'plz' => $input['plz'] === '' ? null : $input['plz'],
                 'ort' => $input['ort'],
                 'geburtsort' => $input['geburtsort'],
                 'religion_id' => $input['religion_id'],
@@ -354,9 +367,6 @@ $average = $enteredGrades === []
         </div>
     <?php endif; ?>
 
-    <?php if ($nationalities === []): ?>
-        <p role="alert">Lege zuerst mindestens eine Staatsangehörigkeit im Katalog an.</p>
-    <?php else: ?>
         <form method="post">
             <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
             <fieldset>
@@ -366,17 +376,17 @@ $average = $enteredGrades === []
                 <p><label for="nachname">Nachname</label>
                     <input id="nachname" name="nachname" maxlength="100" required value="<?= escape($input['nachname']) ?>"></p>
                 <p><label for="geburtsdatum">Geburtsdatum</label>
-                    <input id="geburtsdatum" name="geburtsdatum" type="date" required value="<?= escape($input['geburtsdatum']) ?>"></p>
+                    <input id="geburtsdatum" name="geburtsdatum" type="date" value="<?= escape($input['geburtsdatum']) ?>"></p>
                 <p><label for="strasse">Straße und Hausnummer</label>
-                    <input id="strasse" name="strasse" maxlength="200" required value="<?= escape($input['strasse']) ?>"></p>
+                    <input id="strasse" name="strasse" maxlength="200" value="<?= escape($input['strasse']) ?>"></p>
                 <div class="form-grid form-grid--postal">
                     <p><label for="plz">Postleitzahl</label>
-                        <input id="plz" name="plz" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required value="<?= escape($input['plz']) ?>"></p>
+                        <input id="plz" name="plz" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" value="<?= escape($input['plz']) ?>"></p>
                     <p><label for="ort">Wohnort</label>
-                        <input id="ort" name="ort" maxlength="100" required value="<?= escape($input['ort']) ?>"></p>
+                        <input id="ort" name="ort" maxlength="100" value="<?= escape($input['ort']) ?>"></p>
                 </div>
                 <p><label for="geburtsort">Geburtsort</label>
-                    <input id="geburtsort" name="geburtsort" maxlength="100" required value="<?= escape($input['geburtsort']) ?>"></p>
+                    <input id="geburtsort" name="geburtsort" maxlength="100" value="<?= escape($input['geburtsort']) ?>"></p>
                 <p><label for="religion_id">Religion</label>
                     <select id="religion_id" name="religion_id">
                         <option value="">Keine Angabe</option>
@@ -391,8 +401,8 @@ $average = $enteredGrades === []
                     <span data-catalog-status role="status" aria-live="polite"></span>
                 </div>
                 <p><label for="staatsangehoerigkeit_id">Staatsangehörigkeit</label>
-                    <select id="staatsangehoerigkeit_id" name="staatsangehoerigkeit_id" required>
-                        <option value="">Bitte auswählen</option>
+                    <select id="staatsangehoerigkeit_id" name="staatsangehoerigkeit_id">
+                        <option value="">Keine Angabe</option>
                         <?php foreach ($nationalities as $nationality): ?>
                             <option value="<?= (int) $nationality['id'] ?>" <?= $input['staatsangehoerigkeit_id'] === (string) $nationality['id'] ? 'selected' : '' ?>><?= escape($nationality['name']) ?></option>
                         <?php endforeach; ?>
@@ -421,9 +431,9 @@ $average = $enteredGrades === []
                 </div>
                 <div class="form-grid form-grid--two">
                     <p><label for="anzahl_geschwister">Anzahl Geschwister</label>
-                        <input id="anzahl_geschwister" name="anzahl_geschwister" type="number" min="0" max="4294967295" required value="<?= escape($input['anzahl_geschwister']) ?>"></p>
+                        <input id="anzahl_geschwister" name="anzahl_geschwister" type="number" min="0" max="4294967295" value="<?= escape($input['anzahl_geschwister']) ?>"></p>
                     <p><label for="davon_an_der_marienschule">Davon an der Marienschule</label>
-                        <input id="davon_an_der_marienschule" name="davon_an_der_marienschule" type="number" min="0" max="4294967295" required value="<?= escape($input['davon_an_der_marienschule']) ?>"></p>
+                        <input id="davon_an_der_marienschule" name="davon_an_der_marienschule" type="number" min="0" max="4294967295" value="<?= escape($input['davon_an_der_marienschule']) ?>"></p>
                 </div>
                 <p><label for="freundin">Freundin/Freund</label>
                     <input id="freundin" name="freundin" maxlength="100" value="<?= escape($input['freundin']) ?>"></p>
@@ -452,7 +462,7 @@ $average = $enteredGrades === []
             <fieldset>
                 <legend>Interne Angaben</legend>
                 <p><label for="status">Status</label>
-                    <select id="status" name="status" required>
+                    <select id="status" name="status">
                         <?php foreach ($statuses as $value => $label): ?>
                             <option value="<?= escape($value) ?>" <?= $input['status'] === $value ? 'selected' : '' ?>><?= escape($label) ?></option>
                         <?php endforeach; ?>
@@ -477,7 +487,6 @@ $average = $enteredGrades === []
             </fieldset>
             <button type="submit"><?= $editId === null ? 'Schülerin anlegen' : 'Änderungen speichern' ?></button>
         </form>
-    <?php endif; ?>
 </main>
 </body>
 </html>
