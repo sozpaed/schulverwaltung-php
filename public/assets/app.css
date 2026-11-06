@@ -687,3 +687,8 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
         transition-duration: 0.01ms !important;
     }
 }
+[data-totp-uri] {
+    display: inline-block;
+    background: white;
+    padding: 1rem;
+}

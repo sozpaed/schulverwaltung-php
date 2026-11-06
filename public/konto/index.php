@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Auth;
+use Schulverwaltung\RecoveryCodes;
 use Schulverwaltung\TwoFactor;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
@@ -14,7 +15,15 @@ if ($user === null) {
 
 $errors = [];
 $success = '';
+$recoveryCodes = [];
 $pendingSecret = $_SESSION['totp_pending_secret'] ?? null;
+if (isset($_SESSION['totp_change_version'])
+    && (!isset($_SESSION['totp_change_time']) || !is_int($_SESSION['totp_change_time'])
+        || $_SESSION['totp_change_time'] > time() || time() - $_SESSION['totp_change_time'] >= 300)) {
+    unset($_SESSION['totp_pending_secret'], $_SESSION['totp_change_version'], $_SESSION['totp_change_time']);
+    $pendingSecret = null;
+    $errors[] = 'Der Authenticator-Wechsel ist abgelaufen. Bitte starte ihn erneut.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Auth::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
@@ -81,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $pendingSecret = TwoFactor::generateSecret();
                 $_SESSION['totp_pending_secret'] = $pendingSecret;
+                unset($_SESSION['totp_change_version'], $_SESSION['totp_change_time']);
             }
         } elseif ($action === 'enable_totp') {
             $code = $_POST['totp_code'] ?? null;
@@ -102,17 +112,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              sitzungs_version = sitzungs_version + 1
                          WHERE id = :id AND totp_enabled = 0 AND sitzungs_version = :version'
                     );
-                    $updateStatement->execute([
-                        'secret' => $encryptedSecret,
-                        'counter' => $counter,
-                        'id' => $user['id'],
-                        'version' => $user['sitzungs_version'],
-                    ]);
+                    $database->beginTransaction();
+                    try {
+                        $updateStatement->execute([
+                            'secret' => $encryptedSecret,
+                            'counter' => $counter,
+                            'id' => $user['id'],
+                            'version' => $user['sitzungs_version'],
+                        ]);
+                        if ($updateStatement->rowCount() === 1) {
+                            $recoveryCodes = RecoveryCodes::replace($database, $user['id']);
+                        }
+                        $database->commit();
+                    } catch (Throwable $exception) {
+                        $database->rollBack();
+                        throw $exception;
+                    }
 
-                    if ($updateStatement->rowCount() !== 1) {
+                    if ($recoveryCodes === []) {
                         $errors[] = 'Die Zwei-Faktor-Einrichtung konnte nicht abgeschlossen werden. Bitte lade die Seite neu.';
                     } else {
-                        unset($_SESSION['totp_pending_secret']);
+                        unset($_SESSION['totp_pending_secret'], $_SESSION['totp_change_version'], $_SESSION['totp_change_time']);
                         $pendingSecret = null;
                         $user['totp_enabled'] = true;
                         $_SESSION['user']['totp_enabled'] = true;
@@ -159,22 +179,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              WHERE id = :id AND totp_enabled = 1 AND sitzungs_version = :version
                                AND (totp_last_counter IS NULL OR totp_last_counter < :counter)'
                         );
-                        $updateStatement->execute([
-                            'id' => $user['id'],
-                            'counter' => $counter,
-                            'version' => $user['sitzungs_version'],
-                        ]);
+                        $database->beginTransaction();
+                        try {
+                            $updateStatement->execute([
+                                'id' => $user['id'],
+                                'counter' => $counter,
+                                'version' => $user['sitzungs_version'],
+                            ]);
+                            if ($updateStatement->rowCount() === 1) {
+                                $delete = $database->prepare('DELETE FROM totp_wiederherstellungscodes WHERE benutzer_id = :id');
+                                $delete->execute(['id' => $user['id']]);
+                            }
+                            $database->commit();
+                        } catch (Throwable $exception) {
+                            $database->rollBack();
+                            throw $exception;
+                        }
 
                         if ($updateStatement->rowCount() !== 1) {
                             $errors[] = 'Die Zwei-Faktor-Anmeldung konnte nicht deaktiviert werden. Bitte versuche es erneut.';
                         } else {
-                            unset($_SESSION['totp_pending_secret']);
+                            unset($_SESSION['totp_pending_secret'], $_SESSION['totp_change_version'], $_SESSION['totp_change_time']);
                             $user['totp_enabled'] = false;
                             $_SESSION['user']['totp_enabled'] = false;
                             $_SESSION['user']['sitzungs_version']++;
                             $success = 'Die Zwei-Faktor-Anmeldung wurde deaktiviert.';
                         }
                     }
+                }
+            }
+        } elseif ($action === 'replace_recovery_codes' || $action === 'start_totp_change') {
+            $password = $_POST['current_password'] ?? null;
+            $code = $_POST['totp_code'] ?? null;
+            $statement = $database->prepare(
+                'SELECT password_hash, totp_secret, totp_last_counter FROM app_users
+                 WHERE id = :id AND is_active = 1 AND totp_enabled = 1 AND sitzungs_version = :version'
+            );
+            $statement->execute(['id' => $user['id'], 'version' => $user['sitzungs_version']]);
+            $credentials = $statement->fetch();
+            if (!is_string($password) || $credentials === false
+                || !password_verify($password, $credentials['password_hash'])) {
+                $errors[] = 'Passwort oder Authenticator-Code ist nicht korrekt.';
+            } else {
+                $secret = TwoFactor::decryptSecret($credentials['totp_secret'], $user['id']);
+                $counter = TwoFactor::matchingCounter($secret, $code);
+                $newPendingSecret = null;
+                $database->beginTransaction();
+                try {
+                    $update = $database->prepare(
+                        'UPDATE app_users SET totp_last_counter = :new_counter
+                         WHERE id = :id AND totp_enabled = 1 AND sitzungs_version = :version
+                           AND (totp_last_counter IS NULL OR totp_last_counter < :old_counter)'
+                    );
+                    if ($counter !== null) {
+                        $update->execute([
+                            'new_counter' => $counter, 'old_counter' => $counter,
+                            'id' => $user['id'], 'version' => $user['sitzungs_version'],
+                        ]);
+                    }
+                    if ($counter === null || $update->rowCount() !== 1) {
+                        $errors[] = 'Passwort oder Authenticator-Code ist nicht korrekt.';
+                    } elseif ($action === 'replace_recovery_codes') {
+                        $recoveryCodes = RecoveryCodes::replace($database, $user['id']);
+                    } else {
+                        $newPendingSecret = TwoFactor::generateSecret();
+                    }
+                    $database->commit();
+                } catch (Throwable $exception) {
+                    $database->rollBack();
+                    throw $exception;
+                }
+                if ($recoveryCodes !== []) {
+                    $success = 'Neue Wiederherstellungscodes wurden erstellt.';
+                } elseif ($newPendingSecret !== null) {
+                    $pendingSecret = $newPendingSecret;
+                    $_SESSION['totp_pending_secret'] = $pendingSecret;
+                    $_SESSION['totp_change_version'] = $user['sitzungs_version'];
+                    $_SESSION['totp_change_time'] = time();
+                }
+            }
+        } elseif ($action === 'cancel_totp_change') {
+            unset($_SESSION['totp_pending_secret'], $_SESSION['totp_change_version'], $_SESSION['totp_change_time']);
+            $pendingSecret = null;
+        } elseif ($action === 'finish_totp_change') {
+            $code = $_POST['totp_code'] ?? null;
+            $counter = is_string($pendingSecret) ? TwoFactor::matchingCounter($pendingSecret, $code) : null;
+            if (!$user['totp_enabled'] || $counter === null
+                || ($_SESSION['totp_change_version'] ?? null) !== $user['sitzungs_version']) {
+                $errors[] = 'Der Code ist ungültig oder die Einrichtung ist abgelaufen.';
+            } else {
+                $statement = $database->prepare(
+                    'UPDATE app_users SET totp_secret = :secret, totp_last_counter = :counter,
+                     sitzungs_version = sitzungs_version + 1
+                     WHERE id = :id AND totp_enabled = 1 AND sitzungs_version = :version'
+                );
+                $statement->execute([
+                    'secret' => TwoFactor::encryptSecret($pendingSecret, $user['id']),
+                    'counter' => $counter, 'id' => $user['id'], 'version' => $user['sitzungs_version'],
+                ]);
+                if ($statement->rowCount() !== 1) {
+                    $errors[] = 'Der Authenticator konnte nicht gewechselt werden. Bitte melde dich erneut an.';
+                } else {
+                    unset($_SESSION['totp_pending_secret'], $_SESSION['totp_change_version'], $_SESSION['totp_change_time']);
+                    $pendingSecret = null;
+                    $_SESSION['user']['sitzungs_version']++;
+                    $success = 'Der Authenticator wurde gewechselt.';
                 }
             }
         } else {
@@ -185,6 +294,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrfToken = Auth::csrfToken();
+$isChangingTotp = $user['totp_enabled'] && isset($_SESSION['totp_change_version']);
+$totpUri = is_string($pendingSecret) && (!$user['totp_enabled'] || $isChangingTotp)
+    ? 'otpauth://totp/' . rawurlencode('Schulverwaltung:' . $user['username'])
+        . '?secret=' . rawurlencode($pendingSecret) . '&issuer=Schulverwaltung'
+    : null;
 ?>
 <!doctype html>
 <html lang="de">
@@ -192,6 +306,10 @@ $csrfToken = Auth::csrfToken();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/assets/app.css">
+    <?php if ($totpUri !== null): ?>
+        <script src="/assets/vendor/qrcodejs/qrcode.js" defer></script>
+        <script src="/assets/totp-qr.js" defer></script>
+    <?php endif; ?>
     <title>Kontoeinstellungen – Schulverwaltung</title>
 </head>
 <body>
@@ -215,6 +333,17 @@ $csrfToken = Auth::csrfToken();
     <?php endif; ?>
     <?php if ($success !== ''): ?>
         <p class="success-message" role="status"><?= escape($success) ?></p>
+    <?php endif; ?>
+    <?php if ($recoveryCodes !== []): ?>
+        <section aria-labelledby="recovery-heading">
+            <h2 id="recovery-heading">Wiederherstellungscodes</h2>
+            <p>Diese Codes werden nur jetzt angezeigt. Bewahre sie sicher und getrennt vom Gerät auf. Jeder Code funktioniert einmal.</p>
+            <ul>
+                <?php foreach ($recoveryCodes as $recoveryCode): ?>
+                    <li><code><?= escape($recoveryCode) ?></code></li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
     <?php endif; ?>
 
     <section aria-labelledby="password-heading">
@@ -243,8 +372,40 @@ $csrfToken = Auth::csrfToken();
 
     <section aria-labelledby="totp-heading">
         <h2 id="totp-heading">Zwei-Faktor-Anmeldung (2FA)</h2>
-        <?php if ($user['totp_enabled']): ?>
+        <?php if ($isChangingTotp && is_string($pendingSecret)): ?>
+            <p>Scanne den QR-Code mit der neuen App oder gib den Schlüssel manuell ein. Die bisherige App bleibt bis zur Bestätigung gültig.</p>
+            <div data-totp-uri="<?= escape($totpUri) ?>" aria-label="QR-Code für die neue Authenticator-App"></div>
+            <p class="totp-secret"><code><?= escape($pendingSecret) ?></code></p>
+            <form method="post">
+                <input type="hidden" name="action" value="finish_totp_change">
+                <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
+                <label for="change_totp_code">Code der neuen Authenticator-App</label>
+                <input id="change_totp_code" name="totp_code" type="text" inputmode="numeric"
+                       pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+                <button type="submit">Authenticator wechseln</button>
+            </form>
+            <form method="post">
+                <input type="hidden" name="action" value="cancel_totp_change">
+                <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
+                <button type="submit">Wechsel abbrechen</button>
+            </form>
+        <?php elseif ($user['totp_enabled']): ?>
             <p>Die Zwei-Faktor-Anmeldung ist aktiviert.</p>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
+                <p>
+                    <label for="recovery_current_password">Aktuelles Passwort</label>
+                    <input id="recovery_current_password" name="current_password" type="password"
+                           autocomplete="current-password" required>
+                </p>
+                <p>
+                    <label for="recovery_totp_code">Aktueller Authenticator-Code</label>
+                    <input id="recovery_totp_code" name="totp_code" type="text" inputmode="numeric"
+                           pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+                </p>
+                <button type="submit" name="action" value="replace_recovery_codes">Neue Wiederherstellungscodes</button>
+                <button type="submit" name="action" value="start_totp_change">Authenticator wechseln</button>
+            </form>
             <form method="post">
                 <input type="hidden" name="action" value="disable_totp">
                 <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
@@ -261,7 +422,8 @@ $csrfToken = Auth::csrfToken();
                 <button type="submit">2FA deaktivieren</button>
             </form>
         <?php elseif (is_string($pendingSecret)): ?>
-            <p>Füge diesen Schlüssel manuell in deiner Authenticator-App als TOTP-Konto hinzu:</p>
+            <p>Scanne den QR-Code mit deiner Authenticator-App oder gib den Schlüssel manuell ein:</p>
+            <div data-totp-uri="<?= escape($totpUri) ?>" aria-label="QR-Code für die Authenticator-App"></div>
             <p class="totp-secret"><code><?= escape($pendingSecret) ?></code></p>
             <p>Gib anschließend den sechsstelligen Code aus der App ein, um die Einrichtung zu bestätigen.</p>
             <form method="post">

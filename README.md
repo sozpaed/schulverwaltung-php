@@ -315,7 +315,7 @@ der Anmeldung ab. Die Sitzungs-ID wird nach 15 Minuten bei der nächsten Anfrage
 erneuert. Passwort- und 2FA-Änderungen sowie Änderungen an Status oder Rechten
 beenden andere Sitzungen beim nächsten Aufruf. Die eigene Sitzung bleibt bei
 Änderungen in den Kontoeinstellungen angemeldet. Ein administrativer 2FA-Reset
-ist derzeit nicht vorhanden.
+beendet alle Sitzungen der betroffenen Person.
 
 Für den Produktivbetrieb wird ein auf HTTPS beschränktes
 `__Host-sv_session`-Cookie mit `Secure`, `HttpOnly`, `SameSite=Strict` und
@@ -335,12 +335,43 @@ führt Migrationen nicht aus; ohne die Spalte funktioniert die Anmeldung nicht.
 
 Über das Profilmenü können Benutzer ihr Passwort ändern und optional eine
 zeitbasierte Zwei-Faktor-Anmeldung (TOTP) einrichten. Für die Einrichtung wird
-der angezeigte Base32-Schlüssel manuell in eine Authenticator-App eingetragen
-und anschließend mit einem aktuellen App-Code bestätigt; ein QR-Code oder
-zusätzliches PHP-Paket ist nicht erforderlich. Zum Ändern des Passworts ist das
+der angezeigte QR-Code lokal im Browser erzeugt oder der Base32-Schlüssel manuell
+in eine Authenticator-App eingetragen und anschließend mit einem aktuellen
+App-Code bestätigt. Die mitgelieferte QR-Code-Bibliothek läuft lokal; der
+Schlüssel wird nicht an einen externen Dienst gesendet. Zum Ändern des Passworts ist das
 bisherige Passwort nötig. Das neue Passwort muss mindestens 12 Zeichen lang
 sein und darf höchstens 72 Bytes umfassen. Zum Deaktivieren von 2FA werden
 Passwort und ein aktueller Authenticator-Code verlangt.
+
+Nach der Aktivierung werden zehn Wiederherstellungscodes einmalig angezeigt.
+Diese sicher und getrennt vom Authenticator-Gerät aufbewahren. Jeder Code kann
+anstelle des App-Codes einmal zur Anmeldung verwendet werden. Bereits bestehende
+2FA-Konten können in den Kontoeinstellungen mit Passwort und aktuellem
+Authenticator-Code neue Codes erzeugen; dabei werden alle alten Codes ungültig.
+Der Authenticator kann dort gewechselt werden. Der bisherige Schlüssel bleibt
+bis zur erfolgreichen Bestätigung des neuen Schlüssels gültig.
+
+Administratoren können 2FA für andere Benutzer nach erneuter Bestätigung ihres
+Passworts und, falls aktiviert, ihres Authenticator-Codes zurücksetzen.
+Vorher ist die Identität der betroffenen Person unabhängig zu prüfen. Nach dem
+Reset ist 2FA deaktiviert und eine Anmeldung nur mit Passwort möglich; alle
+Wiederherstellungscodes und Sitzungen des Kontos werden ungültig. Der Reset
+wird in `admin_protokoll` gespeichert und ist in der Benutzerverwaltung unter
+**2FA-Rücksetzungen anzeigen** einsehbar. Diese Protokolle werden nicht automatisch
+gelöscht; die Aufbewahrung muss organisatorisch festgelegt werden.
+Im Notfall kann eine berechtigte Person über SSH
+`php bin/reset-2fa.php BENUTZERNAME` ausführen und die Rücksetzung mit `JA`
+bestätigen. Der CLI-Zugriff ist entsprechend zu beschränken.
+
+Für bestehende Datenbanken vor Bereitstellung des Codes eine Sicherung erstellen
+und `database/migrations/20261106_2fa_wiederherstellung.sql` einmalig ausführen.
+Ohne diese Tabellen funktionieren die Wiederherstellungscodes und 2FA-Änderungen
+nicht. GitHub führt die Migration nicht aus.
+
+Der QR-Code wird mit der lokal mitgelieferten JavaScript-Bibliothek qrcodejs
+erzeugt (MIT-Lizenz in `public/assets/vendor/qrcodejs/LICENSE`, Stand
+`04f46c6a0708418cb7b96fc563eacae0fbf77674`). JavaScript muss dafür aktiviert
+sein; die manuelle Schlüsseleingabe bleibt als Alternative verfügbar.
 
 Bei einer bestehenden Datenbank muss die Migration
 `database/migrations/20261105_add_totp.sql` einmalig mit MariaDB ausgeführt

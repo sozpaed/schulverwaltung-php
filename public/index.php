@@ -89,9 +89,9 @@ $csrfToken = Auth::csrfToken();
                        autocomplete="current-password" required>
             </p>
             <p>
-                <label for="totp_code">Authenticator-Code (falls 2FA eingerichtet ist)</label>
-                <input id="totp_code" name="totp_code" type="text" inputmode="numeric"
-                       pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                <label for="totp_code">Authenticator- oder Wiederherstellungscode (falls 2FA eingerichtet ist)</label>
+                <input id="totp_code" name="totp_code" type="text"
+                       maxlength="11" autocomplete="one-time-code">
             </p>
             <button type="submit">Anmelden</button>
         </form>

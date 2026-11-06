@@ -11,6 +11,7 @@ require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/SessionPolicy.php';
 require_once __DIR__ . '/LoginThrottle.php';
 require_once __DIR__ . '/TwoFactor.php';
+require_once __DIR__ . '/RecoveryCodes.php';
 require_once __DIR__ . '/helpers.php';
 
 ini_set('session.use_strict_mode', '1');

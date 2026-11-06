@@ -49,7 +49,8 @@ final class Auth
                 } elseif ((bool) $user['totp_enabled']) {
                     $secret = TwoFactor::decryptSecret($user['totp_secret'], $userId);
                     $counter = TwoFactor::matchingCounter($secret, $twoFactorCode);
-                    if ($counter === null || !self::storeTotpCounter($database, $userId, $counter)) {
+                    if (($counter === null || !self::storeTotpCounter($database, $userId, $counter))
+                        && !RecoveryCodes::consume($database, $userId, (int) $user['sitzungs_version'], $twoFactorCode)) {
                         $reason = '2fa';
                     }
                 }

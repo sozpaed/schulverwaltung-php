@@ -191,6 +191,9 @@ $csrfToken = Auth::csrfToken();
     <?= renderAccountMenu($user) ?>
     <p><a href="/admin/">Zur Benutzerverwaltung</a></p>
     <h1>Benutzer bearbeiten</h1>
+    <?php if ($targetId !== $user['id']): ?>
+        <p><a href="/admin/2fa-reset.php?id=<?= (int) $targetId ?>">Zwei-Faktor-Anmeldung zurücksetzen</a></p>
+    <?php endif; ?>
     <?php if ($errors !== []): ?>
         <div role="alert">
             <ul>
