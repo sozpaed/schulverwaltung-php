@@ -84,13 +84,7 @@ $statement->bindValue('offset', ($page - 1) * $pageSize, PDO::PARAM_INT);
 $statement->execute();
 $guardians = $statement->fetchAll();
 
-$relationships = [
-    'mutter' => 'Mutter',
-    'vater' => 'Vater',
-    'vormund' => 'Vormund',
-    'pflegeeltern' => 'Pflegeeltern',
-    'sonstiges' => 'Sonstiges',
-];
+$relationships = guardianRelationships();
 ?>
 <!doctype html>
 <html lang="de">
@@ -153,10 +147,18 @@ $relationships = [
                     <td><?= escape($guardian['mobil']) ?></td>
                     <td><?= escape($guardian['email']) ?></td>
                     <td>
-                        <?= renderEditLink(
-                            '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $guardian['schueler_id'] . '&id=' . (int) $guardian['id'],
-                            'Kontaktperson bearbeiten'
-                        ) ?>
+                        <span class="student-actions">
+                            <?= renderEditLink(
+                                '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $guardian['schueler_id'] . '&id=' . (int) $guardian['id'],
+                                'Kontaktperson bearbeiten'
+                            ) ?>
+                            <?php if ($user['can_delete_students']): ?>
+                                <?= renderDeleteLink(
+                                    '/erziehungsberechtigte/loeschen.php?id=' . (int) $guardian['id'] . '&von=liste',
+                                    'Kontaktperson löschen: ' . $guardian['vorname'] . ' ' . $guardian['nachname']
+                                ) ?>
+                            <?php endif; ?>
+                        </span>
                     </td>
                 </tr>
             <?php endforeach; ?>

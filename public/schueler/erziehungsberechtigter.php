@@ -76,13 +76,7 @@ $input = [
     'mobil' => '',
     'email' => '',
 ];
-$relationships = [
-    'mutter' => 'Mutter',
-    'vater' => 'Vater',
-    'vormund' => 'Vormund',
-    'pflegeeltern' => 'Pflegeeltern',
-    'sonstiges' => 'Sonstiges',
-];
+$relationships = guardianRelationships();
 $errors = [];
 
 $religions = $database->query('SELECT id, name FROM religionen ORDER BY name, id')->fetchAll();

@@ -64,6 +64,31 @@ function renderEditLink(string $href, string $label): string
 HTML;
 }
 
+function renderDeleteLink(string $href, string $label): string
+{
+    $safeHref = escape($href);
+    $safeLabel = escape($label);
+
+    return <<<HTML
+<a class="delete-link" href="{$safeHref}" aria-label="{$safeLabel}" title="{$safeLabel}">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11H7L6 9Zm4 2v7h2v-7h-2Zm3 0v7h2v-7h-2Z"></path>
+    </svg>
+</a>
+HTML;
+}
+
+function guardianRelationships(): array
+{
+    return [
+        'mutter' => 'Mutter',
+        'vater' => 'Vater',
+        'vormund' => 'Vormund',
+        'pflegeeltern' => 'Pflegeeltern',
+        'sonstiges' => 'Sonstiges',
+    ];
+}
+
 function renderStudentDetailLink(int $studentId, string $name): string
 {
     $label = escape('Schülerinnendaten anzeigen: ' . $name);

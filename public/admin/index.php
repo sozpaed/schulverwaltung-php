@@ -69,13 +69,10 @@ $csrfToken = Auth::csrfToken();
                                 'Benutzer bearbeiten'
                             ) ?>
                             <?php if ((int) $listedUser['id'] !== $user['id']): ?>
-                                <?php $deleteLabel = 'Benutzer löschen: ' . $listedUser['username']; ?>
-                                <a class="delete-link" href="/admin/loeschen.php?id=<?= (int) $listedUser['id'] ?>"
-                                   aria-label="<?= escape($deleteLabel) ?>" title="<?= escape($deleteLabel) ?>">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11H7L6 9Zm4 2v7h2v-7h-2Zm3 0v7h2v-7h-2Z"></path>
-                                    </svg>
-                                </a>
+                                <?= renderDeleteLink(
+                                    '/admin/loeschen.php?id=' . (int) $listedUser['id'],
+                                    'Benutzer löschen: ' . $listedUser['username']
+                                ) ?>
                             <?php endif; ?>
                         </span>
                     </td>

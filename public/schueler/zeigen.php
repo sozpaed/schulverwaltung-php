@@ -45,6 +45,7 @@ $guardianStatement = $database->prepare(
 );
 $guardianStatement->execute(['schueler_id' => $studentId]);
 $guardians = $guardianStatement->fetchAll();
+$relationships = guardianRelationships();
 
 $conversationStatement = $database->prepare(
     'SELECT g.id, g.datum, g.gewuenschte_schulform, g.aufnahmeempfehlung, u.username
@@ -171,15 +172,25 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
                 <?php foreach ($guardians as $guardian): ?>
                     <tr>
                         <td><?= escape($guardian['vorname'] . ' ' . $guardian['nachname']) ?></td>
-                        <td><?= escape($guardian['beziehung']) ?></td>
+                        <td><?= escape($relationships[$guardian['beziehung']] ?? 'Unbekannt') ?></td>
                         <td><?= (bool) $guardian['erziehungsberechtigt'] ? 'Ja' : 'Nein' ?></td>
                         <td><?= escape($guardian['telefon']) ?></td>
                         <td><?= escape($guardian['mobil']) ?></td>
                         <td><?= escape($guardian['email']) ?></td>
-                        <td><?= renderEditLink(
-                            '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $student['id'] . '&id=' . (int) $guardian['id'],
-                            'Kontaktperson bearbeiten'
-                        ) ?></td>
+                        <td>
+                            <span class="student-actions">
+                                <?= renderEditLink(
+                                    '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $student['id'] . '&id=' . (int) $guardian['id'],
+                                    'Kontaktperson bearbeiten'
+                                ) ?>
+                                <?php if ($user['can_delete_students']): ?>
+                                    <?= renderDeleteLink(
+                                        '/erziehungsberechtigte/loeschen.php?id=' . (int) $guardian['id'] . '&von=akte',
+                                        'Kontaktperson löschen: ' . $guardian['vorname'] . ' ' . $guardian['nachname']
+                                    ) ?>
+                                <?php endif; ?>
+                            </span>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

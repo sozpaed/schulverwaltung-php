@@ -73,13 +73,10 @@ $entries = $database
                                 $definition['singular'] . ' bearbeiten'
                             ) ?>
                             <?php if ($user['can_delete_catalogs']): ?>
-                                <?php $deleteLabel = $definition['singular'] . ' löschen: ' . Catalogs::label($entry, $definition); ?>
-                                <a class="delete-link" href="/kataloge/loeschen.php?typ=<?= rawurlencode($type) ?>&amp;id=<?= (int) $entry['id'] ?>"
-                                   aria-label="<?= escape($deleteLabel) ?>" title="<?= escape($deleteLabel) ?>">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11H7L6 9Zm4 2v7h2v-7h-2Zm3 0v7h2v-7h-2Z"></path>
-                                    </svg>
-                                </a>
+                                <?= renderDeleteLink(
+                                    '/kataloge/loeschen.php?typ=' . rawurlencode($type) . '&id=' . (int) $entry['id'],
+                                    $definition['singular'] . ' löschen: ' . Catalogs::label($entry, $definition)
+                                ) ?>
                             <?php endif; ?>
                         </span>
                     </td>

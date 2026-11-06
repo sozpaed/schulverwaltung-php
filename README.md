@@ -411,8 +411,10 @@ Mit dem Recht „Schülerinnen löschen“ erscheint in der Übersicht ein
 Mülleimer-Symbol. Das endgültige Löschen muss auf einer eigenen Seite bestätigt
 werden. Solange Kontaktpersonen oder Gespräche zugeordnet sind, blockiert die
 Datenbank das Löschen; zugehörige Daten werden nicht automatisch gelöscht. Die
-Anwendung bietet derzeit keine Löschfunktion für diese Kontaktpersonen und
-Gespräche.
+Kontaktpersonen können mit demselben Recht in der Schülerinnenakte oder der
+Kontaktpersonenübersicht nach Bestätigung gelöscht werden; die Schülerin und
+ihre Gespräche bleiben dabei erhalten. Für Gespräche bietet die Anwendung
+derzeit keine Löschfunktion.
 
 Für bestehende Datenbanken vor dem Einsatz der Löschfunktion zuerst eine
 Sicherung anlegen und dann

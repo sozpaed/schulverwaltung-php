@@ -148,13 +148,10 @@ $csrfToken = Auth::csrfToken();
                             <?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerinnendaten bearbeiten') ?>
                             <?= renderStudentDetailLink((int) $student['id'], $student['vorname'] . ' ' . $student['nachname']) ?>
                             <?php if ($user['can_delete_students']): ?>
-                                <?php $deleteLabel = 'Schülerin löschen: ' . $student['vorname'] . ' ' . $student['nachname']; ?>
-                                <a class="delete-link" href="/schueler/loeschen.php?id=<?= (int) $student['id'] ?>"
-                                   aria-label="<?= escape($deleteLabel) ?>" title="<?= escape($deleteLabel) ?>">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11H7L6 9Zm4 2v7h2v-7h-2Zm3 0v7h2v-7h-2Z"></path>
-                                    </svg>
-                                </a>
+                                <?= renderDeleteLink(
+                                    '/schueler/loeschen.php?id=' . (int) $student['id'],
+                                    'Schülerin löschen: ' . $student['vorname'] . ' ' . $student['nachname']
+                                ) ?>
                             <?php endif; ?>
                         </span>
                     </td>
