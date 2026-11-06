@@ -457,10 +457,6 @@ ausgeführt werden.
 ### Benutzer verwalten
 
 Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar.
-Unter **PHP-Diagnose anzeigen** finden Administratoren eine begrenzte Übersicht
-der PHP-Version, einiger für QR-Codes relevanter Erweiterungen und ausgewählter
-Laufzeiteinstellungen. Die Seite gibt weder eine vollständige `phpinfo()`-Ausgabe
-noch Konfigurationsdateien, Zugangsdaten oder Serverpfade aus.
 Nach dem ersten Administrator-Setup ab- und wieder anmelden. Der Link
 **Benutzerverwaltung** erscheint auf der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
 deaktiviert und gelöscht sowie Administrator- und Exportrechte vergeben oder
