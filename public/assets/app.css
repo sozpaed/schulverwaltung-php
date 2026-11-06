@@ -435,7 +435,8 @@ button:active,
 }
 
 .edit-link,
-.detail-link {
+.detail-link,
+.delete-link {
     display: inline-grid;
     width: 36px;
     height: 36px;
@@ -447,21 +448,24 @@ button:active,
 }
 
 .edit-link svg,
-.detail-link svg {
+.detail-link svg,
+.delete-link svg {
     width: 18px;
     height: 18px;
     fill: currentColor;
 }
 
 .edit-link:hover,
-.detail-link:hover {
+.detail-link:hover,
+.delete-link:hover {
     border-color: var(--brand);
     background: var(--accent-soft);
     color: var(--brand-strong);
 }
 
 .edit-link:focus-visible,
-.detail-link:focus-visible {
+.detail-link:focus-visible,
+.delete-link:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 3px;
 }

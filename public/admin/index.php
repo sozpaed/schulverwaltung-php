@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../src/Admin.php';
 Admin::requireAdministrator($user);
 
 $users = $database->query(
-    'SELECT id, username, is_active, is_superuser, can_export, erstellt_am
+    'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs, erstellt_am
      FROM app_users
      ORDER BY username, id'
 )->fetchAll();
@@ -46,6 +46,7 @@ $csrfToken = Auth::csrfToken();
                 <th scope="col">Status</th>
                 <th scope="col">Administrator</th>
                 <th scope="col">Exportrecht</th>
+                <th scope="col">Auswahllisten löschen</th>
                 <th scope="col">Erstellt am</th>
                 <th scope="col">Aktionen</th>
             </tr>
@@ -57,6 +58,7 @@ $csrfToken = Auth::csrfToken();
                     <td><?= (bool) $listedUser['is_active'] ? 'Aktiv' : 'Deaktiviert' ?></td>
                     <td><?= (bool) $listedUser['is_superuser'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_export'] ? 'Ja' : 'Nein' ?></td>
+                    <td><?= (bool) $listedUser['can_delete_catalogs'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= escape($listedUser['erstellt_am']) ?></td>
                     <td>
                         <?= renderEditLink(

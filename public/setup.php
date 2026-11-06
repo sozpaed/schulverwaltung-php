@@ -305,6 +305,7 @@ $postedString = static function (string $name, string $default = ''): string {
                     <input id="db_name" name="db_name" value="<?= escape($postedString('db_name')) ?>"
                            autocomplete="off" required>
                 </p>
+                <p class="field-hint"><strong>Wichtig:</strong> Verwende nicht <code>root</code> oder ein Administratorkonto des Datenbankservers, sondern einen eigenen Benutzer, der nur Rechte auf diese Datenbank hat.</p>
                 <p>
                     <label for="db_user">Datenbank-Benutzername</label>
                     <input id="db_user" name="db_user" value="<?= escape($postedString('db_user')) ?>"

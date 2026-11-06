@@ -5,6 +5,7 @@ CREATE TABLE app_users (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     is_superuser TINYINT(1) NOT NULL DEFAULT 0,
     can_export TINYINT(1) NOT NULL DEFAULT 0,
+    can_delete_catalogs TINYINT(1) NOT NULL DEFAULT 0,
     totp_secret VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
     totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
     totp_last_counter BIGINT UNSIGNED NULL,
@@ -93,12 +94,12 @@ CREATE TABLE schueler (
     CONSTRAINT ck_schueler_status CHECK (status IN ('abgelehnt', 'angenommen', 'in_pruefung', 'verzicht')),
     CONSTRAINT ck_schueler_schulform CHECK (schulform IN ('', 'foerderstufe', 'gymnasium')),
     CONSTRAINT ck_schueler_klasse CHECK (klasse IN ('', '5a', '5b', '5c', '5d', '5e')),
-    CONSTRAINT fk_schueler_religion FOREIGN KEY (religion_id)
-        REFERENCES religionen (id) ON DELETE SET NULL,
+    CONSTRAINT fk_schueler_religion_restrict FOREIGN KEY (religion_id)
+        REFERENCES religionen (id) ON DELETE RESTRICT,
     CONSTRAINT fk_schueler_staatsangehoerigkeit FOREIGN KEY (staatsangehoerigkeit_id)
         REFERENCES staatsangehoerigkeiten (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_schueler_grundschule FOREIGN KEY (grundschule_id)
-        REFERENCES grundschulen (id) ON DELETE SET NULL
+    CONSTRAINT fk_schueler_grundschule_restrict FOREIGN KEY (grundschule_id)
+        REFERENCES grundschulen (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE erziehungsberechtigte (
@@ -131,10 +132,10 @@ CREATE TABLE erziehungsberechtigte (
         CHECK (beziehung IN ('mutter', 'vater', 'vormund', 'pflegeeltern', 'sonstiges')),
     CONSTRAINT fk_erziehungsberechtigte_schueler FOREIGN KEY (schueler_id)
         REFERENCES schueler (id) ON DELETE CASCADE,
-    CONSTRAINT fk_erziehungsberechtigte_religion FOREIGN KEY (religion_id)
-        REFERENCES religionen (id) ON DELETE SET NULL,
-    CONSTRAINT fk_erziehungsberechtigte_staatsangehoerigkeit FOREIGN KEY (staatsangehoerigkeit_id)
-        REFERENCES staatsangehoerigkeiten (id) ON DELETE SET NULL
+    CONSTRAINT fk_erziehungsberechtigte_religion_restrict FOREIGN KEY (religion_id)
+        REFERENCES religionen (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_erziehungsberechtigte_staatsangehoerigkeit_restrict FOREIGN KEY (staatsangehoerigkeit_id)
+        REFERENCES staatsangehoerigkeiten (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE gespraeche (
@@ -182,8 +183,8 @@ CREATE TABLE gespraech_marketing_kanaele (
     PRIMARY KEY (gespraech_id, marketing_kanal_id),
     CONSTRAINT fk_gmk_gespraech FOREIGN KEY (gespraech_id)
         REFERENCES gespraeche (id) ON DELETE CASCADE,
-    CONSTRAINT fk_gmk_marketing_kanal FOREIGN KEY (marketing_kanal_id)
-        REFERENCES marketing_kanaele (id) ON DELETE CASCADE
+    CONSTRAINT fk_gmk_marketing_kanal_restrict FOREIGN KEY (marketing_kanal_id)
+        REFERENCES marketing_kanaele (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE export_protokolle (

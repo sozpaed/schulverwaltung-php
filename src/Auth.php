@@ -16,7 +16,7 @@ final class Auth
     ): bool
     {
         $statement = $database->prepare(
-            'SELECT id, username, password_hash, is_active, is_superuser, can_export,
+            'SELECT id, username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs,
                     totp_secret, totp_enabled, totp_last_counter
              FROM app_users
              WHERE username = :username'
@@ -50,6 +50,7 @@ final class Auth
             'username' => $user['username'],
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
+            'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
         ];
 
         return true;
@@ -64,7 +65,7 @@ final class Auth
         }
 
         $statement = $database->prepare(
-            'SELECT id, username, is_active, is_superuser, can_export, totp_enabled
+            'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs, totp_enabled
              FROM app_users
              WHERE id = :id'
         );
@@ -81,6 +82,7 @@ final class Auth
             'username' => $user['username'],
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
+            'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'totp_enabled' => (bool) $user['totp_enabled'],
         ];
         $_SESSION['user'] = $currentUser;

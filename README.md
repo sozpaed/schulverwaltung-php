@@ -59,6 +59,20 @@ automatisch im Projekt-Hauptverzeichnis an, außerhalb von `public/`. `config.ph
 wird von Git ignoriert. Stelle bei Host Europe `public/` als öffentliches
 Webverzeichnis ein.
 
+> **Wichtig: Datenbankbenutzer.** Verwende für die Datenbankverbindung **niemals
+> `root` oder ein anderes Administratorkonto des Datenbankservers**, sondern einen
+> eigenen Benutzer, der nur Rechte auf die Schulverwaltungs-Datenbank hat.
+> Der Installer braucht dafür einmalig die Rechte `CREATE`, `ALTER`, `INDEX`,
+> `REFERENCES`, `SELECT`, `INSERT`, `UPDATE` und `DELETE` auf diese Datenbank. Der
+> Benutzer muss vorher in der Datenbank bzw. im Kundenbereich des Hosters angelegt
+> sein; `setup.php` legt keine Benutzer an. Bei Host Europe ist der dort angelegte
+> Datenbankbenutzer dafür geeignet.
+>
+> Wer einen eigenen Server betreibt, richtet nach der Installation (und für
+> Migrationen mit einem separaten Administratorkonto) besser einen zweiten
+> Benutzer nur mit `SELECT`, `INSERT`, `UPDATE`, `DELETE` ein und trägt diesen
+> in `config.php` ein.
+
 `config.example.php` ist nur eine Vorlage für eine manuelle Konfiguration, etwa
 für die lokale Entwicklung. Wenn du sie nach `config.php` kopierst, wird der
 Installationsassistent übersprungen; die Datenbank und das Schema müssen dann
@@ -198,7 +212,9 @@ Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar.
 Nach dem ersten Administrator-Setup ab- und wieder anmelden. Der Link
 **Benutzerverwaltung** erscheint auf der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
 deaktiviert und gelöscht sowie Administrator- und Exportrechte vergeben oder
-entzogen werden. Bei der Bearbeitung bleibt das Passwort unverändert, wenn das
+entzogen werden. Zusätzlich kann das Recht zum Löschen von Auswahllisteneinträgen
+vergeben werden; es ist zunächst für alle Benutzer, einschließlich Administratoren,
+deaktiviert. Bei der Bearbeitung bleibt das Passwort unverändert, wenn das
 Passwortfeld leer gelassen wird; ein neu gesetztes Passwort muss mindestens 12
 Zeichen und darf höchstens 72 Bytes umfassen. Aus Sicherheitsgründen kann ein Administrator weder das
 eigene Konto deaktivieren noch sich selbst die Administratorrechte entziehen
@@ -251,8 +267,18 @@ Unter **Auswahllisten pflegen** können Staatsangehörigkeiten, Religionen,
 Grundschulen und Marketingkanäle jeweils auf einer eigenen Seite angesehen,
 hinzugefügt und bearbeitet werden. Die Einträge lassen sich zusätzlich direkt aus den Schülerinnen- und Erziehungsberechtigtenformularen
 sowie die Marketingkanäle aus dem Gesprächsformular ergänzen. Neue Einträge werden
-sofort in der zugehörigen Auswahl übernommen. Katalogeinträge können derzeit
-nicht gelöscht werden, damit bestehende Zuordnungen erhalten bleiben.
+sofort in der zugehörigen Auswahl übernommen. Benutzer mit dem ausdrücklich
+vergebenen Löschrecht können nicht verwendete Einträge über das Mülleimer-Symbol
+und eine anschließende Bestätigung löschen. Einträge, die noch Schülerinnen,
+Kontaktpersonen oder Gesprächen zugeordnet sind, können nicht gelöscht werden.
+
+Für bestehende Datenbanken muss vor dem Einsatz dieser Version die Migration
+`database/migrations/20261106_catalog_delete_permission.sql` einmalig ausgeführt
+werden. Sie ändert Fremdschlüssel zum Schutz bestehender Zuordnungen und ergänzt
+das neue Recht standardmäßig deaktiviert. Vor der Migration eine Datenbanksicherung
+erstellen. MariaDB führt Schemaänderungen unmittelbar aus; bei einem Fehler muss
+der bereits ausgeführte Teil vor einem erneuten Versuch geprüft werden. Bei
+Neuinstallationen sind die Änderungen bereits im Schema enthalten.
 
 Die PHP-Verbindung und Anmeldung verwenden `app_users`. Das archivierte Django-Passwortformat
 ist nicht mit PHPs `password_verify()` kompatibel; Benutzerkonten und Passwörter

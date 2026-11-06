@@ -14,6 +14,7 @@ $username = '';
 $isActive = true;
 $isSuperuser = false;
 $canExport = false;
+$canDeleteCatalogs = false;
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -57,8 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $canExport = !array_key_exists('can_export', $_POST)
             ? false
             : ($_POST['can_export'] === '1' ? true : null);
+        $canDeleteCatalogs = !array_key_exists('can_delete_catalogs', $_POST)
+            ? false
+            : ($_POST['can_delete_catalogs'] === '1' ? true : null);
 
-        if ($isActive === null || $isSuperuser === null || $canExport === null) {
+        if ($isActive === null || $isSuperuser === null || $canExport === null || $canDeleteCatalogs === null) {
             $errors[] = 'Ungültige Berechtigungsauswahl.';
         }
 
@@ -74,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($errors === []) {
             $insertStatement = $database->prepare(
-                'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export)
-                 VALUES (:username, :password_hash, :is_active, :is_superuser, :can_export)'
+                'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs)
+                 VALUES (:username, :password_hash, :is_active, :is_superuser, :can_export, :can_delete_catalogs)'
             );
             try {
                 $insertStatement->execute([
@@ -84,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'is_active' => (int) $isActive,
                     'is_superuser' => (int) $isSuperuser,
                     'can_export' => (int) $canExport,
+                    'can_delete_catalogs' => (int) $canDeleteCatalogs,
                 ]);
             } catch (PDOException $exception) {
                 if ($exception->getCode() !== '23000') {
@@ -157,6 +162,10 @@ $csrfToken = Auth::csrfToken();
             <p>
                 <input id="can_export" name="can_export" type="checkbox" value="1"<?= $canExport ? ' checked' : '' ?>>
                 <label for="can_export">Datenexport erlauben</label>
+            </p>
+            <p>
+                <input id="can_delete_catalogs" name="can_delete_catalogs" type="checkbox" value="1"<?= $canDeleteCatalogs ? ' checked' : '' ?>>
+                <label for="can_delete_catalogs">Auswahllisteneinträge löschen erlauben</label>
             </p>
         </fieldset>
         <button type="submit">Benutzer anlegen</button>

@@ -21,7 +21,7 @@ if ($targetId === false) {
 }
 
 $userStatement = $database->prepare(
-    'SELECT id, username, is_active, is_superuser, can_export FROM app_users WHERE id = :id'
+    'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs FROM app_users WHERE id = :id'
 );
 $userStatement->execute(['id' => $targetId]);
 $targetUser = $userStatement->fetch();
@@ -35,6 +35,7 @@ $username = $targetUser['username'];
 $isActive = (bool) $targetUser['is_active'];
 $isSuperuser = (bool) $targetUser['is_superuser'];
 $canExport = (bool) $targetUser['can_export'];
+$canDeleteCatalogs = (bool) $targetUser['can_delete_catalogs'];
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -77,8 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $canExport = !array_key_exists('can_export', $_POST)
             ? false
             : ($_POST['can_export'] === '1' ? true : null);
+        $canDeleteCatalogs = !array_key_exists('can_delete_catalogs', $_POST)
+            ? false
+            : ($_POST['can_delete_catalogs'] === '1' ? true : null);
 
-        if ($isActive === null || $isSuperuser === null || $canExport === null) {
+        if ($isActive === null || $isSuperuser === null || $canExport === null || $canDeleteCatalogs === null) {
             $errors[] = 'Ungültige Berechtigungsauswahl.';
         }
 
@@ -118,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'is_active' => (int) $isActive,
                 'is_superuser' => (int) $isSuperuser,
                 'can_export' => (int) $canExport,
+                'can_delete_catalogs' => (int) $canDeleteCatalogs,
                 'id' => $targetId,
             ];
             $passwordSql = '';
@@ -128,7 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateStatement = $database->prepare(
                 'UPDATE app_users
                  SET username = :username, is_active = :is_active,
-                     is_superuser = :is_superuser, can_export = :can_export' . $passwordSql . '
+                     is_superuser = :is_superuser, can_export = :can_export,
+                     can_delete_catalogs = :can_delete_catalogs' . $passwordSql . '
                  WHERE id = :id'
             );
             try {
@@ -205,6 +211,10 @@ $csrfToken = Auth::csrfToken();
             <p>
                 <input id="can_export" name="can_export" type="checkbox" value="1"<?= $canExport ? ' checked' : '' ?>>
                 <label for="can_export">Datenexport erlauben</label>
+            </p>
+            <p>
+                <input id="can_delete_catalogs" name="can_delete_catalogs" type="checkbox" value="1"<?= $canDeleteCatalogs ? ' checked' : '' ?>>
+                <label for="can_delete_catalogs">Auswahllisteneinträge löschen erlauben</label>
             </p>
         </fieldset>
         <button type="submit">Änderungen speichern</button>

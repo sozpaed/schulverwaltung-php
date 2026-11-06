@@ -44,7 +44,7 @@ $entries = $database
     <p><a href="/kataloge/">Zurück zu den Auswahllisten</a></p>
     <h1><?= escape($definition['title']) ?></h1>
     <?= renderAccountMenu($user) ?>
-    <p><a href="/kataloge/bearbeiten.php?typ=<?= rawurlencode($type) ?>">Eintrag hinzufügen</a></p>
+    <p><a class="button-link" href="/kataloge/bearbeiten.php?typ=<?= rawurlencode($type) ?>">Eintrag hinzufügen</a></p>
 
     <?php if ($entries === []): ?>
         <p>Noch keine Einträge vorhanden.</p>
@@ -67,10 +67,21 @@ $entries = $database
                         <td><?= escape($entry['ort']) ?></td>
                     <?php endif; ?>
                     <td>
-                        <?= renderEditLink(
-                            '/kataloge/bearbeiten.php?typ=' . rawurlencode($type) . '&id=' . (int) $entry['id'],
-                            $definition['singular'] . ' bearbeiten'
-                        ) ?>
+                        <span class="student-actions">
+                            <?= renderEditLink(
+                                '/kataloge/bearbeiten.php?typ=' . rawurlencode($type) . '&id=' . (int) $entry['id'],
+                                $definition['singular'] . ' bearbeiten'
+                            ) ?>
+                            <?php if ($user['can_delete_catalogs']): ?>
+                                <?php $deleteLabel = $definition['singular'] . ' löschen: ' . Catalogs::label($entry, $definition); ?>
+                                <a class="delete-link" href="/kataloge/loeschen.php?typ=<?= rawurlencode($type) ?>&amp;id=<?= (int) $entry['id'] ?>"
+                                   aria-label="<?= escape($deleteLabel) ?>" title="<?= escape($deleteLabel) ?>">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11H7L6 9Zm4 2v7h2v-7h-2Zm3 0v7h2v-7h-2Z"></path>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
                     </td>
                 </tr>
             <?php endforeach; ?>

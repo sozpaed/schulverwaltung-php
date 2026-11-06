@@ -32,7 +32,7 @@ $definitions = Catalogs::definitions();
     <p><a href="/">Zur Startseite</a></p>
     <h1>Auswahllisten</h1>
     <?= renderAccountMenu($user) ?>
-    <p>Einträge können bearbeitet, aber nicht gelöscht werden, damit bestehende Zuordnungen erhalten bleiben.</p>
+    <p>Mit entsprechender Berechtigung können ungenutzte Einträge gelöscht werden. Verwendete Einträge bleiben zum Schutz bestehender Zuordnungen erhalten.</p>
 
     <ul>
     <?php foreach ($definitions as $type => $definition): ?>
