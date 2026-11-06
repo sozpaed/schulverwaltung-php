@@ -106,7 +106,7 @@ Hinweise:
 
 - Den Ordner `public` nicht als Ganzes hochladen, sondern nur seinen Inhalt
   nach `web/`. Sonst entsteht `web/public/` und die Pfade stimmen nicht.
-- Nicht hochladen: `.git`, `start-server.ps1`, eine lokale `config.php`.
+- Nicht hochladen: `.git` und eine lokale `config.php`.
 - Das Projektverzeichnis (hier `/www/de.meine-domain.verwaltung/`)
   muss für PHP beschreibbar sein, damit `setup.php` `config.php` anlegen kann.
 - Nach der Installation `setup.php` aus `web/` löschen.
@@ -222,8 +222,8 @@ vorheriger Sicherung erfolgen.
 ## Lokaler Start
 
 Der aktuelle Stand enthält einen einfachen Anmeldeablauf. Zum Start werden eine
-MariaDB-Datenbank mit dem Schema aus `database/schema.sql` und mindestens ein
-aktiver Benutzer in `app_users` benötigt. Benutzerpasswörter müssen mit
+Datenbank mit dem Schema aus `database/schema.sql` und mindestens ein aktiver
+Benutzer in `app_users` benötigt. Benutzerpasswörter müssen mit
 PHP-`password_hash()` gehasht sein; Klartextpasswörter dürfen nicht in der
 Datenbank gespeichert werden.
 
@@ -235,12 +235,6 @@ dem Anwendungsbenutzer eingespielt werden:
 ```sql
 USE schulverwaltung_dev;
 SOURCE C:/dev/schulverwaltung-php/schulverwaltung-php/database/seed.sql;
-```
-
-Für den lokalen Start aus dem Repository-Hauptverzeichnis:
-
-```powershell
-.\start-server.ps1
 ```
 
 Bei einer frischen Hosting-Installation wird eine eigens im Hosting-Panel
@@ -255,11 +249,17 @@ Möglichkeit auf nur lesbar für den PHP-Prozess. Die Zugangsdaten werden bei de
 Übertragung ausschließlich über HTTPS geschützt, daher muss HTTPS vor der
 Installation aktiv sein.
 
-Das Skript setzt die lokale Datenbankkonfiguration, fragt das MariaDB-Passwort
-verdeckt ab, prüft `pdo_mysql` und `openssl` und startet PHP auf `127.0.0.1:8000`.
-Das Terminal geöffnet lassen; mit `Strg+C` wird der Server beendet und die
-Passwort-Umgebungsvariable wieder entfernt. Anschließend ist die Anmeldung unter
-`http://127.0.0.1:8000/` erreichbar.
+Für die lokale Entwicklung müssen PHP mit `pdo_mysql` und `openssl` sowie eine
+passende Datenbankkonfiguration verfügbar sein. Der PHP-Entwicklungsserver kann
+aus dem Repository-Hauptverzeichnis gestartet werden:
+
+```powershell
+php -S 127.0.0.1:8000 -t public
+```
+
+Anschließend ist die Anwendung unter `http://127.0.0.1:8000/` erreichbar. Bei
+einer frischen Einrichtung kann dort der Installationsassistent aufgerufen
+werden. Das Terminal geöffnet lassen; mit `Strg+C` wird der Server beendet.
 Die Entwicklungsumgebung darf nicht öffentlich erreichbar sein. Im Produktivbetrieb
 muss HTTPS verwendet werden. Die Anmeldung prüft aktive Benutzer bei jedem
 geschützten Aufruf erneut; Formulare sind mit CSRF-Tokens geschützt und
@@ -321,26 +321,41 @@ Exportrechte.
 
 Nachdem die Entwicklungsdatenbank und das Schema aus `database/schema.sql`
 bereits eingerichtet wurden, kann das erste Administratorkonto aus dem
-Repository-Hauptverzeichnis erstellt oder ein bestehendes aktives Konto zum
-Administrator hochgestuft werden:
+Repository-Hauptverzeichnis mit dem PHP-Kommandozeilenwerkzeug erstellt oder
+ein bestehendes aktives Konto zum Administrator hochgestuft werden. Die
+Datenbankverbindung muss zuvor über `config.php` oder Umgebungsvariablen
+konfiguriert sein.
+
+Für ein neues Konto das Passwort verdeckt abfragen und nur vorübergehend als
+Umgebungsvariable übergeben:
 
 ```powershell
-.\setup-admin.ps1
+$secure = Read-Host 'Passwort für das neue Administratorkonto' -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+try {
+    $env:APP_ADMIN_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+    php bin/setup-admin.php create admin
+} finally {
+    Remove-Item Env:APP_ADMIN_PASSWORD -ErrorAction SilentlyContinue
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+    $secure.Dispose()
+}
 ```
 
-Das Skript fragt das MariaDB-Passwort verdeckt ab und bietet zwei Möglichkeiten:
+Der Benutzername `admin` ist ein Beispiel und muss noch nicht existieren. Das
+Passwort muss mindestens 12 Zeichen lang sein und darf höchstens 72 Bytes
+umfassen. Um stattdessen ein bestehendes aktives Konto hochzustufen:
 
-1. Ein neues Administratorkonto anlegen. Das Passwort wird zweimal verdeckt
-   eingegeben und mit `password_hash()` gespeichert.
-2. Ein bestehendes aktives Konto zum Administrator machen. Das Passwort bleibt
-   unverändert.
+```powershell
+php bin/setup-admin.php promote BENUTZERNAME
+```
 
-In beiden Fällen werden `is_superuser` und `can_export` gesetzt. Datenbank- und
-Administratorkennwörter werden nur vorübergehend an den PHP-Prozess übergeben
-und nach dem Setup aus den Umgebungsvariablen entfernt. Das Skript führt das
-Schema nicht aus und erstellt weder Datenbank noch MariaDB-Benutzer; diese
-Schritte müssen zuvor separat erledigt sein. Es darf nur von einer
-vertrauenswürdigen Person in der lokalen Entwicklungsumgebung ausgeführt werden.
+In beiden Fällen werden `is_superuser` und `can_export` gesetzt. Beim
+Hochstufen bleibt das Passwort unverändert; beim Anlegen wird es mit
+`password_hash()` gespeichert. Das Werkzeug führt das Schema nicht aus und
+erstellt weder Datenbank noch Datenbankbenutzer; diese Schritte müssen zuvor
+separat erledigt sein. Es darf nur von einer vertrauenswürdigen Person
+ausgeführt werden.
 
 ### Benutzer verwalten
 
