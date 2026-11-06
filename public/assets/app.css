@@ -397,7 +397,8 @@ legend {
 }
 
 button,
-input[type="submit"] {
+input[type="submit"],
+.button-link {
     min-height: 42px;
     padding: 9px 17px;
     border: 1px solid var(--brand);
@@ -410,17 +411,31 @@ input[type="submit"] {
     transition: background-color 120ms ease, transform 120ms ease;
 }
 
-button:hover,
-input[type="submit"]:hover {
-    transform: translateY(-1px);
-    background: var(--brand-strong);
+.button-link {
+    display: inline-block;
+    text-decoration: none;
 }
 
-button:active {
+button:hover,
+input[type="submit"]:hover,
+.button-link:hover {
+    transform: translateY(-1px);
+    background: var(--brand-strong);
+    color: #fff;
+}
+
+button:active,
+.button-link:active {
     transform: translateY(0);
 }
 
-.edit-link {
+.student-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.edit-link,
+.detail-link {
     display: inline-grid;
     width: 36px;
     height: 36px;
@@ -431,19 +446,22 @@ button:active {
     vertical-align: middle;
 }
 
-.edit-link svg {
+.edit-link svg,
+.detail-link svg {
     width: 18px;
     height: 18px;
     fill: currentColor;
 }
 
-.edit-link:hover {
+.edit-link:hover,
+.detail-link:hover {
     border-color: var(--brand);
     background: var(--accent-soft);
     color: var(--brand-strong);
 }
 
-.edit-link:focus-visible {
+.edit-link:focus-visible,
+.detail-link:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 3px;
 }

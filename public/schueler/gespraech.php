@@ -18,7 +18,7 @@ $studentId = is_string($studentIdValue)
 
 if ($studentId === false) {
     http_response_code(400);
-    exit('Ungültige Schüler-ID.');
+    exit('Ungültige Schülerinnen-ID.');
 }
 
 $studentStatement = $database->prepare('SELECT id, vorname, nachname FROM schueler WHERE id = :id');
@@ -27,7 +27,7 @@ $student = $studentStatement->fetch();
 
 if ($student === false) {
     http_response_code(404);
-    exit('Der Schülerdatensatz wurde nicht gefunden.');
+    exit('Der Datensatz der Schülerin wurde nicht gefunden.');
 }
 
 $conversationId = null;
@@ -54,7 +54,7 @@ if (array_key_exists('id', $_GET)) {
 
     if ($existingConversation === false) {
         http_response_code(404);
-        exit('Das Gespräch wurde für diesen Schüler nicht gefunden.');
+        exit('Das Gespräch wurde für diese Schülerin nicht gefunden.');
     }
 }
 
@@ -346,7 +346,7 @@ $pageTitle = $conversationId === null
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/schueler/zeigen.php?id=<?= (int) $studentId ?>">Zur Schülerakte</a></p>
+    <p><a href="/schueler/zeigen.php?id=<?= (int) $studentId ?>">Zur Schülerinnenakte</a></p>
     <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
     <h1><?= escape($pageTitle) ?></h1>
     <?= renderAccountMenu($user) ?>

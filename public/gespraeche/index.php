@@ -106,7 +106,7 @@ $recommendations = [
     <p><a href="/">Zur Startseite</a></p>
     <h1>Aufnahmegespräche</h1>
     <?= renderAccountMenu($user) ?>
-    <p>Ein neues Gespräch wird in der zugehörigen Schülerakte angelegt.</p>
+    <p>Ein neues Gespräch wird in der zugehörigen Schülerinnenakte angelegt.</p>
 
     <form method="get">
         <label for="q">Nach Vorname, Nachname oder gewünschter Schulform suchen</label>
@@ -125,7 +125,7 @@ $recommendations = [
             <thead>
             <tr>
                 <th scope="col">Datum</th>
-                <th scope="col">Schülerin/Schüler</th>
+                <th scope="col">Schülerin</th>
                 <th scope="col">Gewünschte Schulform</th>
                 <th scope="col">Empfehlung</th>
                 <th scope="col">Protokollant</th>
@@ -136,19 +136,21 @@ $recommendations = [
             <?php foreach ($conversations as $conversation): ?>
                 <tr>
                     <td><?= escape(date('d.m.Y H:i', strtotime($conversation['datum']))) ?></td>
-                    <td>
-                        <a href="/schueler/zeigen.php?id=<?= (int) $conversation['schueler_id'] ?>">
-                            <?= escape($conversation['nachname'] . ', ' . $conversation['vorname']) ?>
-                        </a>
-                    </td>
+                    <td><?= escape($conversation['nachname'] . ', ' . $conversation['vorname']) ?></td>
                     <td><?= escape($schoolForms[$conversation['gewuenschte_schulform']] ?? 'Unbekannt') ?></td>
                     <td><?= escape($recommendations[$conversation['aufnahmeempfehlung']] ?? 'Unbekannt') ?></td>
                     <td><?= escape($conversation['username'] ?? 'Unbekannt') ?></td>
                     <td>
-                        <?= renderEditLink(
-                            '/schueler/gespraech.php?schueler_id=' . (int) $conversation['schueler_id'] . '&id=' . (int) $conversation['id'],
-                            'Gespräch bearbeiten'
-                        ) ?>
+                        <span class="student-actions">
+                            <?= renderEditLink(
+                                '/schueler/gespraech.php?schueler_id=' . (int) $conversation['schueler_id'] . '&id=' . (int) $conversation['id'],
+                                'Gespräch bearbeiten'
+                            ) ?>
+                            <?= renderStudentDetailLink(
+                                (int) $conversation['schueler_id'],
+                                $conversation['vorname'] . ' ' . $conversation['nachname']
+                            ) ?>
+                        </span>
                     </td>
                 </tr>
             <?php endforeach; ?>

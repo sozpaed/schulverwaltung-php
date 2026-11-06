@@ -16,7 +16,7 @@ $studentId = is_string($idValue)
 
 if ($studentId === false) {
     http_response_code(400);
-    exit('Ungültige Schüler-ID.');
+    exit('Ungültige Schülerinnen-ID.');
 }
 
 $statement = $database->prepare(
@@ -33,7 +33,7 @@ $student = $statement->fetch();
 
 if ($student === false) {
     http_response_code(404);
-    exit('Der Schülerdatensatz wurde nicht gefunden.');
+    exit('Der Datensatz der Schülerin wurde nicht gefunden.');
 }
 
 $guardianStatement = $database->prepare(
@@ -89,13 +89,13 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/schueler/">Zur Schülerübersicht</a></p>
+    <p><a href="/schueler/">Zur Schülerinnenübersicht</a></p>
     <h1><?= escape($student['vorname'] . ' ' . $student['nachname']) ?></h1>
     <?= renderAccountMenu($user) ?>
 
     <section>
-        <h2>Schülerdaten</h2>
-        <p><?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerdaten bearbeiten') ?></p>
+        <h2>Schülerinnendaten</h2>
+        <p><?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerinnendaten bearbeiten') ?></p>
         <dl>
             <dt>Geburtsdatum</dt><dd><?= escape($student['geburtsdatum']) ?></dd>
             <dt>Adresse</dt><dd><?= escape($student['strasse'] . ', ' . $student['plz'] . ' ' . $student['ort']) ?></dd>
@@ -117,7 +117,7 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
 
     <section>
         <h2>Aufnahmegespräche</h2>
-        <p><a href="/schueler/gespraech.php?schueler_id=<?= (int) $student['id'] ?>">Gespräch erfassen</a></p>
+        <p><a class="button-link" href="/schueler/gespraech.php?schueler_id=<?= (int) $student['id'] ?>">Gespräch erfassen</a></p>
         <?php if ($conversations === []): ?>
             <p>Für diesen Datensatz sind noch keine Gespräche hinterlegt.</p>
         <?php else: ?>
@@ -151,7 +151,7 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
 
     <section>
         <h2>Erziehungsberechtigte und Kontaktpersonen</h2>
-        <p><a href="/schueler/erziehungsberechtigter.php?schueler_id=<?= (int) $student['id'] ?>">Kontaktperson hinzufügen</a></p>
+        <p><a class="button-link" href="/schueler/erziehungsberechtigter.php?schueler_id=<?= (int) $student['id'] ?>">Kontaktperson hinzufügen</a></p>
         <?php if ($guardians === []): ?>
             <p>Für diesen Datensatz sind noch keine Kontaktpersonen hinterlegt.</p>
         <?php else: ?>

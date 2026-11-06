@@ -95,7 +95,7 @@ $csrfToken = Auth::csrfToken();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/assets/app.css">
-    <title>Schülerinnen und Schüler – Schulverwaltung</title>
+    <title>Schülerinnen – Schulverwaltung</title>
 </head>
 <body>
 <main>
@@ -105,9 +105,9 @@ $csrfToken = Auth::csrfToken();
         </svg>
     </a>
     <p><a href="/">Zur Startseite</a></p>
-    <h1>Schülerinnen und Schüler</h1>
+    <h1>Schülerinnen</h1>
     <?= renderAccountMenu($user) ?>
-    <p><a href="/schueler/neu.php">Schülerin oder Schüler anlegen</a></p>
+    <p><a href="/schueler/neu.php">Schülerin anlegen</a></p>
 
     <form method="get">
         <label for="q">Name oder Wohnort suchen</label>
@@ -120,7 +120,7 @@ $csrfToken = Auth::csrfToken();
 
     <p><?= $total ?> Datensätze</p>
     <?php if ($students === []): ?>
-        <p>Keine Schülerinnen oder Schüler gefunden.</p>
+        <p>Keine Schülerinnen gefunden.</p>
     <?php else: ?>
         <table>
             <thead>
@@ -137,13 +137,18 @@ $csrfToken = Auth::csrfToken();
             <tbody>
             <?php foreach ($students as $student): ?>
                 <tr>
-                    <td><a href="/schueler/zeigen.php?id=<?= (int) $student['id'] ?>"><?= escape($student['nachname']) ?></a></td>
+                    <td><?= escape($student['nachname']) ?></td>
                     <td><?= escape($student['vorname']) ?></td>
                     <td><?= escape($student['klasse']) ?></td>
                     <td><?= escape($statusLabels[$student['status']] ?? 'Unbekannt') ?></td>
                     <td><?= escape($student['grundschule'] ?? '') ?></td>
                     <td><?= escape($student['ort']) ?></td>
-                    <td><?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerdaten bearbeiten') ?></td>
+                    <td>
+                        <span class="student-actions">
+                            <?= renderEditLink('/schueler/bearbeiten.php?id=' . (int) $student['id'], 'Schülerinnendaten bearbeiten') ?>
+                            <?= renderStudentDetailLink((int) $student['id'], $student['vorname'] . ' ' . $student['nachname']) ?>
+                        </span>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

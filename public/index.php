@@ -88,7 +88,7 @@ $csrfToken = Auth::csrfToken();
         <?= renderAccountMenu($user) ?>
         <nav class="dashboard-links" aria-label="Hauptnavigation">
             <ul class="dashboard-links-primary">
-                <li><a href="/schueler/">Schülerinnen und Schüler verwalten</a></li>
+                <li><a href="/schueler/">Schülerinnen verwalten</a></li>
                 <li><a href="/gespraeche/">Gespräche verwalten</a></li>
                 <li><a href="/erziehungsberechtigte/">Erziehungsberechtigte verwalten</a></li>
             </ul>

@@ -20,7 +20,7 @@ if (array_key_exists('id', $_GET)) {
 
     if ($editId === false) {
         http_response_code(400);
-        exit('Ungültige Schüler-ID.');
+        exit('Ungültige Schülerinnen-ID.');
     }
 
     $studentStatement = $database->prepare('SELECT * FROM schueler WHERE id = :id');
@@ -29,7 +29,7 @@ if (array_key_exists('id', $_GET)) {
 
     if ($existingStudent === false) {
         http_response_code(404);
-        exit('Der Schülerdatensatz wurde nicht gefunden.');
+        exit('Der Datensatz der Schülerin wurde nicht gefunden.');
     }
 }
 
@@ -329,7 +329,7 @@ $average = $enteredGrades === []
     <link rel="stylesheet" href="/assets/app.css">
     <script src="/assets/catalog-add.js" defer></script>
     <script src="/assets/grade-average.js" defer></script>
-    <title><?= $editId === null ? 'Schülerin oder Schüler anlegen' : 'Schülerdatensatz bearbeiten' ?> – Schulverwaltung</title>
+    <title><?= $editId === null ? 'Schülerin anlegen' : 'Schülerinnendatensatz bearbeiten' ?> – Schulverwaltung</title>
 </head>
 <body>
 <main>
@@ -338,9 +338,9 @@ $average = $enteredGrades === []
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/schueler/">Zur Schülerübersicht</a></p>
+    <p><a href="/schueler/">Zur Schülerinnenübersicht</a></p>
     <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
-    <h1><?= $editId === null ? 'Schülerin oder Schüler anlegen' : 'Schülerdatensatz bearbeiten' ?></h1>
+    <h1><?= $editId === null ? 'Schülerin anlegen' : 'Schülerinnendatensatz bearbeiten' ?></h1>
     <?= renderAccountMenu($user) ?>
 
     <?php if ($errors !== []): ?>
@@ -475,7 +475,7 @@ $average = $enteredGrades === []
                         <option value="1" <?= $input['warteliste'] === '1' ? 'selected' : '' ?>>Ja</option>
                     </select></p>
             </fieldset>
-            <button type="submit"><?= $editId === null ? 'Schülerdatensatz anlegen' : 'Änderungen speichern' ?></button>
+            <button type="submit"><?= $editId === null ? 'Schülerin anlegen' : 'Änderungen speichern' ?></button>
         </form>
     <?php endif; ?>
 </main>

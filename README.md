@@ -5,7 +5,7 @@ PHP-/MariaDB-Anwendung.
 
 ## Datenbankschema
 
-`database/schema.sql` legt das MariaDB-Schema für Benutzer, Schüler,
+`database/schema.sql` legt das MariaDB-Schema für Benutzer, Schülerinnen,
 Erziehungsberechtigte, Gespräche, Auswahlkataloge, Gesprächs-Marketingkanäle
 und Exportprotokolle an.
 
@@ -26,7 +26,7 @@ Alle PHP-Seiten verwenden das gemeinsame Stylesheet `public/assets/app.css`.
 Das responsive Layout verwendet die Hauptfarbe `#e31c79` mit grauen
 Navigationsflächen, vereinheitlicht Formulare, Tabellen und Navigation und
 berücksichtigt Tastaturfokus sowie reduzierte Animationen. In den
-Schülerformularen, Kontaktformularen und Gesprächsformularen sind kurze
+Schülerinnenformularen, Kontaktformularen und Gesprächsformularen sind kurze
 zusammengehörige Eingaben auf breiten Bildschirmen kompakt gruppiert; auf kleinen
 Bildschirmen wechseln diese Gruppen in eine einzelne Spalte. Die Unterseiten
 bieten außerdem ein einheitliches Home-Symbol zur Startseite. Der angemeldete
@@ -34,7 +34,9 @@ Benutzer wird als aufklappbares Profilmenü angezeigt. Es bietet Zugang zu den
 Kontoeinstellungen und zur Abmeldung; auf der Startseite sind die drei
 Hauptbereiche von den darunter angeordneten sekundären Funktionen getrennt.
 Bearbeitungslinks in Übersichten und Detailseiten werden einheitlich als
-zugängliche Stiftsymbole dargestellt.
+zugängliche Stiftsymbole dargestellt. In der Schülerinnen- und Gesprächsübersicht
+führt zusätzlich ein Zahnradsymbol zu den Daten der jeweiligen Schülerin. Dort erscheinen die Links zum Erfassen
+eines Gesprächs und zum Hinzufügen einer Kontaktperson als Schaltflächen.
 
 ## Technisches Grundgerüst
 
@@ -76,7 +78,7 @@ aktiver Benutzer in `app_users` benötigt. Benutzerpasswörter müssen mit
 PHP-`password_hash()` gehasht sein; Klartextpasswörter dürfen nicht in der
 Datenbank gespeichert werden.
 
-Das Schema enthält zunächst keine Katalogdaten. Für die Schülererfassung muss
+Das Schema enthält zunächst keine Katalogdaten. Für die Erfassung einer Schülerin muss
 mindestens die Staatsangehörigkeit „Deutschland“ vorhanden sein. Die minimale,
 wiederholt ausführbare Entwicklungsbefüllung kann in der MariaDB-Konsole mit
 dem Anwendungsbenutzer eingespielt werden:
@@ -206,35 +208,37 @@ Gesprächsprotokolle und Exportprotokolle erhalten; die jeweilige
 Benutzerzuordnung wird entfernt.
 
 Nach der Anmeldung führen separate Links zu den geschützten, durchsuchbaren und
-paginierte Übersichten für Schülerinnen und Schüler, Aufnahmegespräche sowie
+paginierte Übersichten für Schülerinnen, Aufnahmegespräche sowie
 Erziehungsberechtigte. Suchbegriffe werden
 parametrisiert an die Datenbank übergeben und alle angezeigten Daten HTML-escaped.
-Über **Schülerin oder Schüler anlegen** lassen sich neue Datensätze mit
+Über **Schülerin anlegen** lassen sich neue Datensätze mit
 serverseitiger Prüfung, Katalogauswahl und CSRF-Schutz erfassen. Vorhandene
 Datensätze lassen sich aus der Übersicht heraus bearbeiten; dieselben
-Validierungen gelten beim Speichern. Ein Klick auf den Schülernamen öffnet die
+Validierungen gelten beim Speichern. Das Zahnradsymbol öffnet die
 Detailansicht mit Stammdaten und Kontaktpersonen; Erziehungsberechtigte können
 dort hinzugefügt und bearbeitet werden. Optionale Übernahmefelder synchronisieren
-Adresse, Religion oder Staatsangehörigkeit aus dem Schülerdatensatz.
-Aufnahmegespräche lassen sich ebenfalls in der Schülerakte erfassen und
+Adresse, Religion oder Staatsangehörigkeit aus dem Datensatz der Schülerin.
+Aufnahmegespräche lassen sich ebenfalls in der Schülerinnenakte erfassen und
 bearbeiten sowie über die zentrale Gesprächsliste suchen und bearbeiten.
 Marketingkanäle können mehreren Gesprächen zugeordnet werden.
 
 ### Daten exportieren
 
 Angemeldete Benutzer mit dem Recht `can_export` können unter **Daten exportieren**
-alle Schülerinnen und Schüler, Erziehungsberechtigten oder Gespräche jeweils als
+alle Schülerinnen, Erziehungsberechtigten oder Gespräche jeweils als
 separate CSV-Datei exportieren. Der Export enthält alle Datensätze des gewählten
 Bereichs, unabhängig von Suchfiltern der Listen. Die Dateien sind UTF-8-kodiert,
 verwenden Semikolons als Trennzeichen und können in Tabellenkalkulationen
 geöffnet werden. Textwerte, die als Tabellenkalkulationsformeln interpretiert
 werden könnten, werden beim Export neutralisiert. Jeder Export wird mit Benutzer,
 Bereich, Datensatzanzahl, Format und Zeitpunkt in `export_protokolle` protokolliert.
-Der Schülerexport enthält zusätzlich die zugeordneten Namen der Erziehungsberechtigten
+Der Schülerinnenexport enthält zusätzlich die zugeordneten Namen der Erziehungsberechtigten
 in einer kommagetrennten Spalte. Der Export der Erziehungsberechtigten und der
-Gespräche enthält jeweils auch den vollständigen Namen der zugehörigen Schülerin
-oder des zugehörigen Schülers; im Gesprächsexport stehen außerdem die Namen der
-zugeordneten Erziehungsberechtigten kommagetrennt in einer Spalte.
+Gespräche enthält jeweils auch den vollständigen Namen der zugehörigen Schülerin;
+im Gesprächsexport stehen außerdem die Namen der
+zugeordneten Erziehungsberechtigten kommagetrennt in einer Spalte. Die
+CSV-Spaltenüberschriften verwenden die weibliche Form; bestehende Auswertungen,
+die die bisherigen Überschriften erwarten, müssen entsprechend angepasst werden.
 
 Exportrechte sind standardmäßig deaktiviert und können in der Benutzerverwaltung
 gezielt erteilt oder entzogen werden. Exportdateien enthalten personenbezogene
@@ -245,7 +249,7 @@ weitergegeben werden.
 
 Unter **Auswahllisten pflegen** können Staatsangehörigkeiten, Religionen,
 Grundschulen und Marketingkanäle jeweils auf einer eigenen Seite angesehen,
-hinzugefügt und bearbeitet werden. Die Einträge lassen sich zusätzlich direkt aus den Schüler- und Erziehungsberechtigtenformularen
+hinzugefügt und bearbeitet werden. Die Einträge lassen sich zusätzlich direkt aus den Schülerinnen- und Erziehungsberechtigtenformularen
 sowie die Marketingkanäle aus dem Gesprächsformular ergänzen. Neue Einträge werden
 sofort in der zugehörigen Auswahl übernommen. Katalogeinträge können derzeit
 nicht gelöscht werden, damit bestehende Zuordnungen erhalten bleiben.

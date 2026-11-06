@@ -38,7 +38,7 @@ $csrfToken = Auth::csrfToken();
     <?= renderAccountMenu($user) ?>
     <p>Die CSV-Dateien enthalten alle Datensätze des jeweiligen Bereichs, ohne Filter.</p>
     <ul>
-        <li><a href="/exporte/download.php?bereich=schueler">Schülerinnen und Schüler exportieren</a></li>
+        <li><a href="/exporte/download.php?bereich=schueler">Schülerinnen exportieren</a></li>
         <li><a href="/exporte/download.php?bereich=erziehungsberechtigte">Erziehungsberechtigte exportieren</a></li>
         <li><a href="/exporte/download.php?bereich=gespraeche">Gespräche exportieren</a></li>
     </ul>

@@ -63,3 +63,16 @@ function renderEditLink(string $href, string $label): string
 </a>
 HTML;
 }
+
+function renderStudentDetailLink(int $studentId, string $name): string
+{
+    $label = escape('Schülerinnendaten anzeigen: ' . $name);
+
+    return <<<HTML
+<a class="detail-link" href="/schueler/zeigen.php?id={$studentId}" aria-label="{$label}" title="{$label}">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M19.14 12.94a7.5 7.5 0 0 0 0-1.88l2.03-1.58-2-3.46-2.39.96a7.4 7.4 0 0 0-1.62-.94L14.8 3H9.2l-.36 3.04c-.58.23-1.12.55-1.62.94l-2.39-.96-2 3.46 2.03 1.58a7.5 7.5 0 0 0 0 1.88l-2.03 1.58 2 3.46 2.39-.96c.5.39 1.04.71 1.62.94L9.2 21h5.6l.36-3.04c.58-.23 1.12-.55 1.62-.94l2.39.96 2-3.46-2.03-1.58ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"></path>
+    </svg>
+</a>
+HTML;
+}

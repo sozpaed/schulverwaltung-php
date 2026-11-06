@@ -110,10 +110,10 @@ $relationships = [
     <p><a href="/">Zur Startseite</a></p>
     <h1>Erziehungsberechtigte und Kontaktpersonen</h1>
     <?= renderAccountMenu($user) ?>
-    <p>Neue Kontaktpersonen werden weiterhin in der jeweiligen Schülerakte angelegt.</p>
+    <p>Neue Kontaktpersonen werden weiterhin in der jeweiligen Schülerinnenakte angelegt.</p>
 
     <form method="get">
-        <label for="q">Nach Name, zugehöriger Schülerin/Schüler oder E-Mail suchen</label>
+        <label for="q">Nach Name, zugehöriger Schülerin oder E-Mail suchen</label>
         <input id="q" name="q" type="search" maxlength="100" value="<?= escape($search) ?>">
         <button type="submit">Suchen</button>
         <?php if ($search !== ''): ?>
@@ -131,7 +131,7 @@ $relationships = [
                 <th scope="col">Name</th>
                 <th scope="col">Beziehung</th>
                 <th scope="col">Erziehungsberechtigt</th>
-                <th scope="col">Schülerin/Schüler</th>
+                <th scope="col">Schülerin</th>
                 <th scope="col">Telefon</th>
                 <th scope="col">Mobil</th>
                 <th scope="col">E-Mail</th>
