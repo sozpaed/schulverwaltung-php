@@ -48,7 +48,7 @@ verwendet andernfalls die nicht versionierte `config.php` im Projekt-Hauptverzei
 |---|---|---|
 | `DB_HOST` | Ja | Hostname oder IP-Adresse des MariaDB-Servers |
 | `DB_PORT` | Nein | Port des Servers, standardmäßig `3306` |
-| `DB_NAME` | Ja | Name der Entwicklungsdatenbank |
+| `DB_NAME` | Ja | Datenbankname; Buchstaben, Ziffern, Unterstriche und Bindestriche sind erlaubt |
 | `DB_USER` | Ja | Datenbankbenutzer |
 | `DB_PASSWORD` | Ja | Passwort des Datenbankbenutzers; darf leer sein |
 

@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($host === '' || !preg_match('/\A[A-Za-z0-9.:-]+\z/', $host)) {
                 $errors[] = 'Der Datenbank-Host enthält einen ungültigen Wert.';
             }
-            if ($databaseName === '' || !preg_match('/\A[A-Za-z0-9_]+\z/', $databaseName)) {
+            if (!Database::isValidDatabaseName($databaseName)) {
                 $errors[] = 'Der Datenbankname enthält einen ungültigen Wert.';
             }
             if (trim($databaseUser) === '') {

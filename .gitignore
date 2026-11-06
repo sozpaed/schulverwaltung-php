@@ -2,3 +2,4 @@
 /backup/
 /config.php
 /.config-setup-*.php
+*.ps1

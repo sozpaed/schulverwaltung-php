@@ -64,7 +64,7 @@ function backupDatabase(): void
             throw new RuntimeException($setting . ' fehlt in der Datenbankkonfiguration.');
         }
     }
-    if (!preg_match('/\A[A-Za-z0-9_]+\z/', $config['DB_NAME'])
+    if (!Database::isValidDatabaseName($config['DB_NAME'])
         || !preg_match('/\A[A-Za-z0-9.:-]+\z/', $config['DB_HOST'])) {
         throw new RuntimeException('Datenbankname oder Host enthält ungültige Zeichen.');
     }

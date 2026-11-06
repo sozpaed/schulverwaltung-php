@@ -28,6 +28,11 @@ final class Database
         return $configuration;
     }
 
+    public static function isValidDatabaseName(string $name): bool
+    {
+        return preg_match('/\A[A-Za-z0-9_-]+\z/', $name) === 1;
+    }
+
     public static function connectWithConfiguration(array $configuration): PDO
     {
         $host = self::requiredSetting('DB_HOST', $configuration);
@@ -43,7 +48,7 @@ final class Database
             throw new RuntimeException('DB_HOST enthält einen ungültigen Wert.');
         }
 
-        if (!preg_match('/\A[A-Za-z0-9_]+\z/', $database)) {
+        if (!self::isValidDatabaseName($database)) {
             throw new RuntimeException('DB_NAME enthält einen ungültigen Wert.');
         }
 
