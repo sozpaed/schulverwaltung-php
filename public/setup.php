@@ -135,12 +135,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $database = Database::connectWithConfiguration($configuration);
                 $serverVersion = (string) $database->query('SELECT VERSION()')->fetchColumn();
-                if (
-                    preg_match('/(?:^|[-\s])(\d+\.\d+\.\d+)-MariaDB\b/i', $serverVersion, $versionMatch) !== 1
-                    || version_compare($versionMatch[1], '10.5.0', '<')
-                ) {
+                if (Database::supportedServerType($serverVersion) === null) {
                     throw new RuntimeException(
-                        'Es wird MariaDB ab Version 10.5 benötigt. Erkannte Serverversion: ' . $serverVersion
+                        'Es wird MariaDB ab Version 10.5 oder MySQL 8.4 benötigt. Erkannte Serverversion: ' . $serverVersion
                     );
                 }
 
@@ -229,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 http_response_code(500);
                 $errors[] = 'Installation fehlgeschlagen: ' . $exception->getMessage();
                 if ($schemaStarted) {
-                    $errors[] = 'MariaDB führt CREATE TABLE sofort aus. Falls Tabellen angelegt wurden, prüfe die Datenbank manuell, bevor du den Installer erneut startest. Es wurden keine vorhandenen Tabellen gelöscht.';
+                    $errors[] = 'MariaDB und MySQL führen CREATE TABLE sofort aus. Falls Tabellen angelegt wurden, prüfe die Datenbank manuell, bevor du den Installer erneut startest. Es wurden keine vorhandenen Tabellen gelöscht.';
                 }
                 if ($temporaryConfigPath !== null && is_file($temporaryConfigPath)) {
                     if (!unlink($temporaryConfigPath)) {
@@ -259,7 +256,7 @@ $postedString = static function (string $name, string $default = ''): string {
 <body>
 <main>
     <h1>Schulverwaltung installieren</h1>
-    <p>Der Assistent prüft die Servervoraussetzungen, verbindet sich mit einer eigens angelegten, leeren MariaDB-Datenbank, richtet das Schema ein und erstellt das erste Administratorkonto.</p>
+    <p>Der Assistent prüft die Servervoraussetzungen, verbindet sich mit einer eigens angelegten, leeren MariaDB- oder MySQL-Datenbank, richtet das Schema ein und erstellt das erste Administratorkonto.</p>
     <p>Vorhandene Tabellen werden nicht überschrieben oder gelöscht. Die Datenbank muss zuvor bei deinem Hoster angelegt worden und leer sein.</p>
 
     <section aria-labelledby="requirements-heading">
@@ -272,7 +269,7 @@ $postedString = static function (string $name, string $default = ''): string {
                 </li>
             <?php endforeach; ?>
         </ul>
-        <p>Erforderlich ist außerdem MariaDB 10.5 oder neuer; die Serverversion wird beim Verbindungstest geprüft.</p>
+        <p>Erforderlich ist außerdem MariaDB 10.5 oder neuer oder MySQL 8.4; die Serverversion wird beim Verbindungstest geprüft.</p>
     </section>
 
     <?php if ($errors !== []): ?>

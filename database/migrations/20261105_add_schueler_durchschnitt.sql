@@ -8,4 +8,4 @@ ALTER TABLE schueler
                 2
             )
         END
-    ) PERSISTENT AFTER sachkunde;
+    ) STORED AFTER sachkunde;

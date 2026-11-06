@@ -1,11 +1,11 @@
 # PHP-Neuimplementierung
 
 Das Repository-Hauptverzeichnis enthält die aktive, frameworkfreie
-PHP-/MariaDB-Anwendung.
+PHP-Anwendung mit MariaDB- oder MySQL-Datenbank.
 
 ## Datenbankschema
 
-`database/schema.sql` legt das MariaDB-Schema für Benutzer, Schülerinnen,
+`database/schema.sql` legt das Datenbankschema für Benutzer, Schülerinnen,
 Erziehungsberechtigte, Gespräche, Auswahlkataloge, Gesprächs-Marketingkanäle
 und Exportprotokolle an.
 
@@ -15,7 +15,8 @@ angelegten Entwicklungsdatenbank ausgeführt werden.
 ## Voraussetzungen für den späteren Betrieb
 
 - PHP mit `PDO`, `pdo_mysql` und `openssl`
-- MariaDB mit InnoDB-Unterstützung
+- MariaDB ab 10.5 oder MySQL 8.4 (einschließlich Percona Server for MySQL 8.4)
+  mit InnoDB-Unterstützung
 - HTTPS im Produktivbetrieb
 
 Es werden vorerst weder Laravel noch Composer-Pakete vorausgesetzt.
@@ -40,13 +41,13 @@ eines Gesprächs und zum Hinzufügen einer Kontaktperson als Schaltflächen.
 
 ## Technisches Grundgerüst
 
-`src/Database.php` stellt eine PDO-Verbindung zur MariaDB her. Die Verbindung
+`src/Database.php` stellt eine PDO-Verbindung zur Datenbank her. Die Verbindung
 liest ihre Einstellungen zuerst aus Umgebungsvariablen des PHP-Prozesses und
 verwendet andernfalls die nicht versionierte `config.php` im Projekt-Hauptverzeichnis:
 
 | Variable | Erforderlich | Beschreibung |
 |---|---|---|
-| `DB_HOST` | Ja | Hostname oder IP-Adresse des MariaDB-Servers |
+| `DB_HOST` | Ja | Hostname oder IP-Adresse des Datenbankservers |
 | `DB_PORT` | Nein | Port des Servers, standardmäßig `3306` |
 | `DB_NAME` | Ja | Datenbankname; Buchstaben, Ziffern, Unterstriche und Bindestriche sind erlaubt |
 | `DB_USER` | Ja | Datenbankbenutzer |
@@ -77,7 +78,7 @@ Webverzeichnis ein.
 für die lokale Entwicklung. Wenn du sie nach `config.php` kopierst, wird der
 Installationsassistent übersprungen; die Datenbank und das Schema müssen dann
 selbst eingerichtet werden. Der Assistent prüft Voraussetzungen,
-Datenbankverbindung und MariaDB-Version, richtet das Schema ein und legt den
+Datenbankverbindung und Serverversion, richtet das Schema ein und legt den
 ersten Administrator an.
 Ungültige oder fehlende
 Verbindungswerte sowie Verbindungsfehler werden als Fehler gemeldet und nicht
@@ -109,7 +110,8 @@ Hinweise:
 - Das Projektverzeichnis (hier `/www/de.meine-domain.verwaltung/`)
   muss für PHP beschreibbar sein, damit `setup.php` `config.php` anlegen kann.
 - Nach der Installation `setup.php` aus `web/` löschen.
-- Die Domain muss per HTTPS erreichbar sein, PHP 8.3 und MariaDB werden benötigt.
+- Die Domain muss per HTTPS erreichbar sein; benötigt werden PHP 8.1 oder neuer
+  sowie ein unterstützter MariaDB- oder MySQL-Server.
 
 ## Datensicherung
 
@@ -124,7 +126,7 @@ Ort aufbewahrt und ihre Wiederherstellung regelmäßig getestet werden.
 
 `bin/backup.php` ist ausschließlich über die Kommandozeile ausführbar. Das Skript
 liest dieselbe Datenbankkonfiguration wie die Anwendung, überträgt den
-MariaDB-Dump unmittelbar an GnuPG und legt nur die verschlüsselte SQL-Datei im
+Datenbank-Dump unmittelbar an GnuPG und legt nur die verschlüsselte SQL-Datei im
 Verzeichnis `backup/` neben `public/` ab. Dort erzeugt es kurzzeitig auch eine
 Datei mit den Datenbankzugangsdaten und entfernt sie anschließend. Bei einem
 abgebrochenen Prozess können temporäre Dateien zurückbleiben; diese müssen
@@ -135,7 +137,9 @@ unter Windows müssen passende Zugriffsrechte separat gesetzt werden.
 
 Voraussetzungen, die insbesondere beim Hoster vorab zu prüfen sind:
 
-- PHP-CLI mit aktivierter Funktion `proc_open`, `mariadb-dump` und GnuPG;
+- PHP-CLI mit `pdo_mysql` und aktivierter Funktion `proc_open`, GnuPG und dem
+  zum Server passenden Dump-Programm (`mariadb-dump` für MariaDB, `mysqldump`
+  für MySQL 8.4);
   gegebenenfalls Cron oder eine andere Aufgabenplanung. Auf Windows können die
   ausführbaren Programme über die unten genannten Variablen angegeben werden.
 - Der Datenbankbenutzer benötigt Leserechte für die zu sichernden Daten und
@@ -159,7 +163,9 @@ Optional wählen `BACKUP_DIR` ein anderes geschütztes Verzeichnis,
 `BACKUP_DUMP_BIN` und `BACKUP_GPG_BIN` die ausführbaren Programme und `GNUPGHOME`
 den GnuPG-Schlüsselbund. Alle Pfade und Rechte müssen zur Betriebsumgebung
 passen; Umgebungsvariablen `DB_*` überschreiben wie bei der Anwendung die
-`config.php`.
+`config.php`. Der Servertyp wird über die Datenbankverbindung ermittelt. Auf
+MySQL wird `--set-gtid-purged=OFF` verwendet; das Backup ist für eine
+Wiederherstellung der Anwendungsdatenbank vorgesehen, nicht zur Replikation.
 
 Das Skript richtet keinen Zeitplan ein. Beispiel für einen täglich um 02:30 Uhr
 ausgeführten Cron-Eintrag, nachdem der einmalige Test funktioniert hat:
@@ -190,17 +196,19 @@ gespeicherte Zwei-Faktor-Geheimnisse nicht mehr entschlüsselt werden. Ein
 Datenbank-Backup und der zugehörige TOTP-Schlüssel müssen zusammen passen.
 
 Die Wiederherstellung zunächst in einer **separaten Testdatenbank** durchführen:
-mit dem privaten GnuPG-Schlüssel die Sicherung entschlüsseln und den SQL-Dump mit dem MariaDB-Client importieren;
+mit dem privaten GnuPG-Schlüssel die Sicherung entschlüsseln und den SQL-Dump mit
+dem passenden Datenbank-Client importieren;
 außerdem die gesicherten Dateien in einer isolierten Testumgebung wiederherstellen.
 Beispiel mit Bash unter Linux (Pfade und Datenbanknamen anpassen):
 
 ```bash
 set -o pipefail
 gpg --decrypt /pfad/zur/sicherung.sql.gpg | \
-  mariadb --defaults-extra-file=/sicherer/pfad/test-client.cnf testdatenbank
+  mysql --defaults-extra-file=/sicherer/pfad/test-client.cnf testdatenbank
 ```
 
-Die Testdatenbank muss vorher angelegt und leer sein; für den Import sind
+Für MariaDB kann stattdessen `mariadb` verwendet werden. Die Testdatenbank
+muss vorher angelegt und leer sein; für den Import sind
 entsprechende Rechte erforderlich. `test-client.cnf` enthält die Zugangsdaten im
 Abschnitt `[client]` und muss vor fremdem Zugriff geschützt sein. Der private
 GnuPG-Schlüssel muss dem ausführenden Konto zugänglich sein. Die Pipe kann bei
@@ -236,8 +244,9 @@ Für den lokalen Start aus dem Repository-Hauptverzeichnis:
 ```
 
 Bei einer frischen Hosting-Installation wird eine eigens im Hosting-Panel
-angelegte, leere MariaDB-Datenbank in `public/setup.php` konfiguriert. Der
-Assistent verlangt PHP 8.1 oder neuer und MariaDB 10.5 oder neuer. Er verändert
+angelegte, leere Datenbank in `public/setup.php` konfiguriert. Der
+Assistent verlangt PHP 8.1 oder neuer sowie MariaDB 10.5 oder neuer oder MySQL
+8.4. Er verändert
 oder löscht keine vorhandenen Tabellen und setzt deshalb eine leere Datenbank
 voraus. Nach erfolgreicher Einrichtung führt
 `setup.php` zurück zur Anmeldung und sperrt sich über die vorhandene
@@ -274,7 +283,7 @@ erhalten die Spalten über `database/schema.sql`.
 
 Für bestehende Datenbanken muss außerdem
 `database/migrations/20261105_add_schueler_durchschnitt.sql` einmalig ausgeführt
-werden. Der Notendurchschnitt ist eine gespeicherte MariaDB-Berechnung aus den
+werden. Der Notendurchschnitt ist eine gespeicherte Datenbankberechnung aus den
 vorhandenen Fachnoten Deutsch, Mathematik und Sachkunde; leere Noten werden
 ausgelassen. Arbeits- und Sozialverhalten zählen nicht in den Durchschnitt.
 

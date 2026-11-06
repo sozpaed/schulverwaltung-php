@@ -75,6 +75,13 @@ function backupDatabase(): void
     if (filter_var($port, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]) === false) {
         throw new RuntimeException('DB_PORT muss zwischen 1 und 65535 liegen.');
     }
+    $connection = Database::connectWithConfiguration($config);
+    $serverVersion = (string) $connection->query('SELECT VERSION()')->fetchColumn();
+    $serverType = Database::supportedServerType($serverVersion);
+    if ($serverType === null) {
+        throw new RuntimeException('Nicht unterstützte Datenbankversion: ' . $serverVersion);
+    }
+    $connection = null;
 
     $suffix = bin2hex(random_bytes(8));
     $base = 'schulverwaltung-' . gmdate('Ymd-His') . '-' . $suffix;
@@ -111,14 +118,20 @@ function backupDatabase(): void
         $options = null;
         unset($contents, $config['DB_PASSWORD']);
 
-        $dump = proc_open([
-            backupSetting('BACKUP_DUMP_BIN', 'mariadb-dump'),
+        $dumpCommand = [
+            backupSetting('BACKUP_DUMP_BIN', $serverType === 'mysql' ? 'mysqldump' : 'mariadb-dump'),
             '--defaults-file=' . $optionsPath,
             '--protocol=tcp', '--single-transaction', '--quick', '--skip-lock-tables',
-            '--no-tablespaces', '--default-character-set=utf8mb4', '--', $config['DB_NAME'],
-        ], [0 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => $dumpErrors], $dumpPipes);
+            '--no-tablespaces', '--default-character-set=utf8mb4',
+        ];
+        if ($serverType === 'mysql') {
+            $dumpCommand[] = '--set-gtid-purged=OFF';
+        }
+        $dumpCommand[] = '--';
+        $dumpCommand[] = $config['DB_NAME'];
+        $dump = proc_open($dumpCommand, [0 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => $dumpErrors], $dumpPipes);
         if (!is_resource($dump)) {
-            throw new RuntimeException('mariadb-dump konnte nicht gestartet werden.');
+            throw new RuntimeException('Das Datenbank-Dump-Programm konnte nicht gestartet werden.');
         }
         $gpg = proc_open([
             backupSetting('BACKUP_GPG_BIN', 'gpg'), '--batch', '--no-tty', '--trust-model', 'always',
@@ -197,7 +210,7 @@ function backupDatabase(): void
 
 try {
     backupDatabase();
-} catch (RuntimeException $exception) {
+} catch (PDOException | RuntimeException $exception) {
     fwrite(STDERR, "Backup-Fehler: " . $exception->getMessage() . "\n");
     exit(1);
 }

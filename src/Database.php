@@ -33,6 +33,24 @@ final class Database
         return preg_match('/\A[A-Za-z0-9_-]+\z/', $name) === 1;
     }
 
+    public static function supportedServerType(string $version): ?string
+    {
+        if (stripos($version, 'MariaDB') !== false) {
+            if (preg_match('/(?:^|[-\s])(\d+\.\d+\.\d+)-MariaDB\b/i', $version, $match) === 1
+                && version_compare($match[1], '10.5.0', '>=')) {
+                return 'mariadb';
+            }
+
+            return null;
+        }
+
+        if (preg_match('/\A(8\.4\.\d+)(?:[-+][A-Za-z0-9._+-]+)?\z/', $version) === 1) {
+            return 'mysql';
+        }
+
+        return null;
+    }
+
     public static function connectWithConfiguration(array $configuration): PDO
     {
         $host = self::requiredSetting('DB_HOST', $configuration);

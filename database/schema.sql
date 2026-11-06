@@ -71,7 +71,7 @@ CREATE TABLE schueler (
                 2
             )
         END
-    ) PERSISTENT,
+    ) STORED,
     av TINYINT UNSIGNED NULL,
     sv TINYINT UNSIGNED NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'in_pruefung',
