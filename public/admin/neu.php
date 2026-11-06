@@ -15,6 +15,7 @@ $isActive = true;
 $isSuperuser = false;
 $canExport = false;
 $canDeleteCatalogs = false;
+$canDeleteStudents = false;
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -61,8 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $canDeleteCatalogs = !array_key_exists('can_delete_catalogs', $_POST)
             ? false
             : ($_POST['can_delete_catalogs'] === '1' ? true : null);
+        $canDeleteStudents = !array_key_exists('can_delete_students', $_POST)
+            ? false
+            : ($_POST['can_delete_students'] === '1' ? true : null);
 
-        if ($isActive === null || $isSuperuser === null || $canExport === null || $canDeleteCatalogs === null) {
+        if ($isActive === null || $isSuperuser === null || $canExport === null || $canDeleteCatalogs === null || $canDeleteStudents === null) {
             $errors[] = 'Ungültige Berechtigungsauswahl.';
         }
 
@@ -78,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($errors === []) {
             $insertStatement = $database->prepare(
-                'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs)
-                 VALUES (:username, :password_hash, :is_active, :is_superuser, :can_export, :can_delete_catalogs)'
+                'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students)
+                 VALUES (:username, :password_hash, :is_active, :is_superuser, :can_export, :can_delete_catalogs, :can_delete_students)'
             );
             try {
                 $insertStatement->execute([
@@ -89,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'is_superuser' => (int) $isSuperuser,
                     'can_export' => (int) $canExport,
                     'can_delete_catalogs' => (int) $canDeleteCatalogs,
+                    'can_delete_students' => (int) $canDeleteStudents,
                 ]);
             } catch (PDOException $exception) {
                 if ($exception->getCode() !== '23000') {
@@ -166,6 +171,10 @@ $csrfToken = Auth::csrfToken();
             <p>
                 <input id="can_delete_catalogs" name="can_delete_catalogs" type="checkbox" value="1"<?= $canDeleteCatalogs ? ' checked' : '' ?>>
                 <label for="can_delete_catalogs">Auswahllisteneinträge löschen erlauben</label>
+            </p>
+            <p>
+                <input id="can_delete_students" name="can_delete_students" type="checkbox" value="1"<?= $canDeleteStudents ? ' checked' : '' ?>>
+                <label for="can_delete_students">Schülerinnen löschen erlauben</label>
             </p>
         </fieldset>
         <button type="submit">Benutzer anlegen</button>

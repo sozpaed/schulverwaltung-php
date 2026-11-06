@@ -6,6 +6,7 @@ CREATE TABLE app_users (
     is_superuser TINYINT(1) NOT NULL DEFAULT 0,
     can_export TINYINT(1) NOT NULL DEFAULT 0,
     can_delete_catalogs TINYINT(1) NOT NULL DEFAULT 0,
+    can_delete_students TINYINT(1) NOT NULL DEFAULT 0,
     totp_secret VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
     totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
     totp_last_counter BIGINT UNSIGNED NULL,
@@ -130,8 +131,8 @@ CREATE TABLE erziehungsberechtigte (
     CONSTRAINT ck_erziehungsberechtigte_plz CHECK (plz IS NULL OR plz REGEXP '^[0-9]{5}$'),
     CONSTRAINT ck_erziehungsberechtigte_beziehung
         CHECK (beziehung IN ('mutter', 'vater', 'vormund', 'pflegeeltern', 'sonstiges')),
-    CONSTRAINT fk_erziehungsberechtigte_schueler FOREIGN KEY (schueler_id)
-        REFERENCES schueler (id) ON DELETE CASCADE,
+    CONSTRAINT fk_erziehungsberechtigte_schueler_restrict FOREIGN KEY (schueler_id)
+        REFERENCES schueler (id) ON DELETE RESTRICT,
     CONSTRAINT fk_erziehungsberechtigte_religion_restrict FOREIGN KEY (religion_id)
         REFERENCES religionen (id) ON DELETE RESTRICT,
     CONSTRAINT fk_erziehungsberechtigte_staatsangehoerigkeit_restrict FOREIGN KEY (staatsangehoerigkeit_id)

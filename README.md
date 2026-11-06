@@ -362,9 +362,9 @@ Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar.
 Nach dem ersten Administrator-Setup ab- und wieder anmelden. Der Link
 **Benutzerverwaltung** erscheint auf der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
 deaktiviert und gelöscht sowie Administrator- und Exportrechte vergeben oder
-entzogen werden. Zusätzlich kann das Recht zum Löschen von Auswahllisteneinträgen
-vergeben werden; es ist zunächst für alle Benutzer, einschließlich Administratoren,
-deaktiviert. Bei der Bearbeitung bleibt das Passwort unverändert, wenn das
+entzogen werden. Zusätzlich können separate Rechte zum Löschen von
+Auswahllisteneinträgen und Schülerinnen vergeben werden; beide sind zunächst
+für alle Benutzer, einschließlich Administratoren, deaktiviert. Bei der Bearbeitung bleibt das Passwort unverändert, wenn das
 Passwortfeld leer gelassen wird; ein neu gesetztes Passwort muss mindestens 12
 Zeichen und darf höchstens 72 Bytes umfassen. Aus Sicherheitsgründen kann ein Administrator weder das
 eigene Konto deaktivieren noch sich selbst die Administratorrechte entziehen
@@ -406,6 +406,23 @@ Adresse, Religion oder Staatsangehörigkeit aus dem Datensatz der Schülerin.
 Aufnahmegespräche lassen sich ebenfalls in der Schülerinnenakte erfassen und
 bearbeiten sowie über die zentrale Gesprächsliste suchen und bearbeiten.
 Marketingkanäle können mehreren Gesprächen zugeordnet werden.
+
+Mit dem Recht „Schülerinnen löschen“ erscheint in der Übersicht ein
+Mülleimer-Symbol. Das endgültige Löschen muss auf einer eigenen Seite bestätigt
+werden. Solange Kontaktpersonen oder Gespräche zugeordnet sind, blockiert die
+Datenbank das Löschen; zugehörige Daten werden nicht automatisch gelöscht. Die
+Anwendung bietet derzeit keine Löschfunktion für diese Kontaktpersonen und
+Gespräche.
+
+Für bestehende Datenbanken vor dem Einsatz der Löschfunktion zuerst eine
+Sicherung anlegen und dann
+`database/migrations/20261106_student_delete_permission.sql` mit ALTER-Rechten
+ausführen, bevor die neuen PHP-Dateien bereitgestellt werden. Die Migration
+ändert den Fremdschlüssel der Kontaktpersonen auf `RESTRICT` und ergänzt das
+standardmäßig deaktivierte Recht `can_delete_students`. Datenbankänderungen
+werden unmittelbar ausgeführt; bei einem Fehler den Zustand beider Änderungen
+prüfen und nicht die gesamte Migration blind wiederholen. Danach kann ein
+Administrator das Recht in der Benutzerverwaltung vergeben.
 
 ### Daten exportieren
 
