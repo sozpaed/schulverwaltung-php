@@ -8,24 +8,44 @@ use Schulverwaltung\Database;
 require_once __DIR__ . '/security_headers.php';
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Auth.php';
+require_once __DIR__ . '/SessionPolicy.php';
 require_once __DIR__ . '/LoginThrottle.php';
 require_once __DIR__ . '/TwoFactor.php';
 require_once __DIR__ . '/helpers.php';
 
 ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
+ini_set('session.gc_maxlifetime', (string) \Schulverwaltung\SessionPolicy::ABSOLUTE_SECONDS);
 session_cache_limiter('');
 
+$configuration = Database::configuration();
+$insecureCookies = $configuration['DEV_INSECURE_COOKIES'] ?? false;
+if (!is_bool($insecureCookies)) {
+    throw new RuntimeException('DEV_INSECURE_COOKIES muss ein boolescher Wert sein.');
+}
+if ($insecureCookies && (!in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)
+    || !in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1', '::1'], true))) {
+    throw new RuntimeException('DEV_INSECURE_COOKIES ist nur für lokale Anfragen zulässig.');
+}
+session_name($insecureCookies ? 'sv_dev_session' : '__Host-sv_session');
 session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
     'httponly' => true,
-    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'samesite' => 'Lax',
+    'secure' => !$insecureCookies,
+    'samesite' => 'Strict',
 ]);
 
 session_start();
 
 $database = Database::connect();
 $user = Auth::user($database);
+if (isset($_SESSION['session_expired'])
+    && (($_SERVER['SCRIPT_NAME'] ?? '') !== '/index.php' || $_SERVER['REQUEST_METHOD'] !== 'GET')) {
+    header('Location: /', true, 303);
+    exit;
+}
 
 function renderAccountMenu(array $user): string
 {

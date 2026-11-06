@@ -39,7 +39,10 @@ if ($action === 'promote') {
     }
 
     $statement = $database->prepare(
-        'UPDATE app_users SET is_superuser = 1, can_export = 1 WHERE id = :id'
+        'UPDATE app_users
+         SET sitzungs_version = sitzungs_version + (is_superuser <> 1 OR can_export <> 1),
+             is_superuser = 1, can_export = 1
+         WHERE id = :id'
     );
     $statement->execute(['id' => $existingUser['id']]);
     fwrite(STDOUT, sprintf(

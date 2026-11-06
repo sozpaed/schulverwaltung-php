@@ -22,6 +22,8 @@ if (!is_file(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php') && !$databas
 require_once __DIR__ . '/../src/bootstrap.php';
 
 $error = '';
+$sessionExpired = !empty($_SESSION['session_expired']);
+unset($_SESSION['session_expired']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Auth::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
@@ -67,6 +69,9 @@ $csrfToken = Auth::csrfToken();
 <main>
     <?php if ($user === null): ?>
         <h1>Anmeldung</h1>
+        <?php if ($sessionExpired): ?>
+            <p role="status">Du wurdest aus Sicherheitsgründen abgemeldet.</p>
+        <?php endif; ?>
         <?php if ($error !== ''): ?>
             <p role="alert"><?= escape($error) ?></p>
         <?php endif; ?>

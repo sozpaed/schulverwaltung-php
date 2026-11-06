@@ -129,6 +129,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'can_delete_catalogs' => (int) $canDeleteCatalogs,
                 'can_delete_students' => (int) $canDeleteStudents,
                 'id' => $targetId,
+                'version_active' => (int) $isActive,
+                'version_superuser' => (int) $isSuperuser,
+                'version_export' => (int) $canExport,
+                'version_catalogs' => (int) $canDeleteCatalogs,
+                'version_students' => (int) $canDeleteStudents,
+                'version_password' => (int) ($password !== ''),
             ];
             $passwordSql = '';
             if ($password !== '') {
@@ -137,7 +143,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $updateStatement = $database->prepare(
                 'UPDATE app_users
-                 SET username = :username, is_active = :is_active,
+                 SET sitzungs_version = sitzungs_version + (
+                         is_active <> :version_active OR is_superuser <> :version_superuser
+                         OR can_export <> :version_export OR can_delete_catalogs <> :version_catalogs
+                         OR can_delete_students <> :version_students OR :version_password = 1
+                     ),
+                     username = :username, is_active = :is_active,
                      is_superuser = :is_superuser, can_export = :can_export,
                      can_delete_catalogs = :can_delete_catalogs, can_delete_students = :can_delete_students' . $passwordSql . '
                  WHERE id = :id'

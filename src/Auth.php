@@ -26,7 +26,7 @@ final class Auth
             $failureCount = max($userFailures, $ipFailures) + 1;
             $statement = $database->prepare(
                 'SELECT id, username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students,
-                        totp_secret, totp_enabled, totp_last_counter
+                        totp_secret, totp_enabled, totp_last_counter, sitzungs_version
                  FROM app_users
                  WHERE username = :username'
             );
@@ -70,8 +70,11 @@ final class Auth
             LoginThrottle::cleanup($database);
         }
 
-        session_regenerate_id(true);
+        if (!session_regenerate_id(true)) {
+            throw new \RuntimeException('Die Sitzungs-ID konnte nicht erneuert werden.');
+        }
         unset($_SESSION['csrf_token']);
+        $now = time();
         $_SESSION['user'] = [
             'id' => (int) $user['id'],
             'username' => $user['username'],
@@ -79,6 +82,10 @@ final class Auth
             'can_export' => (bool) $user['can_export'],
             'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'can_delete_students' => (bool) $user['can_delete_students'],
+            'sitzungs_version' => (int) $user['sitzungs_version'],
+            'angemeldet_am' => $now,
+            'letzte_aktivitaet' => $now,
+            'erneuert_am' => $now,
         ];
 
         return true;
@@ -92,19 +99,35 @@ final class Auth
             return null;
         }
 
+        $now = time();
+        if (!isset($sessionUser['angemeldet_am'], $sessionUser['letzte_aktivitaet'], $sessionUser['erneuert_am'], $sessionUser['sitzungs_version'])
+            || !is_int($sessionUser['angemeldet_am']) || !is_int($sessionUser['letzte_aktivitaet'])
+            || !is_int($sessionUser['erneuert_am']) || !is_int($sessionUser['sitzungs_version'])
+            || SessionPolicy::expired($now, $sessionUser['angemeldet_am'], $sessionUser['letzte_aktivitaet'])) {
+            self::expireSession();
+            return null;
+        }
+
         $statement = $database->prepare(
-            'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students, totp_enabled
+            'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students, totp_enabled, sitzungs_version
              FROM app_users
              WHERE id = :id'
         );
         $statement->execute(['id' => $sessionUser['id']]);
         $user = $statement->fetch();
 
-        if ($user === false || !(bool) $user['is_active']) {
-            self::logout();
+        if ($user === false || !(bool) $user['is_active']
+            || (int) $user['sitzungs_version'] !== $sessionUser['sitzungs_version']) {
+            self::expireSession();
             return null;
         }
 
+        if (SessionPolicy::shouldRegenerate($now, $sessionUser['erneuert_am'])) {
+            if (!session_regenerate_id(true)) {
+                throw new \RuntimeException('Die Sitzungs-ID konnte nicht erneuert werden.');
+            }
+            $sessionUser['erneuert_am'] = $now;
+        }
         $currentUser = [
             'id' => (int) $user['id'],
             'username' => $user['username'],
@@ -113,6 +136,10 @@ final class Auth
             'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'can_delete_students' => (bool) $user['can_delete_students'],
             'totp_enabled' => (bool) $user['totp_enabled'],
+            'sitzungs_version' => (int) $user['sitzungs_version'],
+            'angemeldet_am' => $sessionUser['angemeldet_am'],
+            'letzte_aktivitaet' => $now,
+            'erneuert_am' => $sessionUser['erneuert_am'],
         ];
         $_SESSION['user'] = $currentUser;
 
@@ -138,6 +165,7 @@ final class Auth
 
     public static function logout(): void
     {
+        header('Clear-Site-Data: "cache", "storage"');
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {
@@ -153,6 +181,15 @@ final class Auth
         }
 
         session_destroy();
+    }
+
+    private static function expireSession(): void
+    {
+        self::logout();
+        if (!session_start()) {
+            throw new \RuntimeException('Eine neue Sitzung konnte nicht gestartet werden.');
+        }
+        $_SESSION['session_expired'] = true;
     }
 
     public static function csrfToken(): string

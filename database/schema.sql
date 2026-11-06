@@ -7,6 +7,7 @@ CREATE TABLE app_users (
     can_export TINYINT(1) NOT NULL DEFAULT 0,
     can_delete_catalogs TINYINT(1) NOT NULL DEFAULT 0,
     can_delete_students TINYINT(1) NOT NULL DEFAULT 0,
+    sitzungs_version INT UNSIGNED NOT NULL DEFAULT 0,
     totp_secret VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
     totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
     totp_last_counter BIGINT UNSIGNED NULL,

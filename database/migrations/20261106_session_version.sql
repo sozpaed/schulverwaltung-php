@@ -1,0 +1,2 @@
+ALTER TABLE app_users
+    ADD COLUMN sitzungs_version INT UNSIGNED NOT NULL DEFAULT 0;

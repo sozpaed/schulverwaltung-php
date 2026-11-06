@@ -262,7 +262,7 @@ werden. Das Terminal geöffnet lassen; mit `Strg+C` wird der Server beendet.
 Die Entwicklungsumgebung darf nicht öffentlich erreichbar sein. Im Produktivbetrieb
 muss HTTPS verwendet werden. Die Anmeldung prüft aktive Benutzer bei jedem
 geschützten Aufruf erneut; Formulare sind mit CSRF-Tokens geschützt und
-Session-Cookies mit `HttpOnly` und `SameSite=Lax` konfiguriert.
+Session-Cookies mit `HttpOnly` und `SameSite=Strict` konfiguriert.
 
 ### Sicherheits-Header
 
@@ -307,6 +307,29 @@ Anmeldungen nicht möglich. Der Anwendungsbenutzer benötigt SELECT-, INSERT- un
 DELETE-Rechte auf der Tabelle sowie Zugriff auf MySQL-/MariaDB-Benutzersperren
 (`GET_LOCK`, `RELEASE_LOCK`). Bei Installationen mit vorgeschaltetem Proxy die
 angezeigten IP-Adressen und die gemeinsame Sperrwirkung prüfen.
+
+### Sitzungen
+
+Sitzungen laufen nach 30 Minuten Inaktivität oder spätestens acht Stunden nach
+der Anmeldung ab. Die Sitzungs-ID wird nach 15 Minuten bei der nächsten Anfrage
+erneuert. Passwort- und 2FA-Änderungen sowie Änderungen an Status oder Rechten
+beenden andere Sitzungen beim nächsten Aufruf. Die eigene Sitzung bleibt bei
+Änderungen in den Kontoeinstellungen angemeldet. Ein administrativer 2FA-Reset
+ist derzeit nicht vorhanden.
+
+Für den Produktivbetrieb wird ein auf HTTPS beschränktes
+`__Host-sv_session`-Cookie mit `Secure`, `HttpOnly`, `SameSite=Strict` und
+Pfad `/` verwendet. Nach der Umstellung müssen sich Benutzer erneut anmelden.
+Nur für die lokale Entwicklung ohne HTTPS kann in der lokalen `config.php`
+zusätzlich `'DEV_INSECURE_COOKIES' => true` gesetzt werden. Dann heißt das
+Cookie `sv_dev_session` und ist nicht transportgeschützt. Diese Einstellung
+niemals auf einem öffentlich erreichbaren Server verwenden.
+Der Installationsassistent verwendet vor Abschluss der Einrichtung eine eigene
+Sitzung und ist deshalb von diesen Einstellungen getrennt.
+
+Vor Bereitstellung des neuen Codes eine Datenbanksicherung erstellen und
+`database/migrations/20261106_session_version.sql` einmalig ausführen. GitHub
+führt Migrationen nicht aus; ohne die Spalte funktioniert die Anmeldung nicht.
 
 ### Kontoeinstellungen und Zwei-Faktor-Anmeldung
 

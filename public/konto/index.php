@@ -54,14 +54,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $errors[] = 'Das aktuelle Passwort ist nicht korrekt.';
                     } else {
                         $updateStatement = $database->prepare(
-                            'UPDATE app_users SET password_hash = :password_hash WHERE id = :id'
+                            'UPDATE app_users SET password_hash = :password_hash, sitzungs_version = sitzungs_version + 1
+                             WHERE id = :id AND sitzungs_version = :version'
                         );
                         $updateStatement->execute([
                             'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
                             'id' => $user['id'],
+                            'version' => $user['sitzungs_version'],
                         ]);
-                        session_regenerate_id(true);
-                        $success = 'Das Passwort wurde geändert.';
+                        if ($updateStatement->rowCount() !== 1) {
+                            $errors[] = 'Das Passwort konnte nicht geändert werden. Bitte melde dich erneut an.';
+                        } else {
+                            $_SESSION['user']['sitzungs_version']++;
+                            if (!session_regenerate_id(true)) {
+                                throw new RuntimeException('Die Sitzungs-ID konnte nicht erneuert werden.');
+                            }
+                            $_SESSION['user']['erneuert_am'] = time();
+                            $success = 'Das Passwort wurde geändert.';
+                        }
                     }
                 }
             }
@@ -88,13 +98,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $encryptedSecret = TwoFactor::encryptSecret($pendingSecret, $user['id']);
                     $updateStatement = $database->prepare(
                         'UPDATE app_users
-                         SET totp_secret = :secret, totp_enabled = 1, totp_last_counter = :counter
-                         WHERE id = :id AND totp_enabled = 0'
+                         SET totp_secret = :secret, totp_enabled = 1, totp_last_counter = :counter,
+                             sitzungs_version = sitzungs_version + 1
+                         WHERE id = :id AND totp_enabled = 0 AND sitzungs_version = :version'
                     );
                     $updateStatement->execute([
                         'secret' => $encryptedSecret,
                         'counter' => $counter,
                         'id' => $user['id'],
+                        'version' => $user['sitzungs_version'],
                     ]);
 
                     if ($updateStatement->rowCount() !== 1) {
@@ -104,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $pendingSecret = null;
                         $user['totp_enabled'] = true;
                         $_SESSION['user']['totp_enabled'] = true;
+                        $_SESSION['user']['sitzungs_version']++;
                         $success = 'Die Zwei-Faktor-Anmeldung ist jetzt aktiviert.';
                     }
                 }
@@ -141,13 +154,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $updateStatement = $database->prepare(
                             'UPDATE app_users
-                             SET totp_secret = NULL, totp_enabled = 0, totp_last_counter = NULL
-                             WHERE id = :id AND totp_enabled = 1
+                             SET totp_secret = NULL, totp_enabled = 0, totp_last_counter = NULL,
+                                 sitzungs_version = sitzungs_version + 1
+                             WHERE id = :id AND totp_enabled = 1 AND sitzungs_version = :version
                                AND (totp_last_counter IS NULL OR totp_last_counter < :counter)'
                         );
                         $updateStatement->execute([
                             'id' => $user['id'],
                             'counter' => $counter,
+                            'version' => $user['sitzungs_version'],
                         ]);
 
                         if ($updateStatement->rowCount() !== 1) {
@@ -156,6 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             unset($_SESSION['totp_pending_secret']);
                             $user['totp_enabled'] = false;
                             $_SESSION['user']['totp_enabled'] = false;
+                            $_SESSION['user']['sitzungs_version']++;
                             $success = 'Die Zwei-Faktor-Anmeldung wurde deaktiviert.';
                         }
                     }
