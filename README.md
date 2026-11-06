@@ -65,8 +65,8 @@ Webverzeichnis ein.
 > Der Installer braucht dafür einmalig die Rechte `CREATE`, `ALTER`, `INDEX`,
 > `REFERENCES`, `SELECT`, `INSERT`, `UPDATE` und `DELETE` auf diese Datenbank. Der
 > Benutzer muss vorher in der Datenbank bzw. im Kundenbereich des Hosters angelegt
-> sein; `setup.php` legt keine Benutzer an. Bei Host Europe ist der dort angelegte
-> Datenbankbenutzer dafür geeignet.
+> sein; `setup.php` legt keine Benutzer an. Ob ein Hoster-Benutzer diese Rechte
+> besitzt und auf die betreffende Datenbank beschränkt ist, muss geprüft werden.
 >
 > Wer einen eigenen Server betreibt, richtet nach der Installation (und für
 > Migrationen mit einem separaten Administratorkonto) besser einen zweiten
@@ -97,7 +97,7 @@ Webverzeichnis `/www/de.meine-domain.verwaltung/web` ist:
 | Lokal | Auf dem Server |
 |---|---|
 | Inhalt von `public/` (inkl. `.htaccess`, `assets/`, `setup.php`) | `/www/de.meine-domain.verwaltung/web/` |
-| `src/`, `database/` | `/www/de.meine-domain.verwaltung/` |
+| `src/`, `database/`, `bin/` | `/www/de.meine-domain.verwaltung/` |
 | `config.php` (vom Installer erzeugt) | `/www/de.meine-domain.verwaltung/` |
 | `storage/` (TOTP-Schlüssel, wird automatisch angelegt) | `/www/de.meine-domain.verwaltung/storage/` |
 
@@ -110,6 +110,106 @@ Hinweise:
   muss für PHP beschreibbar sein, damit `setup.php` `config.php` anlegen kann.
 - Nach der Installation `setup.php` aus `web/` löschen.
 - Die Domain muss per HTTPS erreichbar sein, PHP 8.3 und MariaDB werden benötigt.
+
+## Datensicherung
+
+Vor dem Produktivbetrieb muss mit der IT-Firma ein Sicherungs- und
+Wiederherstellungskonzept vereinbart werden. Hoster-Backups, ihre Häufigkeit,
+Aufbewahrung und Wiederherstellungsmöglichkeiten sind beim Hoster zu prüfen.
+Eine Sicherung auf demselben Hosting-Account schützt nicht gegen dessen Ausfall
+oder Kompromittierung. Verschlüsselte Kopien müssen zusätzlich an einem getrennten
+Ort aufbewahrt und ihre Wiederherstellung regelmäßig getestet werden.
+
+### Verschlüsselte Datenbanksicherung
+
+`bin/backup.php` ist ausschließlich über die Kommandozeile ausführbar. Das Skript
+liest dieselbe Datenbankkonfiguration wie die Anwendung, überträgt den
+MariaDB-Dump unmittelbar an GnuPG und legt nur die verschlüsselte SQL-Datei im
+Verzeichnis `backup/` neben `public/` ab. Dort erzeugt es kurzzeitig auch eine
+Datei mit den Datenbankzugangsdaten und entfernt sie anschließend. Bei einem
+abgebrochenen Prozess können temporäre Dateien zurückbleiben; diese müssen
+geschützt und nach Prüfung entfernt werden. Das Backup-Verzeichnis wird von Git
+ignoriert und muss außerhalb **jedes** öffentlichen Webverzeichnisses liegen.
+Unter Unix darf es nur für seinen Eigentümer zugänglich sein (`chmod 700`);
+unter Windows müssen passende Zugriffsrechte separat gesetzt werden.
+
+Voraussetzungen, die insbesondere beim Hoster vorab zu prüfen sind:
+
+- PHP-CLI mit aktivierter Funktion `proc_open`, `mariadb-dump` und GnuPG;
+  gegebenenfalls Cron oder eine andere Aufgabenplanung. Auf Windows können die
+  ausführbaren Programme über die unten genannten Variablen angegeben werden.
+- Der Datenbankbenutzer benötigt Leserechte für die zu sichernden Daten und
+  gegebenenfalls Rechte wie `SHOW VIEW` und `TRIGGER`. Ein Test muss bestätigen,
+  dass alle benötigten Objekte gesichert werden.
+- Ein GnuPG-Schlüsselpaar: Nur der **öffentliche** Schlüssel wird im Schlüsselbund
+  des ausführenden Betriebssystemkontos importiert. Den vollständigen
+  Fingerabdruck aus einer vertrauenswürdigen Quelle prüfen. Den privaten Schlüssel
+  und dessen Passphrase getrennt und sicher aufbewahren; ohne ihn ist eine
+  Wiederherstellung nicht möglich. Das Skript vertraut dem angegebenen Schlüssel
+  für die Verschlüsselung ausdrücklich.
+
+Einmaliger Test unter Linux, mit den eigenen Pfaden und dem geprüften vollständigen
+Fingerabdruck statt des Platzhalters:
+
+```sh
+BACKUP_GPG_FINGERPRINT=VOLLSTAENDIGER_FINGERABDRUCK /usr/bin/php /pfad/zur/anwendung/bin/backup.php
+```
+
+Optional wählen `BACKUP_DIR` ein anderes geschütztes Verzeichnis,
+`BACKUP_DUMP_BIN` und `BACKUP_GPG_BIN` die ausführbaren Programme und `GNUPGHOME`
+den GnuPG-Schlüsselbund. Alle Pfade und Rechte müssen zur Betriebsumgebung
+passen; Umgebungsvariablen `DB_*` überschreiben wie bei der Anwendung die
+`config.php`.
+
+Das Skript richtet keinen Zeitplan ein. Beispiel für einen täglich um 02:30 Uhr
+ausgeführten Cron-Eintrag, nachdem der einmalige Test funktioniert hat:
+
+```cron
+30 2 * * * BACKUP_GPG_FINGERPRINT=VOLLSTAENDIGER_FINGERABDRUCK /usr/bin/php /pfad/zur/anwendung/bin/backup.php
+```
+
+Den Schlüssel im Schlüsselbund des Cron-Benutzers bereitstellen und dessen
+Arbeitsumgebung, Ausgabe und Fehler überwachen. Das Skript liefert bei Fehlern
+einen Exit-Code ungleich null. Nach einem erfolgreichen Backup löscht es
+ausschließlich eigene Sicherungsdateien, die älter als 30 Tage sind. Schlägt die Erstellung oder Verschlüsselung fehl, werden
+keine alten Sicherungen gelöscht. Falls das Löschen selbst fehlschlägt, meldet
+das Skript einen Fehler; gegebenenfalls wurden bereits einzelne alte Dateien
+entfernt.
+
+Der Dump verwendet `--single-transaction` für einen konsistenten Stand von
+InnoDB-Tabellen; während der Sicherung dürfen keine Schemaänderungen oder
+Migrationen ausgeführt werden. Nichttransaktionale Tabellen und künftig
+hinzugefügte Datenbankobjekte müssen gesondert beurteilt werden.
+
+### Wiederherstellung und weitere Dateien
+
+Die Datenbanksicherung umfasst **nicht** `config.php`, `storage/totp.key` oder
+andere Dateien. Konfiguration und insbesondere den TOTP-Schlüssel separat
+verschlüsselt und zugriffsgeschützt sichern. Ohne den passenden Schlüssel können
+gespeicherte Zwei-Faktor-Geheimnisse nicht mehr entschlüsselt werden. Ein
+Datenbank-Backup und der zugehörige TOTP-Schlüssel müssen zusammen passen.
+
+Die Wiederherstellung zunächst in einer **separaten Testdatenbank** durchführen:
+mit dem privaten GnuPG-Schlüssel die Sicherung entschlüsseln und den SQL-Dump mit dem MariaDB-Client importieren;
+außerdem die gesicherten Dateien in einer isolierten Testumgebung wiederherstellen.
+Beispiel mit Bash unter Linux (Pfade und Datenbanknamen anpassen):
+
+```bash
+set -o pipefail
+gpg --decrypt /pfad/zur/sicherung.sql.gpg | \
+  mariadb --defaults-extra-file=/sicherer/pfad/test-client.cnf testdatenbank
+```
+
+Die Testdatenbank muss vorher angelegt und leer sein; für den Import sind
+entsprechende Rechte erforderlich. `test-client.cnf` enthält die Zugangsdaten im
+Abschnitt `[client]` und muss vor fremdem Zugriff geschützt sein. Der private
+GnuPG-Schlüssel muss dem ausführenden Konto zugänglich sein. Die Pipe kann bei
+Fehlern einen teilweisen Import hinterlassen; Exit-Status und Ausgabe prüfen und
+die Testdatenbank gegebenenfalls neu anlegen. Zugangsdaten nicht in Befehlszeilen
+schreiben. Die IT-Firma sollte das konkrete Verfahren dokumentieren und
+regelmäßig prüfen, ob Anmeldung, Daten und Zwei-Faktor-Anmeldung funktionieren.
+Eine Wiederherstellung in die Produktivdatenbank darf nur geplant und nach
+vorheriger Sicherung erfolgen.
 
 ## Lokaler Start
 

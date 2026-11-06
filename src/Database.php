@@ -12,6 +12,12 @@ final class Database
     public static function connect(): PDO
     {
         $configuration = self::configuration();
+        return self::connectWithConfiguration($configuration);
+    }
+
+    public static function configuration(): array
+    {
+        $configuration = self::configurationFromFile();
         foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $name) {
             $environmentValue = getenv($name);
             if ($environmentValue !== false) {
@@ -19,7 +25,7 @@ final class Database
             }
         }
 
-        return self::connectWithConfiguration($configuration);
+        return $configuration;
     }
 
     public static function connectWithConfiguration(array $configuration): PDO
@@ -68,7 +74,7 @@ final class Database
         ]);
     }
 
-    private static function configuration(): array
+    private static function configurationFromFile(): array
     {
         $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php';
         if (!is_file($path)) {
