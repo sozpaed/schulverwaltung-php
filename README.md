@@ -560,9 +560,14 @@ deren Lizenz liegt unter `src/vendor/fpdf/LICENSE.txt`. Filterung und
 PDF-Erstellung benötigen keine Datenbankänderung. Auch PDF-Exporte werden in
 `export_protokolle` protokolliert.
 
-Die Statistikseite zeigt Gesamtzahlen für Schülerinnen, Erziehungsberechtigte,
-Gespräche und Warteliste sowie Kreisdiagramme zu Schulform und Status. Angezeigt
-werden nur zusammengefasste Werte, keine Namen oder Einzeldatensätze.
+Die Statistikseite enthält Tabellen und farbige Ringdiagramme nach Status,
+Klasse und Schulform. Der äußere Ring zeigt die Gesamtzahl, der mittlere Ring
+die Warteliste und der innere Ring die um Wartelistenplätze bereinigte Zahl.
+Die Farben sind den Kategorien in der Tabelle zugeordnet. „Bereinigt“ bedeutet
+Gesamtzahl abzüglich Warteliste; bei Erziehungsberechtigten und Gesprächen wird
+die Warteliste anhand der zugeordneten Schülerin ermittelt. Weitere Tabellenwerte
+zeigen die Gesamtzahlen für Schülerinnen, Erziehungsberechtigte und Gespräche.
+Angezeigt werden nur zusammengefasste Werte, keine Namen oder Einzeldatensätze.
 
 ### Auswahllisten pflegen
 

@@ -694,7 +694,6 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
 }
 
 .export-actions,
-.stat-cards,
 .statistics-grid {
     display: grid;
     gap: 16px;
@@ -708,12 +707,6 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
     margin: 18px 0 30px;
 }
 
-.stat-cards {
-    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-    margin: 24px 0;
-}
-
-.stat-card,
 .statistics-panel {
     padding: 18px;
     border: 1px solid var(--line);
@@ -721,17 +714,9 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
     background: var(--surface);
 }
 
-.stat-card h2,
 .statistics-panel h2 {
     margin: 0 0 12px;
     font-size: 1.1rem;
-}
-
-.stat-card p {
-    margin: 0;
-    color: var(--ink);
-    font-size: 2rem;
-    font-weight: 750;
 }
 
 .statistics-grid {
@@ -750,24 +735,43 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
     grid-column: 1 / -1;
 }
 
-.pie-chart {
+.ring-chart {
     display: block;
     width: min(100%, 220px);
     height: auto;
+    grid-column: 1 / -1;
     justify-self: center;
 }
 
-.chart-legend {
+.ring-description {
+    grid-column: 1 / -1;
     margin: 0;
-    padding: 0;
-    list-style: none;
+    color: var(--muted);
+    text-align: center;
 }
 
-.chart-legend li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 8px 0;
+.statistics-panel > .statistics-table {
+    grid-column: 1 / -1;
+    margin-top: 0;
+}
+
+.statistics-table {
+    min-width: 100%;
+}
+
+.statistics-table th,
+.statistics-table td {
+    white-space: nowrap;
+}
+
+.statistics-table tbody th[scope="row"] {
+    text-align: left;
+}
+
+.statistics-total th,
+.statistics-total td {
+    border-top: 2px solid var(--line);
+    font-weight: 750;
 }
 
 .legend-swatch {
@@ -779,6 +783,10 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
 
 .legend-swatch[data-color="#e31c79"] {
     background: #e31c79;
+}
+
+.legend-swatch[data-color="#7047a3"] {
+    background: #7047a3;
 }
 
 .legend-swatch[data-color="#203348"] {
