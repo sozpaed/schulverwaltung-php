@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Schulverwaltung\Auth;
 use Schulverwaltung\StatisticsChart;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
@@ -132,7 +131,6 @@ $furtherValues['Schülerinnen'] = [
     'total' => $totalStudents,
     'waitlist' => $waitlistStudents,
 ];
-$csrfToken = Auth::csrfToken();
 ?>
 <!doctype html>
 <html lang="de">
@@ -232,11 +230,6 @@ $csrfToken = Auth::csrfToken();
         </table>
     </div>
     <p>„Bereinigt“ bedeutet Anzahl Gesamt abzüglich der Datensätze auf der Warteliste.</p>
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>

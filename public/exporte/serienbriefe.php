@@ -71,11 +71,6 @@ $csrfToken = Auth::csrfToken();
         <p>Filter: Warteliste (Ja)</p>
         <button type="submit">Serienbrief-PDF für die Warteliste laden</button>
     </form>
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>

@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Admin;
-use Schulverwaltung\Auth;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
 require_once __DIR__ . '/../../src/Admin.php';
@@ -15,7 +14,6 @@ $users = $database->query(
      FROM app_users
      ORDER BY username, id'
 )->fetchAll();
-$csrfToken = Auth::csrfToken();
 ?>
 <!doctype html>
 <html lang="de">
@@ -83,11 +81,6 @@ $csrfToken = Auth::csrfToken();
             </tbody>
         </table>
     <?php endif; ?>
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>

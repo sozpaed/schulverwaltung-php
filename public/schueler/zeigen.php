@@ -73,7 +73,6 @@ $conversationSchoolFormLabels = [
     'foerderstufe_realschule' => 'Förderstufe/Realschule',
     'unklar' => 'Noch unklar',
 ];
-$csrfToken = \Schulverwaltung\Auth::csrfToken();
 ?>
 <!doctype html>
 <html lang="de">
@@ -198,11 +197,6 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
         <?php endif; ?>
     </section>
 
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>

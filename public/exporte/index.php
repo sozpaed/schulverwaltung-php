@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use Schulverwaltung\Auth;
-
 require_once __DIR__ . '/../../src/bootstrap.php';
 
 if ($user === null) {
@@ -16,7 +14,6 @@ if (!$user['can_export']) {
     exit('Du bist nicht berechtigt, Daten zu exportieren.');
 }
 
-$csrfToken = Auth::csrfToken();
 ?>
 <!doctype html>
 <html lang="de">
@@ -44,11 +41,6 @@ $csrfToken = Auth::csrfToken();
         <li><a href="/exporte/download.php?bereich=gespraeche">Gespräche exportieren</a></li>
     </ul>
     <p>Die Dateien sind UTF-8-kodiert und verwenden Semikolons als Trennzeichen.</p>
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>

@@ -30,7 +30,6 @@ $guardianCounts = $database->query(
      FROM erziehungsberechtigte e
      JOIN schueler s ON s.id = e.schueler_id'
 )->fetch(PDO::FETCH_ASSOC);
-$csrfToken = \Schulverwaltung\Auth::csrfToken();
 ?>
 <!doctype html>
 <html lang="de">
@@ -103,11 +102,6 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
         <?php endforeach; ?>
         </tbody>
     </table>
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>

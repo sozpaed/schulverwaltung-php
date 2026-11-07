@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Schulverwaltung\Auth;
 use Schulverwaltung\Maintenance;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
@@ -102,7 +101,6 @@ $statusLabels = [
     'in_pruefung' => 'In Prüfung',
     'verzicht' => 'Verzicht',
 ];
-$csrfToken = Auth::csrfToken();
 ?>
 <!doctype html>
 <html lang="de">
@@ -196,11 +194,6 @@ $csrfToken = Auth::csrfToken();
         </nav>
     <?php endif; ?>
 
-    <form method="post" action="/">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
-        <button type="submit">Abmelden</button>
-    </form>
 </main>
 </body>
 </html>
