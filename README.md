@@ -580,7 +580,7 @@ die Warteliste anhand der zugeordneten Schülerin ermittelt. Weitere Tabellenwer
 zeigen die Gesamtzahlen für Schülerinnen, Erziehungsberechtigte und Gespräche.
 Angezeigt werden nur zusammengefasste Werte, keine Namen oder Einzeldatensätze.
 
-### Erziehungsberechtigte aus CSV importieren
+### Neue Schülerinnen und Erziehungsberechtigte aus CSV importieren
 
 Administratoren können von der Startseite die Importseite öffnen und eine
 UTF-8-CSV-Datei mit Semikolon-Trennung hochladen. Die Kopfzeile muss die Felder
@@ -591,17 +591,20 @@ UTF-8-CSV-Datei mit Semikolon-Trennung hochladen. Die Kopfzeile muss die Felder
 und `Beziehung` enthalten. Beziehungen sind Mutter, Vater, Vormund,
 Pflegeeltern oder Sonstiges.
 
-Vor dem Speichern wird jede Zeile geprüft und über den Vor- und Nachnamen der
-Schülerin zugeordnet. Bei mehreren Treffern muss die Zuordnung in der Vorschau
-ausgewählt werden; fehlende oder ungültige Zuordnungen verhindern den Import.
-Bereits vorhandene gleiche Kontaktpersonen werden erkannt. Der Import wird erst
-durch den ausdrücklich betätigten Import-Button gestartet und erfolgt für alle
-Zeilen gemeinsam oder gar nicht. Es werden höchstens 500 Datensätze aus einer
-Datei bis 2 MB verarbeitet. Die Adresse aus der CSV wird sowohl bei der
-Schülerin als auch bei der erziehungsberechtigten Person gespeichert; beim
-Erziehungsberechtigten wird die Option „Adresse des Kindes übernehmen“ gesetzt.
-Enthält die CSV für dieselbe Schülerin unterschiedliche Adressen, wird der
-Import abgebrochen, damit keine Adresse unbemerkt überschrieben wird. Eine
+Vor dem Speichern wird jede Zeile geprüft. Der Import legt neue Schülerinnen
+und die zugehörigen Erziehungsberechtigten an; bestehende Schülerinnen werden
+nicht gesucht. Zeilen mit identischem Vor- und Nachnamen der Schülerin werden
+als dieselbe neue Schülerin zusammengeführt, damit mehrere Kontaktpersonen
+zugeordnet werden können. Daher lassen sich zwei verschiedene Schülerinnen
+mit exakt gleichem Vor- und Nachnamen in einer Datei nicht unterscheiden.
+Weitere Schülerangaben, die nicht in der CSV enthalten sind, bleiben leer oder
+verwenden den Datenbank-Standardwert. Die Adresse aus der CSV wird bei der
+Schülerin und bei jeder zugehörigen erziehungsberechtigten Person gespeichert;
+beim Erziehungsberechtigten wird die Option „Adresse des Kindes übernehmen“
+gesetzt. Enthält die CSV für denselben Namen unterschiedliche Adressen, wird
+der Import verhindert. Der Import wird erst durch den ausdrücklich betätigten
+Import-Button gestartet und erfolgt für alle Zeilen gemeinsam oder gar nicht.
+Es werden höchstens 500 Datensätze aus einer Datei bis 2 MB verarbeitet. Eine
 Datenbankänderung ist dafür nicht erforderlich.
 
 ### Auswahllisten pflegen

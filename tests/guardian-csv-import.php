@@ -23,6 +23,19 @@ expectGuardianCsvImport(count($parsed['rows']) === 1, 'Der CSV-Datensatz wurde n
 expectGuardianCsvImport($parsed['rows'][0]['errors'] === [], 'Ein gültiger Datensatz erhielt Fehler.');
 expectGuardianCsvImport($parsed['rows'][0]['values']['beziehung'] === 'mutter', 'Die Beziehung wurde nicht normalisiert.');
 expectGuardianCsvImport($parsed['rows'][0]['values']['plz'] === '01234', 'Die führende Null der PLZ ging verloren.');
+$studentGroup = GuardianCsvImport::studentGroupKey($parsed['rows'][0]['values']);
+$sameStudent = $parsed['rows'][0]['values'];
+$sameStudent['vorname'] = 'Andere Kontaktperson';
+expectGuardianCsvImport(
+    GuardianCsvImport::studentGroupKey($sameStudent) === $studentGroup,
+    'Gleiche Schülerinnen-Namen wurden nicht gruppiert.'
+);
+$differentStudent = $sameStudent;
+$differentStudent['schuelerin_nachname'] = 'Anders';
+expectGuardianCsvImport(
+    GuardianCsvImport::studentGroupKey($differentStudent) !== $studentGroup,
+    'Unterschiedliche Schülerinnen-Namen wurden gruppiert.'
+);
 $addressRow = [$parsed['rows'][0]['values'], '12'];
 expectGuardianCsvImport(
     GuardianCsvImport::addressesAreConsistent([$addressRow, $addressRow]),

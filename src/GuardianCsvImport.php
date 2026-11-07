@@ -125,6 +125,14 @@ final class GuardianCsvImport
         return true;
     }
 
+    public static function studentGroupKey(array $values): string
+    {
+        return hash('sha256', json_encode(
+            [$values['schuelerin_vorname'], $values['schuelerin_nachname']],
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ));
+    }
+
     private static function validate(array &$values): array
     {
         $errors = [];
