@@ -580,7 +580,7 @@ main > ul a,
     color: var(--brand-strong);
 }
 
-.dashboard-links-maintenance {
+.dashboard-links ul.dashboard-links-maintenance {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-top: 12px;
     margin-bottom: 0;
@@ -717,7 +717,7 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
     .form-grid--four,
     .choice-grid--three,
     .dashboard-links-primary,
-    .dashboard-links-maintenance {
+    .dashboard-links ul.dashboard-links-maintenance {
         grid-template-columns: 1fr;
     }
 }
