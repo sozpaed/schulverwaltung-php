@@ -33,7 +33,7 @@ $csrfToken = Auth::csrfToken();
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/">Zurück zur Startseite</a></p>
+    <p><a href="/">Zur Startseite</a></p>
     <h1>Serienbriefe als PDF</h1>
     <?= renderAccountMenu($user) ?>
     <p>Die Texte sind zunächst Muster und müssen vor einem Versand geprüft werden.

@@ -149,7 +149,7 @@ $csrfToken = Auth::csrfToken();
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/">Zurück zur Startseite</a></p>
+    <p><a href="/">Zur Startseite</a></p>
     <h1>Statistik</h1>
     <?= renderAccountMenu($user) ?>
     <p>Übersicht über die aktuellen Datensätze. Es werden ausschließlich zusammengefasste Zahlen angezeigt.</p>
