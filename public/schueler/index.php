@@ -15,10 +15,16 @@ if ($user === null) {
 $searchValue = $_GET['q'] ?? '';
 $pageInput = $_GET['seite'] ?? 1;
 $maintenanceValue = $_GET['wartung'] ?? '';
+$statusValue = $_GET['status'] ?? '';
+$classValue = $_GET['klasse'] ?? '';
+$cityValue = $_GET['ort'] ?? '';
 
 if (!is_string($searchValue)
     || (!is_string($pageInput) && !is_int($pageInput))
-    || !is_string($maintenanceValue)) {
+    || !is_string($maintenanceValue)
+    || !is_string($statusValue)
+    || !is_string($classValue)
+    || !is_string($cityValue)) {
     http_response_code(400);
     exit('Ungültige Suchanfrage.');
 }
@@ -33,15 +39,37 @@ if ($maintenanceValue !== '') {
 }
 $maintenanceCondition = $maintenance === null ? '' : ' AND (' . $maintenance['condition'] . ')';
 
-$searchValue = trim($searchValue);
+$statusLabels = [
+    'abgelehnt' => 'Abgelehnt',
+    'angenommen' => 'Angenommen',
+    'in_pruefung' => 'In Prüfung',
+    'verzicht' => 'Verzicht',
+];
+$classes = [
+    '5a' => '5a',
+    '5b' => '5b',
+    '5c' => '5c',
+    '5d' => '5d',
+    '5e' => '5e',
+];
+if (($statusValue !== '' && !array_key_exists($statusValue, $statusLabels))
+    || ($classValue !== '' && $classValue !== '__leer' && !array_key_exists($classValue, $classes))) {
+    http_response_code(400);
+    exit('Ungültiger Status- oder Klassenfilter.');
+}
 
-if (preg_match('//u', $searchValue) !== 1) {
+$searchValue = trim($searchValue);
+$cityValue = trim($cityValue);
+
+if (preg_match('//u', $searchValue) !== 1 || preg_match('//u', $cityValue) !== 1) {
     http_response_code(400);
     exit('Die Suchanfrage enthält ungültige Zeichen.');
 }
 
 preg_match('/\A.{0,100}/us', $searchValue, $searchMatches);
 $search = $searchMatches[0];
+preg_match('/\A.{0,100}/us', $cityValue, $cityMatches);
+$city = $cityMatches[0];
 $pageValue = filter_var($pageInput, FILTER_VALIDATE_INT);
 
 if ($pageValue === false || $pageValue < 1) {
@@ -50,21 +78,35 @@ if ($pageValue === false || $pageValue < 1) {
 }
 
 $pageSize = 25;
+$conditions = [
+    '(:search = \'\' OR s.vorname LIKE :first_name OR s.nachname LIKE :last_name OR s.ort LIKE :search_city)',
+];
+$queryParameters = [
+    'search' => $search,
+    'first_name' => '%' . $search . '%',
+    'last_name' => '%' . $search . '%',
+    'search_city' => '%' . $search . '%',
+];
+if ($statusValue !== '') {
+    $conditions[] = 's.status = :status';
+    $queryParameters['status'] = $statusValue;
+}
+if ($classValue !== '') {
+    $conditions[] = 's.klasse = :class';
+    $queryParameters['class'] = $classValue === '__leer' ? '' : $classValue;
+}
+if ($city !== '') {
+    $conditions[] = 's.ort LIKE :city_filter';
+    $queryParameters['city_filter'] = '%' . $city . '%';
+}
+$whereClause = implode(' AND ', $conditions) . $maintenanceCondition;
+
 $countStatement = $database->prepare(
     'SELECT COUNT(*)
      FROM schueler s
-     WHERE (:search = \'\'
-        OR s.vorname LIKE :first_name
-        OR s.nachname LIKE :last_name
-        OR s.ort LIKE :city)' . $maintenanceCondition
+     WHERE ' . $whereClause
 );
-$likeSearch = '%' . $search . '%';
-$countStatement->execute([
-    'search' => $search,
-    'first_name' => $likeSearch,
-    'last_name' => $likeSearch,
-    'city' => $likeSearch,
-]);
+$countStatement->execute($queryParameters);
 $total = (int) $countStatement->fetchColumn();
 $pageCount = max(1, (int) ceil($total / $pageSize));
 
@@ -79,28 +121,29 @@ $statement = $database->prepare(
             g.name AS grundschule
      FROM schueler s
      LEFT JOIN grundschulen g ON g.id = s.grundschule_id
-     WHERE (:search = \'\'
-        OR s.vorname LIKE :first_name
-        OR s.nachname LIKE :last_name
-        OR s.ort LIKE :city)' . $maintenanceCondition . '
-     ORDER BY s.nachname, s.vorname, s.id
-     LIMIT :page_size OFFSET :offset'
+    WHERE ' . $whereClause . '
+    ORDER BY s.nachname, s.vorname, s.id
+    LIMIT :page_size OFFSET :offset'
 );
-$statement->bindValue('search', $search);
-$statement->bindValue('first_name', $likeSearch);
-$statement->bindValue('last_name', $likeSearch);
-$statement->bindValue('city', $likeSearch);
+foreach ($queryParameters as $name => $value) {
+    $statement->bindValue($name, $value);
+}
 $statement->bindValue('page_size', $pageSize, PDO::PARAM_INT);
 $statement->bindValue('offset', $offset, PDO::PARAM_INT);
 $statement->execute();
 $students = $statement->fetchAll();
 
-$statusLabels = [
-    'abgelehnt' => 'Abgelehnt',
-    'angenommen' => 'Angenommen',
-    'in_pruefung' => 'In Prüfung',
-    'verzicht' => 'Verzicht',
-];
+$activeFilters = $search !== '' || $statusValue !== '' || $classValue !== '' || $city !== '';
+$resetUrl = $maintenance === null
+    ? '/schueler/'
+    : '/schueler/?wartung=' . rawurlencode($maintenanceValue);
+$paginationParameters = array_filter([
+    'q' => $search,
+    'status' => $statusValue,
+    'klasse' => $classValue,
+    'ort' => $city,
+    'wartung' => $maintenanceValue,
+], static fn (string $value): bool => $value !== '');
 ?>
 <!doctype html>
 <html lang="de">
@@ -131,11 +174,34 @@ $statusLabels = [
         <?php if ($maintenance !== null): ?>
             <input type="hidden" name="wartung" value="<?= escape($maintenanceValue) ?>">
         <?php endif; ?>
-        <label for="q">Name oder Wohnort suchen</label>
-        <input id="q" name="q" type="search" maxlength="100" value="<?= escape($search) ?>">
-        <button type="submit">Suchen</button>
-        <?php if ($search !== ''): ?>
-            <a href="<?= $maintenance === null ? '/schueler/' : '/schueler/?wartung=' . rawurlencode($maintenanceValue) ?>">Suche zurücksetzen</a>
+        <div class="form-grid form-grid--four">
+            <p><label for="q">Name oder Wohnort suchen</label>
+                <input id="q" name="q" type="search" maxlength="100" value="<?= escape($search) ?>"></p>
+            <p><label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">Alle Status</option>
+                    <?php foreach ($statusLabels as $value => $label): ?>
+                        <option value="<?= escape($value) ?>"<?= $statusValue === $value ? ' selected' : '' ?>>
+                            <?= escape($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select></p>
+            <p><label for="klasse">Klasse</label>
+                <select id="klasse" name="klasse">
+                    <option value="">Alle Klassen</option>
+                    <?php foreach ($classes as $value => $label): ?>
+                        <option value="<?= escape($value) ?>"<?= $classValue === $value ? ' selected' : '' ?>>
+                            <?= escape($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                    <option value="__leer"<?= $classValue === '__leer' ? ' selected' : '' ?>>Nicht zugeordnet</option>
+                </select></p>
+            <p><label for="ort">Wohnort</label>
+                <input id="ort" name="ort" type="search" maxlength="100" value="<?= escape($city) ?>"></p>
+        </div>
+        <button type="submit">Filtern</button>
+        <?php if ($activeFilters): ?>
+            <a href="<?= escape($resetUrl) ?>">Filter zurücksetzen</a>
         <?php endif; ?>
     </form>
 
@@ -183,13 +249,16 @@ $statusLabels = [
     <?php endif; ?>
 
     <?php if ($pageCount > 1): ?>
+        <?php $paginationParameters['seite'] = (string) $pageValue; ?>
         <nav aria-label="Seitennavigation">
             <?php if ($pageValue > 1): ?>
-                <a href="?q=<?= rawurlencode($search) ?><?= $maintenance === null ? '' : '&amp;wartung=' . rawurlencode($maintenanceValue) ?>&amp;seite=<?= $pageValue - 1 ?>">Zurück</a>
+                <?php $paginationParameters['seite'] = (string) ($pageValue - 1); ?>
+                <a href="?<?= escape(http_build_query($paginationParameters)) ?>">Zurück</a>
             <?php endif; ?>
             <span>Seite <?= $pageValue ?> von <?= $pageCount ?></span>
             <?php if ($pageValue < $pageCount): ?>
-                <a href="?q=<?= rawurlencode($search) ?><?= $maintenance === null ? '' : '&amp;wartung=' . rawurlencode($maintenanceValue) ?>&amp;seite=<?= $pageValue + 1 ?>">Weiter</a>
+                <?php $paginationParameters['seite'] = (string) ($pageValue + 1); ?>
+                <a href="?<?= escape(http_build_query($paginationParameters)) ?>">Weiter</a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>
