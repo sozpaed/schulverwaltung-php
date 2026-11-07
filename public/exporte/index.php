@@ -43,6 +43,41 @@ $csrfToken = Auth::csrfToken();
         <li><a href="/exporte/download.php?bereich=gespraeche">Gespräche exportieren</a></li>
     </ul>
     <p>Die Dateien sind UTF-8-kodiert und verwenden Semikolons als Trennzeichen.</p>
+    <h2>Serienbriefe als PDF (Muster)</h2>
+    <p>Die Texte sind zunächst Muster und müssen vor einem Versand geprüft werden. Die Schulform wird jeweils zuerst ausgewählt.</p>
+    <form method="post" action="/exporte/serienbrief.php">
+        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
+        <input type="hidden" name="filter_type" value="status">
+        <h3>Nach Status filtern</h3>
+        <p><label for="school_form_status">Schulform</label>
+            <select id="school_form_status" name="school_form" required>
+                <option value="">Bitte auswählen</option>
+                <option value="foerderstufe">Förderstufe</option>
+                <option value="gymnasium">Gymnasium</option>
+            </select></p>
+        <p><label for="status">Status</label>
+            <select id="status" name="filter_value" required>
+                <option value="">Bitte auswählen</option>
+                <option value="in_pruefung">In Prüfung</option>
+                <option value="angenommen">Angenommen</option>
+                <option value="abgelehnt">Abgelehnt</option>
+            </select></p>
+        <button type="submit">Serienbrief-PDF nach Status laden</button>
+    </form>
+    <form method="post" action="/exporte/serienbrief.php">
+        <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
+        <input type="hidden" name="filter_type" value="warteliste">
+        <input type="hidden" name="filter_value" value="ja">
+        <h3>Nach Warteliste filtern</h3>
+        <p><label for="school_form_waitlist">Schulform</label>
+            <select id="school_form_waitlist" name="school_form" required>
+                <option value="">Bitte auswählen</option>
+                <option value="foerderstufe">Förderstufe</option>
+                <option value="gymnasium">Gymnasium</option>
+            </select></p>
+        <p>Filter: Warteliste (Ja)</p>
+        <button type="submit">Serienbrief-PDF für die Warteliste laden</button>
+    </form>
     <form method="post" action="/">
         <input type="hidden" name="action" value="logout">
         <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">

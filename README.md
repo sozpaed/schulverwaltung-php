@@ -547,6 +547,18 @@ gezielt erteilt oder entzogen werden. Exportdateien enthalten personenbezogene
 und teils sensible Angaben und müssen entsprechend geschützt gespeichert und
 weitergegeben werden.
 
+Zusätzlich lassen sich Serienbriefe als PDF erstellen. Zuerst wird die Schulform
+ausgewählt, anschließend der Status (In Prüfung, Angenommen oder Abgelehnt) oder
+die Warteliste. Alle als erziehungsberechtigt markierten Kontaktpersonen erhalten
+den Brief; bei gleicher Adresse werden sie gemeinsam aufgeführt, bei
+unterschiedlichen Adressen entstehen separate Briefe. Wenn keine passende
+Kontaktperson vorhanden ist, wird die Adresse der Schülerin verwendet. Die Texte
+sind zunächst als **Muster** gekennzeichnet und müssen vor dem Versand geprüft
+werden. Die PDF-Erstellung verwendet die lokal mitgelieferte FPDF-Bibliothek;
+deren Lizenz liegt unter `src/vendor/fpdf/LICENSE.txt`. Filterung und
+PDF-Erstellung benötigen keine Datenbankänderung. Auch PDF-Exporte werden in
+`export_protokolle` protokolliert.
+
 ### Auswahllisten pflegen
 
 Unter **Auswahllisten pflegen** können Staatsangehörigkeiten, Religionen,
