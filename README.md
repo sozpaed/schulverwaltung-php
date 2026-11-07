@@ -558,10 +558,10 @@ Staatsangehörigkeit nur dann als vorhanden, wenn auch der zugehörige Wert der
 Schülerin eingetragen ist. Bearbeitung und Löschung verwenden die bestehenden
 Zugriffsrechte der Listen.
 
-In der Übersicht gibt es außerdem eigene Seiten für **Serienbriefe** und
-**Statistik**. Für Serienbriefe wird zuerst die Schulform ausgewählt,
-anschließend der Status (In Prüfung, Angenommen oder Abgelehnt) oder die
-Warteliste. Alle als erziehungsberechtigt markierten Kontaktpersonen erhalten
+Auf der Startseite gibt es für Benutzer mit Exportrecht außerdem eigene
+Einstiege für **Serienbriefe** und **Statistik**. Für Serienbriefe wird zuerst
+die Schulform ausgewählt, anschließend der Status (In Prüfung, Angenommen oder
+Abgelehnt) oder die Warteliste. Alle als erziehungsberechtigt markierten Kontaktpersonen erhalten
 den Brief; bei gleicher Adresse werden sie gemeinsam aufgeführt, bei
 unterschiedlichen Adressen entstehen separate Briefe. Wenn keine passende
 Kontaktperson vorhanden ist, wird die Adresse der Schülerin verwendet. Die Texte

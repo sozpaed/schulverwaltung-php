@@ -115,6 +115,10 @@ $csrfToken = Auth::csrfToken();
             </ul>
             <ul class="dashboard-links-maintenance">
                 <li><a class="maintenance-link" href="/wartung/">Wartung</a></li>
+                <?php if ($user['can_export']): ?>
+                    <li><a class="maintenance-link" href="/exporte/serienbriefe.php">Serienbriefe</a></li>
+                    <li><a class="maintenance-link" href="/exporte/statistik.php">Statistik</a></li>
+                <?php endif; ?>
             </ul>
         </nav>
     <?php endif; ?>

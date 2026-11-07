@@ -44,11 +44,6 @@ $csrfToken = Auth::csrfToken();
         <li><a href="/exporte/download.php?bereich=gespraeche">Gespräche exportieren</a></li>
     </ul>
     <p>Die Dateien sind UTF-8-kodiert und verwenden Semikolons als Trennzeichen.</p>
-    <h2>Weitere Funktionen</h2>
-    <nav class="export-actions" aria-label="Exportfunktionen">
-        <a class="button-link" href="/exporte/serienbriefe.php">Serienbriefe</a>
-        <a class="button-link" href="/exporte/statistik.php">Statistik</a>
-    </nav>
     <form method="post" action="/">
         <input type="hidden" name="action" value="logout">
         <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
