@@ -169,6 +169,36 @@ $csrfToken = Auth::csrfToken();
             ?>
             <article class="statistics-panel">
                 <h2><?= escape($definition['title']) ?></h2>
+                <div class="statistics-table-wrapper">
+                    <table class="statistics-table">
+                        <thead><tr>
+                            <th scope="col"><?= escape($definition['title']) ?></th>
+                            <th scope="col">Anzahl Gesamt</th>
+                            <th scope="col">Davon Warteliste</th>
+                            <th scope="col">Bereinigt</th>
+                        </tr></thead>
+                        <tbody>
+                        <?php foreach ($definition['labels'] as $category => $label): ?>
+                            <tr>
+                                <th scope="row">
+                                    <span class="legend-swatch" aria-hidden="true"
+                                          data-color="<?= escape($definition['colors'][$category]) ?>"></span>
+                                    <?= escape($label) ?>
+                                </th>
+                                <td><?= number_format($distribution['total'][$category], 0, ',', '.') ?></td>
+                                <td><?= number_format($distribution['waitlist'][$category], 0, ',', '.') ?></td>
+                                <td><?= number_format($adjusted[$category], 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                            <tr class="statistics-total">
+                                <th scope="row">Summe</th>
+                                <td><?= number_format(array_sum($distribution['total']), 0, ',', '.') ?></td>
+                                <td><?= number_format(array_sum($distribution['waitlist']), 0, ',', '.') ?></td>
+                                <td><?= number_format(array_sum($adjusted), 0, ',', '.') ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <?= StatisticsChart::renderRing(
                     $definition['title'] . ' – außen Gesamt, Mitte Warteliste, innen bereinigt',
                     $series,
@@ -176,34 +206,6 @@ $csrfToken = Auth::csrfToken();
                     'statistics-' . $key
                 ) ?>
                 <p class="ring-description">Außen: Gesamt · Mitte: Warteliste · Innen: Bereinigt</p>
-                <table class="statistics-table">
-                    <thead><tr>
-                        <th scope="col"><?= escape($definition['title']) ?></th>
-                        <th scope="col">Anzahl Gesamt</th>
-                        <th scope="col">Davon Warteliste</th>
-                        <th scope="col">Bereinigt</th>
-                    </tr></thead>
-                    <tbody>
-                    <?php foreach ($definition['labels'] as $category => $label): ?>
-                        <tr>
-                            <th scope="row">
-                                <span class="legend-swatch" aria-hidden="true"
-                                      data-color="<?= escape($definition['colors'][$category]) ?>"></span>
-                                <?= escape($label) ?>
-                            </th>
-                            <td><?= number_format($distribution['total'][$category], 0, ',', '.') ?></td>
-                            <td><?= number_format($distribution['waitlist'][$category], 0, ',', '.') ?></td>
-                            <td><?= number_format($adjusted[$category], 0, ',', '.') ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                        <tr class="statistics-total">
-                            <th scope="row">Summe</th>
-                            <td><?= number_format(array_sum($distribution['total']), 0, ',', '.') ?></td>
-                            <td><?= number_format(array_sum($distribution['waitlist']), 0, ',', '.') ?></td>
-                            <td><?= number_format(array_sum($adjusted), 0, ',', '.') ?></td>
-                        </tr>
-                    </tbody>
-                </table>
             </article>
         <?php endforeach; ?>
     </section>
