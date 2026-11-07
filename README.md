@@ -547,6 +547,17 @@ gezielt erteilt oder entzogen werden. Exportdateien enthalten personenbezogene
 und teils sensible Angaben und müssen entsprechend geschützt gespeichert und
 weitergegeben werden.
 
+Die Startseite bietet außerdem die Übersicht **Wartung**. Sie zeigt
+Schülerinnen und Erziehungsberechtigte mit fehlenden Angaben, etwa zu Adresse,
+Geburtsdatum, Noten, Schulform, Kontaktdaten oder Klasse. Die Treffer führen in
+die jeweilige Liste und bleiben dort nach dem Filter durchsuchbar. Die
+Erziehungsberechtigtenliste bietet Bearbeitungs- und Löschsymbole; das
+Löschsymbol erscheint nur mit dem Recht „Schülerinnen löschen“. Bei
+Erziehungsberechtigten gelten übernommene Adresse, Religion und
+Staatsangehörigkeit nur dann als vorhanden, wenn auch der zugehörige Wert der
+Schülerin eingetragen ist. Bearbeitung und Löschung verwenden die bestehenden
+Zugriffsrechte der Listen.
+
 In der Übersicht gibt es außerdem eigene Seiten für **Serienbriefe** und
 **Statistik**. Für Serienbriefe wird zuerst die Schulform ausgewählt,
 anschließend der Status (In Prüfung, Angenommen oder Abgelehnt) oder die

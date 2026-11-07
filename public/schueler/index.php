@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Auth;
+use Schulverwaltung\Maintenance;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../../src/Maintenance.php';
 
 if ($user === null) {
     header('Location: /');
@@ -13,11 +15,24 @@ if ($user === null) {
 
 $searchValue = $_GET['q'] ?? '';
 $pageInput = $_GET['seite'] ?? 1;
+$maintenanceValue = $_GET['wartung'] ?? '';
 
-if (!is_string($searchValue) || !is_string($pageInput) && !is_int($pageInput)) {
+if (!is_string($searchValue)
+    || (!is_string($pageInput) && !is_int($pageInput))
+    || !is_string($maintenanceValue)) {
     http_response_code(400);
     exit('Ungültige Suchanfrage.');
 }
+
+$maintenance = null;
+if ($maintenanceValue !== '') {
+    $maintenance = Maintenance::definition('schueler', $maintenanceValue);
+    if ($maintenance === null) {
+        http_response_code(400);
+        exit('Ungültiger Wartungsfilter.');
+    }
+}
+$maintenanceCondition = $maintenance === null ? '' : ' AND (' . $maintenance['condition'] . ')';
 
 $searchValue = trim($searchValue);
 
@@ -42,7 +57,7 @@ $countStatement = $database->prepare(
      WHERE (:search = \'\'
         OR s.vorname LIKE :first_name
         OR s.nachname LIKE :last_name
-        OR s.ort LIKE :city)'
+        OR s.ort LIKE :city)' . $maintenanceCondition
 );
 $likeSearch = '%' . $search . '%';
 $countStatement->execute([
@@ -68,7 +83,7 @@ $statement = $database->prepare(
      WHERE (:search = \'\'
         OR s.vorname LIKE :first_name
         OR s.nachname LIKE :last_name
-        OR s.ort LIKE :city)
+        OR s.ort LIKE :city)' . $maintenanceCondition . '
      ORDER BY s.nachname, s.vorname, s.id
      LIMIT :page_size OFFSET :offset'
 );
@@ -107,14 +122,22 @@ $csrfToken = Auth::csrfToken();
     <p><a href="/">Zur Startseite</a></p>
     <h1>Schülerinnen</h1>
     <?= renderAccountMenu($user) ?>
+    <?php if ($maintenance !== null): ?>
+        <p>Wartung: <strong><?= escape($maintenance['label']) ?></strong>
+            – nur Datensätze mit fehlender Angabe werden angezeigt.
+            <a href="/wartung/">Zur Wartungsübersicht</a></p>
+    <?php endif; ?>
     <p><a href="/schueler/neu.php">Schülerin anlegen</a></p>
 
     <form method="get">
+        <?php if ($maintenance !== null): ?>
+            <input type="hidden" name="wartung" value="<?= escape($maintenanceValue) ?>">
+        <?php endif; ?>
         <label for="q">Name oder Wohnort suchen</label>
         <input id="q" name="q" type="search" maxlength="100" value="<?= escape($search) ?>">
         <button type="submit">Suchen</button>
         <?php if ($search !== ''): ?>
-            <a href="/schueler/">Suche zurücksetzen</a>
+            <a href="<?= $maintenance === null ? '/schueler/' : '/schueler/?wartung=' . rawurlencode($maintenanceValue) ?>">Suche zurücksetzen</a>
         <?php endif; ?>
     </form>
 
@@ -164,11 +187,11 @@ $csrfToken = Auth::csrfToken();
     <?php if ($pageCount > 1): ?>
         <nav aria-label="Seitennavigation">
             <?php if ($pageValue > 1): ?>
-                <a href="?q=<?= rawurlencode($search) ?>&amp;seite=<?= $pageValue - 1 ?>">Zurück</a>
+                <a href="?q=<?= rawurlencode($search) ?><?= $maintenance === null ? '' : '&amp;wartung=' . rawurlencode($maintenanceValue) ?>&amp;seite=<?= $pageValue - 1 ?>">Zurück</a>
             <?php endif; ?>
             <span>Seite <?= $pageValue ?> von <?= $pageCount ?></span>
             <?php if ($pageValue < $pageCount): ?>
-                <a href="?q=<?= rawurlencode($search) ?>&amp;seite=<?= $pageValue + 1 ?>">Weiter</a>
+                <a href="?q=<?= rawurlencode($search) ?><?= $maintenance === null ? '' : '&amp;wartung=' . rawurlencode($maintenanceValue) ?>&amp;seite=<?= $pageValue + 1 ?>">Weiter</a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>

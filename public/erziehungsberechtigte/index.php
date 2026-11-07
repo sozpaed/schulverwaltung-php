@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use Schulverwaltung\Maintenance;
+
 require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../../src/Maintenance.php';
 
 if ($user === null) {
     header('Location: /');
@@ -11,10 +14,23 @@ if ($user === null) {
 
 $searchValue = $_GET['q'] ?? '';
 $pageInput = $_GET['seite'] ?? 1;
-if (!is_string($searchValue) || (!is_string($pageInput) && !is_int($pageInput))) {
+$maintenanceValue = $_GET['wartung'] ?? '';
+if (!is_string($searchValue)
+    || (!is_string($pageInput) && !is_int($pageInput))
+    || !is_string($maintenanceValue)) {
     http_response_code(400);
     exit('Ungültige Suchanfrage.');
 }
+
+$maintenance = null;
+if ($maintenanceValue !== '') {
+    $maintenance = Maintenance::definition('erziehungsberechtigte', $maintenanceValue);
+    if ($maintenance === null) {
+        http_response_code(400);
+        exit('Ungültiger Wartungsfilter.');
+    }
+}
+$maintenanceCondition = $maintenance === null ? '' : ' AND (' . $maintenance['condition'] . ')';
 
 $searchValue = trim($searchValue);
 if (preg_match('//u', $searchValue) !== 1) {
@@ -40,7 +56,7 @@ $countStatement = $database->prepare(
         OR e.nachname LIKE :guardian_last_name
         OR s.vorname LIKE :student_first_name
         OR s.nachname LIKE :student_last_name
-        OR e.email LIKE :email)'
+        OR e.email LIKE :email)' . $maintenanceCondition
 );
 $countStatement->execute([
     'search' => $search,
@@ -69,7 +85,7 @@ $statement = $database->prepare(
         OR e.nachname LIKE :guardian_last_name
         OR s.vorname LIKE :student_first_name
         OR s.nachname LIKE :student_last_name
-        OR e.email LIKE :email)
+        OR e.email LIKE :email)' . $maintenanceCondition . '
      ORDER BY e.nachname, e.vorname, e.id
      LIMIT :page_size OFFSET :offset'
 );
@@ -104,14 +120,22 @@ $relationships = guardianRelationships();
     <p><a href="/">Zur Startseite</a></p>
     <h1>Erziehungsberechtigte und Kontaktpersonen</h1>
     <?= renderAccountMenu($user) ?>
+    <?php if ($maintenance !== null): ?>
+        <p>Wartung: <strong><?= escape($maintenance['label']) ?></strong>
+            – nur Datensätze mit fehlender Angabe werden angezeigt.
+            <a href="/wartung/">Zur Wartungsübersicht</a></p>
+    <?php endif; ?>
     <p>Neue Kontaktpersonen werden weiterhin in der jeweiligen Schülerinnenakte angelegt.</p>
 
     <form method="get">
+        <?php if ($maintenance !== null): ?>
+            <input type="hidden" name="wartung" value="<?= escape($maintenanceValue) ?>">
+        <?php endif; ?>
         <label for="q">Nach Name, zugehöriger Schülerin oder E-Mail suchen</label>
         <input id="q" name="q" type="search" maxlength="100" value="<?= escape($search) ?>">
         <button type="submit">Suchen</button>
         <?php if ($search !== ''): ?>
-            <a href="/erziehungsberechtigte/">Suche zurücksetzen</a>
+            <a href="<?= $maintenance === null ? '/erziehungsberechtigte/' : '/erziehungsberechtigte/?wartung=' . rawurlencode($maintenanceValue) ?>">Suche zurücksetzen</a>
         <?php endif; ?>
     </form>
 
@@ -169,11 +193,11 @@ $relationships = guardianRelationships();
     <?php if ($pageCount > 1): ?>
         <nav aria-label="Seitennavigation">
             <?php if ($page > 1): ?>
-                <a href="?q=<?= rawurlencode($search) ?>&amp;seite=<?= $page - 1 ?>">Zurück</a>
+                <a href="?q=<?= rawurlencode($search) ?><?= $maintenance === null ? '' : '&amp;wartung=' . rawurlencode($maintenanceValue) ?>&amp;seite=<?= $page - 1 ?>">Zurück</a>
             <?php endif; ?>
             <span>Seite <?= $page ?> von <?= $pageCount ?></span>
             <?php if ($page < $pageCount): ?>
-                <a href="?q=<?= rawurlencode($search) ?>&amp;seite=<?= $page + 1 ?>">Weiter</a>
+                <a href="?q=<?= rawurlencode($search) ?><?= $maintenance === null ? '' : '&amp;wartung=' . rawurlencode($maintenanceValue) ?>&amp;seite=<?= $page + 1 ?>">Weiter</a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>

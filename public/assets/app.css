@@ -580,6 +580,17 @@ main > ul a,
     color: var(--brand-strong);
 }
 
+.dashboard-links-secondary .maintenance-link {
+    background: #E9892C;
+    color: #203348;
+}
+
+.dashboard-links-secondary .maintenance-link:hover {
+    border-color: #b96716;
+    background: #d9771d;
+    color: #203348;
+}
+
 main > ul a:hover,
 .dashboard-links a:hover {
     border-color: #e98ab8;
