@@ -112,6 +112,8 @@ $csrfToken = Auth::csrfToken();
                 <?php if ($user['can_export']): ?>
                     <li><a href="/exporte/">Daten exportieren</a></li>
                 <?php endif; ?>
+            </ul>
+            <ul class="dashboard-links-maintenance">
                 <li><a class="maintenance-link" href="/wartung/">Wartung</a></li>
             </ul>
         </nav>

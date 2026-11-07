@@ -59,8 +59,20 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
         <?php foreach ($studentDefinitions as $key => $definition): ?>
             <tr>
                 <th scope="row"><?= escape($definition['label']) ?></th>
-                <td><?= number_format((int) $studentCounts[$key], 0, ',', '.') ?></td>
-                <td><a href="/schueler/?wartung=<?= rawurlencode($key) ?>">Treffer anzeigen</a></td>
+                <?php $count = (int) $studentCounts[$key]; ?>
+                <td><?= number_format($count, 0, ',', '.') ?></td>
+                <td>
+                    <?php if ($count > 0): ?>
+                        <a class="maintenance-open-link"
+                           href="/schueler/?wartung=<?= rawurlencode($key) ?>"
+                           aria-label="<?= escape($definition['label'] . ': ' . $count . ' Treffer anzeigen') ?>"
+                           title="Treffer anzeigen">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M7 17 17 7M7 7h10v10"></path>
+                            </svg>
+                        </a>
+                    <?php endif; ?>
+                </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
@@ -73,8 +85,20 @@ $csrfToken = \Schulverwaltung\Auth::csrfToken();
         <?php foreach ($guardianDefinitions as $key => $definition): ?>
             <tr>
                 <th scope="row"><?= escape($definition['label']) ?></th>
-                <td><?= number_format((int) $guardianCounts[$key], 0, ',', '.') ?></td>
-                <td><a href="/erziehungsberechtigte/?wartung=<?= rawurlencode($key) ?>">Treffer anzeigen</a></td>
+                <?php $count = (int) $guardianCounts[$key]; ?>
+                <td><?= number_format($count, 0, ',', '.') ?></td>
+                <td>
+                    <?php if ($count > 0): ?>
+                        <a class="maintenance-open-link"
+                           href="/erziehungsberechtigte/?wartung=<?= rawurlencode($key) ?>"
+                           aria-label="<?= escape($definition['label'] . ': ' . $count . ' Treffer anzeigen') ?>"
+                           title="Treffer anzeigen">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M7 17 17 7M7 7h10v10"></path>
+                            </svg>
+                        </a>
+                    <?php endif; ?>
+                </td>
             </tr>
         <?php endforeach; ?>
         </tbody>

@@ -580,15 +580,46 @@ main > ul a,
     color: var(--brand-strong);
 }
 
-.dashboard-links-secondary .maintenance-link {
+.dashboard-links-maintenance {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
+.dashboard-links-maintenance .maintenance-link {
     background: #E9892C;
     color: #203348;
 }
 
-.dashboard-links-secondary .maintenance-link:hover {
+.dashboard-links-maintenance .maintenance-link:hover {
     border-color: #b96716;
     background: #d9771d;
     color: #203348;
+}
+
+.maintenance-open-link {
+    display: inline-grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--brand);
+}
+
+.maintenance-open-link:hover {
+    border-color: var(--brand);
+    background: var(--accent-soft);
+}
+
+.maintenance-open-link svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
 }
 
 main > ul a:hover,
@@ -685,7 +716,8 @@ main > p:has(> a[href="/schueler/erziehungsberechtigter.php"]) a {
     .form-grid--three,
     .form-grid--four,
     .choice-grid--three,
-    .dashboard-links-primary {
+    .dashboard-links-primary,
+    .dashboard-links-maintenance {
         grid-template-columns: 1fr;
     }
 }
