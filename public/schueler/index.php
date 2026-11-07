@@ -17,14 +17,14 @@ $pageInput = $_GET['seite'] ?? 1;
 $maintenanceValue = $_GET['wartung'] ?? '';
 $statusValue = $_GET['status'] ?? '';
 $classValue = $_GET['klasse'] ?? '';
-$cityValue = $_GET['ort'] ?? '';
+$schoolValue = $_GET['grundschule'] ?? '';
 
 if (!is_string($searchValue)
     || (!is_string($pageInput) && !is_int($pageInput))
     || !is_string($maintenanceValue)
     || !is_string($statusValue)
     || !is_string($classValue)
-    || !is_string($cityValue)) {
+    || !is_string($schoolValue)) {
     http_response_code(400);
     exit('Ungültige Suchanfrage.');
 }
@@ -59,17 +59,21 @@ if (($statusValue !== '' && !array_key_exists($statusValue, $statusLabels))
 }
 
 $searchValue = trim($searchValue);
-$cityValue = trim($cityValue);
 
-if (preg_match('//u', $searchValue) !== 1 || preg_match('//u', $cityValue) !== 1) {
+if (preg_match('//u', $searchValue) !== 1) {
     http_response_code(400);
     exit('Die Suchanfrage enthält ungültige Zeichen.');
 }
 
 preg_match('/\A.{0,100}/us', $searchValue, $searchMatches);
 $search = $searchMatches[0];
-preg_match('/\A.{0,100}/us', $cityValue, $cityMatches);
-$city = $cityMatches[0];
+$schools = $database->query('SELECT id, name, ort FROM grundschulen ORDER BY name, ort, id')->fetchAll();
+$schoolIds = array_map(static fn (array $school): string => (string) $school['id'], $schools);
+if ($schoolValue !== '' && $schoolValue !== '__leer' && !in_array($schoolValue, $schoolIds, true)) {
+    http_response_code(400);
+    exit('Ungültiger Grundschulfilter.');
+}
+
 $pageValue = filter_var($pageInput, FILTER_VALIDATE_INT);
 
 if ($pageValue === false || $pageValue < 1) {
@@ -95,9 +99,11 @@ if ($classValue !== '') {
     $conditions[] = 's.klasse = :class';
     $queryParameters['class'] = $classValue === '__leer' ? '' : $classValue;
 }
-if ($city !== '') {
-    $conditions[] = 's.ort LIKE :city_filter';
-    $queryParameters['city_filter'] = '%' . $city . '%';
+if ($schoolValue === '__leer') {
+    $conditions[] = 's.grundschule_id IS NULL';
+} elseif ($schoolValue !== '') {
+    $conditions[] = 's.grundschule_id = :school_id';
+    $queryParameters['school_id'] = $schoolValue;
 }
 $whereClause = implode(' AND ', $conditions) . $maintenanceCondition;
 
@@ -133,7 +139,7 @@ $statement->bindValue('offset', $offset, PDO::PARAM_INT);
 $statement->execute();
 $students = $statement->fetchAll();
 
-$activeFilters = $search !== '' || $statusValue !== '' || $classValue !== '' || $city !== '';
+$activeFilters = $search !== '' || $statusValue !== '' || $classValue !== '' || $schoolValue !== '';
 $resetUrl = $maintenance === null
     ? '/schueler/'
     : '/schueler/?wartung=' . rawurlencode($maintenanceValue);
@@ -141,7 +147,7 @@ $paginationParameters = array_filter([
     'q' => $search,
     'status' => $statusValue,
     'klasse' => $classValue,
-    'ort' => $city,
+    'grundschule' => $schoolValue,
     'wartung' => $maintenanceValue,
 ], static fn (string $value): bool => $value !== '');
 ?>
@@ -196,8 +202,17 @@ $paginationParameters = array_filter([
                     <?php endforeach; ?>
                     <option value="__leer"<?= $classValue === '__leer' ? ' selected' : '' ?>>Nicht zugeordnet</option>
                 </select></p>
-            <p><label for="ort">Wohnort</label>
-                <input id="ort" name="ort" type="search" maxlength="100" value="<?= escape($city) ?>"></p>
+            <p><label for="grundschule">Grundschule</label>
+                <select id="grundschule" name="grundschule">
+                    <option value="">Alle Grundschulen</option>
+                    <?php foreach ($schools as $school): ?>
+                        <?php $schoolLabel = $school['ort'] === '' ? $school['name'] : $school['name'] . ' (' . $school['ort'] . ')'; ?>
+                        <option value="<?= (int) $school['id'] ?>"<?= $schoolValue === (string) $school['id'] ? ' selected' : '' ?>>
+                            <?= escape($schoolLabel) ?>
+                        </option>
+                    <?php endforeach; ?>
+                    <option value="__leer"<?= $schoolValue === '__leer' ? ' selected' : '' ?>>Nicht zugeordnet</option>
+                </select></p>
         </div>
         <button type="submit">Filtern</button>
         <?php if ($activeFilters): ?>
