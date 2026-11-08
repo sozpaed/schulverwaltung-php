@@ -604,7 +604,11 @@ Zugriffsrechte der Listen.
 Auf der Startseite gibt es für Benutzer mit Exportrecht außerdem eigene
 Einstiege für **Serienbriefe** und **Statistik**. Für Serienbriefe wird zuerst
 die Schulform ausgewählt, anschließend der Status (In Prüfung, Angenommen oder
-Abgelehnt) oder die Warteliste. Alle als erziehungsberechtigt markierten Kontaktpersonen erhalten
+Abgelehnt) oder die Warteliste. **Keine** berücksichtigt nur Schülerinnen ohne
+Schulform; **Beide** berücksichtigt Schülerinnen mit Förderstufe oder Gymnasium,
+aber nicht diejenigen ohne Schulform. Die Briefe verwenden jeweils die
+eingetragene Schulform; bei fehlender Schulform sind die Mustertexte neutral.
+Alle als erziehungsberechtigt markierten Kontaktpersonen erhalten
 den Brief; bei gleicher Adresse werden sie gemeinsam aufgeführt, bei
 unterschiedlichen Adressen entstehen separate Briefe. Wenn keine passende
 Kontaktperson vorhanden ist, wird die Adresse der Schülerin verwendet. Die Texte

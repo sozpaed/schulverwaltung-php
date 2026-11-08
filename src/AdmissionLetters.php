@@ -12,6 +12,8 @@ final class AdmissionLetters
     private const SCHOOL_FORMS = [
         'foerderstufe' => 'Förderstufe',
         'gymnasium' => 'Gymnasium',
+        'keine' => 'Keine Schulform',
+        'beide' => 'Förderstufe und Gymnasium',
     ];
 
     private const STATUSES = [
@@ -56,8 +58,11 @@ final class AdmissionLetters
         $condition = $filters['filter_type'] === 'status'
             ? 's.status = :status'
             : 's.warteliste = 1';
+        $schoolCondition = $filters['school_form'] === 'beide'
+            ? "s.schulform IN ('foerderstufe', 'gymnasium')"
+            : 's.schulform = :school_form';
         $statement = $database->prepare(
-            'SELECT s.id, s.vorname, s.nachname, s.strasse, s.plz, s.ort,
+            'SELECT s.id, s.vorname, s.nachname, s.schulform, s.strasse, s.plz, s.ort,
                     e.id AS guardian_id, e.vorname AS guardian_vorname,
                     e.nachname AS guardian_nachname, e.adresse_wie_schuelerin,
                     e.strasse AS guardian_strasse, e.plz AS guardian_plz,
@@ -65,10 +70,13 @@ final class AdmissionLetters
              FROM schueler s
              LEFT JOIN erziehungsberechtigte e
                  ON e.schueler_id = s.id AND e.erziehungsberechtigt = 1
-             WHERE s.schulform = :school_form AND ' . $condition . '
+             WHERE ' . $schoolCondition . ' AND ' . $condition . '
              ORDER BY s.nachname, s.vorname, s.id, e.nachname, e.vorname, e.id'
         );
-        $parameters = ['school_form' => $filters['school_form']];
+        $parameters = [];
+        if ($filters['school_form'] !== 'beide') {
+            $parameters['school_form'] = $filters['school_form'] === 'keine' ? '' : $filters['school_form'];
+        }
         if ($filters['filter_type'] === 'status') {
             $parameters['status'] = $filters['filter_value'];
         }
@@ -109,6 +117,7 @@ final class AdmissionLetters
             if (!isset($groups[$key])) {
                 $groups[$key] = [
                     'student_name' => $studentName,
+                    'school_form' => $row['schulform'],
                     'address' => $address,
                     'recipients' => [],
                 ];
@@ -132,22 +141,31 @@ final class AdmissionLetters
         return array_values($groups);
     }
 
+    public static function filtersForRecipient(array $filters, array $recipient): array
+    {
+        $schoolForm = $recipient['school_form'] === '' ? 'keine' : $recipient['school_form'];
+        return self::validateFilters($schoolForm, $filters['filter_type'], $filters['filter_value']);
+    }
+
     public static function letterContent(array $filters, string $studentName, string $schoolName): array
     {
         $schoolForm = $filters['school_label'];
-        $schoolAccusative = $filters['school_form'] === 'gymnasium'
-            ? 'das Gymnasium'
-            : 'die Förderstufe';
-        $schoolLocation = $filters['school_form'] === 'gymnasium'
-            ? 'am Gymnasium'
-            : 'in der Förderstufe';
+        [$schoolAccusative, $schoolLocation, $schoolAdmission] = match ($filters['school_form']) {
+            'gymnasium' => ['das Gymnasium', 'am Gymnasium', 'in das Gymnasium'],
+            'foerderstufe' => ['die Förderstufe', 'in der Förderstufe', 'in die Förderstufe'],
+            'keine' => ['einen Schulplatz', 'an unserer Schule', 'an unserer Schule'],
+            default => throw new InvalidArgumentException('Ungültige Schulform für den Serienbrief.'),
+        };
+        $waitlistLocation = $filters['school_form'] === 'keine'
+            ? $schoolLocation . ' ' . $schoolName
+            : $schoolLocation . ' an unserer Schule ' . $schoolName;
 
         if ($filters['filter_type'] === 'warteliste') {
             return [
                 'subject' => 'Aufnahmeverfahren – Warteliste ' . $schoolForm,
                 'paragraphs' => [
-                    'Für ' . $studentName . ' können wir derzeit noch keinen festen Platz ' . $schoolLocation
-                        . ' an unserer Schule ' . $schoolName . ' anbieten. Wir haben ' . $studentName . ' auf die Warteliste gesetzt.',
+                    'Für ' . $studentName . ' können wir derzeit noch keinen festen Platz ' . $waitlistLocation
+                        . ' anbieten. Wir haben ' . $studentName . ' auf die Warteliste gesetzt.',
                     'Sollte ein Platz frei werden, melden wir uns bei Ihnen. Bitte verstehen Sie dieses Schreiben '
                         . 'nicht als verbindliche Aufnahmezusage.',
                 ],
@@ -165,11 +183,12 @@ final class AdmissionLetters
                 ],
             ],
             'angenommen' => [
-                'subject' => 'Aufnahme in ' . $schoolAccusative,
+                'subject' => $filters['school_form'] === 'keine' ? 'Aufnahme an unserer Schule' : 'Aufnahme in ' . $schoolAccusative,
                 'paragraphs' => [
-                    'Wir freuen uns, Ihnen mitteilen zu können, dass wir ' . $studentName . ' in '
-                        . $schoolAccusative
-                        . ' an unserer Schule ' . $schoolName . ' aufnehmen können.',
+                    'Wir freuen uns, Ihnen mitteilen zu können, dass wir ' . $studentName . ' '
+                        . $schoolAdmission
+                        . ($filters['school_form'] === 'keine' ? ' ' : ' an unserer Schule ')
+                        . $schoolName . ' aufnehmen können.',
                     'Weitere Informationen zum Schulbeginn und zu den nächsten Schritten erhalten Sie gesondert.',
                 ],
             ],

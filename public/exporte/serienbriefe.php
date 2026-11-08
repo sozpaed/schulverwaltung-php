@@ -54,6 +54,8 @@ $settings = SchoolSettings::get($database);
                 <option value="">Bitte auswählen</option>
                 <option value="foerderstufe">Förderstufe</option>
                 <option value="gymnasium">Gymnasium</option>
+                <option value="keine">Keine</option>
+                <option value="beide">Beide</option>
             </select></p>
         <p><label for="status">Status</label>
             <select id="status" name="filter_value" required>
@@ -74,6 +76,8 @@ $settings = SchoolSettings::get($database);
                 <option value="">Bitte auswählen</option>
                 <option value="foerderstufe">Förderstufe</option>
                 <option value="gymnasium">Gymnasium</option>
+                <option value="keine">Keine</option>
+                <option value="beide">Beide</option>
             </select></p>
         <p>Filter: Warteliste (Ja)</p>
         <button type="submit">Serienbrief-PDF für die Warteliste laden</button>

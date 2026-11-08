@@ -77,7 +77,7 @@ if ($recipients === []) {
 
 $pdf = new AdmissionLetterPdf($settings);
 foreach ($recipients as $recipient) {
-    $pdf->addLetter($recipient, $filters);
+    $pdf->addLetter($recipient, AdmissionLetters::filtersForRecipient($filters, $recipient));
 }
 $document = $pdf->Output('S');
 $studentCount = count(array_unique(array_column($rows, 'id')));

@@ -33,6 +33,7 @@ $rows = [
         'id' => 1,
         'vorname' => 'Anna',
         'nachname' => 'Beispiel',
+        'schulform' => 'gymnasium',
         'strasse' => 'Schulstraße 1',
         'plz' => '63071',
         'ort' => 'Offenbach',
@@ -48,6 +49,7 @@ $rows = [
         'id' => 1,
         'vorname' => 'Anna',
         'nachname' => 'Beispiel',
+        'schulform' => 'gymnasium',
         'strasse' => 'Schulstraße 1',
         'plz' => '63071',
         'ort' => 'Offenbach',
@@ -63,6 +65,7 @@ $rows = [
         'id' => 1,
         'vorname' => 'Anna',
         'nachname' => 'Beispiel',
+        'schulform' => 'gymnasium',
         'strasse' => 'Schulstraße 1',
         'plz' => '63071',
         'ort' => 'Offenbach',
@@ -79,6 +82,7 @@ $rows = [
 $recipients = AdmissionLetters::groupRecipients($rows);
 expect(count($recipients) === 2, 'Gemeinsame Adressen wurden nicht gebündelt.');
 expect(count($recipients[0]['recipients']) === 2, 'Empfänger mit gleicher Adresse wurden nicht zusammengeführt.');
+expect($recipients[0]['school_form'] === 'gymnasium', 'Die Schulform der Schülerin fehlt in der Empfängergruppe.');
 expect($recipients[1]['address'][0] === 'Nebenstraße 2', 'Eine separate Erziehungsberechtigtenadresse wurde ignoriert.');
 
 $schoolName = 'Beispielschule';
@@ -92,6 +96,16 @@ expect(
     str_contains(AdmissionLetters::letterContent($gymnasiumStatus, 'Anna Beispiel', $schoolName)['paragraphs'][0], 'für das Gymnasium'),
     'Die Schulform Gymnasium wurde im Mustertext grammatikalisch nicht angepasst.'
 );
+foreach (['in_pruefung', 'angenommen', 'abgelehnt'] as $status) {
+    $none = AdmissionLetters::validateFilters('keine', 'status', $status);
+    $content = AdmissionLetters::letterContent($none, 'Anna Beispiel', $schoolName);
+    $text = $content['subject'] . ' ' . implode(' ', $content['paragraphs']);
+    expect(!str_contains($text, 'Gymnasium') && !str_contains($text, 'Förderstufe'), 'Bei fehlender Schulform wird eine Schulform behauptet.');
+}
+$noneWaiting = AdmissionLetters::validateFilters('keine', 'warteliste', 'ja');
+$waitingText = implode(' ', AdmissionLetters::letterContent($noneWaiting, 'Anna Beispiel', $schoolName)['paragraphs']);
+expect(str_contains($waitingText, 'Warteliste') && !str_contains($waitingText, 'Förderstufe'), 'Der Wartelistentext ohne Schulform ist falsch.');
+expect(AdmissionLetters::validateFilters('beide', 'status', 'angenommen')['school_form'] === 'beide', 'Die Auswahl beider Schulformen wird nicht akzeptiert.');
 
 $settings = [
     'school_name' => $schoolName,
