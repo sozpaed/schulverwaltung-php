@@ -37,16 +37,13 @@ final class AdmissionLetterPdf extends \FPDF
                 throw new RuntimeException('Das gespeicherte Logo ist ungültig.');
             }
             $scale = min(57 / $size[0], 25 / $size[1]);
-            $this->Image('school-logo', 20, 12, $size[0] * $scale, $size[1] * $scale, $type);
+            $width = $size[0] * $scale;
+            $this->Image('school-logo', 190 - $width, 12, $width, $size[1] * $scale, $type);
         } else {
             $this->SetFont('Arial', 'B', 11);
             $this->SetXY(20, 18);
             $this->Cell(100, 6, $this->pdfText($this->settings['school_name']));
         }
-        $this->SetFont('Arial', 'B', 8);
-        $this->SetTextColor(...self::BRAND_COLOR);
-        $this->SetXY(130, 18);
-        $this->Cell(60, 5, $this->pdfText('MUSTER – VOR VERSAND PRÜFEN'), 0, 0, 'R');
         $this->SetDrawColor(...self::BRAND_COLOR);
         $this->SetLineWidth(0.7);
         $this->Line(20, 41, 190, 41);

@@ -40,7 +40,7 @@ $settings = SchoolSettings::get($database);
     <p><a href="/">Zur Startseite</a></p>
     <h1>Serienbriefe als PDF</h1>
     <?= renderAccountMenu($user) ?>
-    <p>Die Texte sind zunächst Muster und müssen vor einem Versand geprüft werden.
+    <p>Bitte prüfe die Brieftexte und Empfänger vor dem Versand.
         Die Schulform wird jeweils zuerst ausgewählt.</p>
     <?php if ($settings['school_name'] === '' || $settings['head_name'] === ''): ?>
         <p role="alert">Name der Schule und Name der Schulleitung müssen vor der PDF-Erstellung in der Administration hinterlegt werden.</p>

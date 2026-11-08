@@ -158,6 +158,8 @@ expect(
 );
 expect(str_contains($document, 'schule@example.test'), 'Die konfigurierte E-Mail fehlt im PDF.');
 expect(!str_contains($document, 'Tumbrink'), 'Eine alte Schulleitung ist noch im PDF enthalten.');
+expect(!str_contains($document, 'MUSTER'), 'Der Musterhinweis erscheint noch im PDF ohne Logo.');
+expect(str_contains($document, '(Beispielschule) Tj'), 'Ohne Logo fehlt der Schulname im PDF-Kopf.');
 
 foreach ([
     [$separate[0], '(Sehr geehrte Frau Beispiel,) Tj', '(Sehr geehrter Herr Beispiel,) Tj'],
@@ -192,10 +194,19 @@ foreach ([
 $settings['logo_data'] = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0yQAAAAASUVORK5CYII=';
 $settings['logo_type'] = 'PNG';
 $pdfWithLogo = new Schulverwaltung\AdmissionLetterPdf($settings);
+$pdfWithLogo->SetCompression(false);
 $pdfWithLogo->addLetter($recipients[0], $statusFilters);
 $pdfWithLogo->addLetter($recipients[1], $statusFilters);
 $logoDocument = $pdfWithLogo->Output('S');
 expect(str_starts_with($logoDocument, '%PDF-'), 'PDF mit konfiguriertem Logo konnte nicht erzeugt werden.');
 expect(substr_count($logoDocument, '/Subtype /Image') === 2, 'Das Logo wurde auf mehreren Seiten nicht wiederverwendet.');
+expect(!str_contains($logoDocument, 'MUSTER'), 'Der Musterhinweis erscheint noch im PDF mit Logo.');
+preg_match_all('/q ([\d.]+) 0 0 ([\d.]+) ([\d.]+) ([\d.]+) cm \/I\d+ Do Q/', $logoDocument, $logoPositions, PREG_SET_ORDER);
+expect(count($logoPositions) === 2, 'Das Logo fehlt auf einer der PDF-Seiten.');
+foreach ($logoPositions as $position) {
+    $rightEdgeMm = ((float) $position[1] + (float) $position[3]) * 25.4 / 72;
+    $widthMm = (float) $position[1] * 25.4 / 72;
+    expect(abs($rightEdgeMm - 190) < 0.02 && $widthMm <= 57.01, 'Das Logo ist nicht rechtsbündig im Kopf platziert.');
+}
 
 fwrite(STDOUT, "Serienbrief-Filter, Empfängergruppen und Mustertexte erfolgreich geprüft." . PHP_EOL);
