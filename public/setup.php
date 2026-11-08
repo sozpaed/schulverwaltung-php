@@ -254,6 +254,7 @@ $postedString = static function (string $name, string $default = ''): string {
 </head>
 <body>
 <main>
+    <?= renderPageHeader('') ?>
     <h1>Schulverwaltung installieren</h1>
     <p>Der Assistent prüft die Servervoraussetzungen, verbindet sich mit einer eigens angelegten, leeren MariaDB- oder MySQL-Datenbank, richtet das Schema ein und erstellt das erste Administratorkonto.</p>
     <p>Vorhandene Tabellen werden nicht überschrieben oder gelöscht. Die Datenbank muss zuvor bei deinem Hoster angelegt worden und leer sein.</p>

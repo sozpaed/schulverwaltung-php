@@ -23,6 +23,7 @@ $entries = $database->query(
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <p><a href="/admin/">Zur Benutzerverwaltung</a></p>
     <h1>2FA-Rücksetzungen</h1>
     <?= renderAccountMenu($user) ?>

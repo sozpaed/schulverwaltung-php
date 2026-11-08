@@ -35,6 +35,7 @@ $entries = $statement->fetchAll();
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <p><a href="/admin/">Zur Benutzerverwaltung</a></p>
     <h1>Anmeldeprotokoll</h1>
     <?= renderAccountMenu($user) ?>

@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <p><a href="/admin/">Zur Benutzerverwaltung</a></p>
     <h1>2FA zurücksetzen</h1>
     <?= renderAccountMenu($user) ?>

@@ -29,6 +29,12 @@ final class SchoolSettings
         return array_fill_keys(array_keys(self::FIELDS), '') + ['logo_data' => null, 'logo_type' => null];
     }
 
+    public static function schoolName(PDO $database): string
+    {
+        $name = $database->query('SELECT school_name FROM schuleinstellungen WHERE id = 1')->fetchColumn();
+        return $name === false ? '' : $name;
+    }
+
     public static function validate(array $input): array
     {
         $errors = [];

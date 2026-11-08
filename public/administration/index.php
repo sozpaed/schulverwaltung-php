@@ -19,6 +19,7 @@ Admin::requireAdministrator($user);
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <p><a href="/">Zur Startseite</a></p>
     <h1>Administration</h1>
     <?= renderAccountMenu($user) ?>

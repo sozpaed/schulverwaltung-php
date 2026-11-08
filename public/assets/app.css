@@ -56,7 +56,7 @@ body:has(#password) main {
     margin-block: clamp(0px, 8vh, 80px);
 }
 
-main::before {
+.page-header {
     display: block;
     margin-bottom: 26px;
     padding-right: 110px;
@@ -64,7 +64,6 @@ main::before {
     font-size: 0.76rem;
     font-weight: 750;
     letter-spacing: 0.13em;
-    content: "SCHULVERWALTUNG";
 }
 
 h1,

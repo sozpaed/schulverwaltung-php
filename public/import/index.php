@@ -185,6 +185,7 @@ $csrfToken = Auth::csrfToken();
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <p><a href="/">Zur Startseite</a></p>
     <p><a href="/administration/">Zur Administration</a></p>
     <h1>Neue Schülerinnen und Erziehungsberechtigte aus CSV importieren</h1>

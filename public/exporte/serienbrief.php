@@ -65,6 +65,7 @@ if ($recipients === []) {
         <title>Keine Treffer – Serienbrief</title>
     </head>
     <body><main>
+    <?= renderSchoolHeader($database) ?>
         <h1>Keine passenden Schülerinnen gefunden</h1>
         <p>Für die gewählte Schulform und den Filter gibt es keine passenden Datensätze.</p>
         <p><a href="/exporte/">Zurück zum Datenexport</a></p>

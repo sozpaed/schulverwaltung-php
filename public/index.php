@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrfToken = Auth::csrfToken();
-$schoolName = $user === null ? '' : SchoolSettings::get($database)['school_name'];
+$schoolName = SchoolSettings::schoolName($database);
 ?>
 <!doctype html>
 <html lang="de">
@@ -70,6 +70,7 @@ $schoolName = $user === null ? '' : SchoolSettings::get($database)['school_name'
 </head>
 <body>
 <main>
+    <?= renderPageHeader($schoolName) ?>
     <?php if ($user === null): ?>
         <h1>Anmeldung</h1>
         <?php if ($sessionExpired): ?>

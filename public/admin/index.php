@@ -25,6 +25,7 @@ $users = $database->query(
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>

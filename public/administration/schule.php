@@ -99,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <main>
+    <?= renderSchoolHeader($database) ?>
     <p><a href="/">Zur Startseite</a></p>
     <p><a href="/administration/">Zur Administration</a></p>
     <h1>Angaben zur Schule</h1>

@@ -12,6 +12,7 @@ require_once __DIR__ . '/SessionPolicy.php';
 require_once __DIR__ . '/LoginThrottle.php';
 require_once __DIR__ . '/TwoFactor.php';
 require_once __DIR__ . '/RecoveryCodes.php';
+require_once __DIR__ . '/SchoolSettings.php';
 require_once __DIR__ . '/helpers.php';
 
 ini_set('session.use_strict_mode', '1');
@@ -72,6 +73,11 @@ function renderAccountMenu(array $user): string
     </div>
 </details>
 HTML;
+}
+
+function renderSchoolHeader(PDO $database): string
+{
+    return renderPageHeader(\Schulverwaltung\SchoolSettings::schoolName($database));
 }
 
 function renderEditLink(string $href, string $label): string

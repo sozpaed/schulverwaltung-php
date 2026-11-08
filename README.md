@@ -24,6 +24,9 @@ Es werden vorerst weder Laravel noch Composer-Pakete vorausgesetzt.
 ## Gestaltung
 
 Alle PHP-Seiten verwenden das gemeinsame Stylesheet `public/assets/app.css`.
+Im Seitenkopf steht der in der Administration hinterlegte Schulname vor
+„Schulverwaltung“. Solange kein Schulname hinterlegt ist, wird nur
+„Schulverwaltung“ angezeigt.
 Das responsive Layout verwendet die Hauptfarbe `#e31c79` mit grauen
 Navigationsflächen, vereinheitlicht Formulare, Tabellen und Navigation und
 berücksichtigt Tastaturfokus sowie reduzierte Animationen. In den
