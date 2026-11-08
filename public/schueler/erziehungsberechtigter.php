@@ -291,7 +291,7 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
     <title><?= escape($pageTitle) ?> – Schulverwaltung</title>
 </head>
 <body>
-<main>
+<main<?= $guardianId !== null ? ' class="record-edit"' : '' ?>>
     <?= renderSchoolHeader($database) ?>
     <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">

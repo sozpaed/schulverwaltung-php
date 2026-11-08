@@ -350,7 +350,7 @@ $average = $enteredGrades === []
     <title><?= $editId === null ? 'Schülerin anlegen' : 'Schülerinnendatensatz bearbeiten' ?> – Schulverwaltung</title>
 </head>
 <body>
-<main>
+<main<?= $editId !== null ? ' class="record-edit"' : '' ?>>
     <?= renderSchoolHeader($database) ?>
     <a class="home-link" href="/" aria-label="Zur Startseite" title="Zur Startseite">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">

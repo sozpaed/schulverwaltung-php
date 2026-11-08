@@ -451,6 +451,14 @@ button:active,
     overflow-wrap: anywhere;
 }
 
+.record-edit .record-navigation-current {
+    display: grid;
+    min-height: 42px;
+    place-items: center;
+    background: var(--canvas);
+    font-weight: 700;
+}
+
 @media (max-width: 600px) {
     .record-navigation {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
