@@ -90,7 +90,9 @@ final class AdmissionLetterPdf extends \FPDF
         foreach ($recipient['recipients'] as $name) {
             $this->Cell(90, 5, $this->pdfText($name), 0, 1);
         }
-        foreach ($recipient['address'] as $line) {
+        [$street, $postalCode, $city] = $recipient['address'];
+        $addressLines = [$street, trim($postalCode . ' ' . $city)];
+        foreach ($addressLines as $line) {
             if ($line !== '') {
                 $this->Cell(90, 5, $this->pdfText($line), 0, 1);
             }
@@ -125,7 +127,7 @@ final class AdmissionLetterPdf extends \FPDF
         $this->SetFont('Arial', 'B', 11);
         $this->Cell(170, 6, $this->pdfText($this->settings['head_name']), 0, 1);
         $this->SetFont('Arial', '', 10);
-        $this->Cell(170, 5, $this->pdfText($this->settings['school_name']), 0, 1);
+        $this->Cell(170, 5, $this->pdfText('Schulleitung'), 0, 1);
     }
 
     private function senderLine(): string

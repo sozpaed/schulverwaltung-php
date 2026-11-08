@@ -127,8 +127,30 @@ expect(str_starts_with($document, '%PDF-'), 'Die PDF-Ausgabe hat keinen gültige
 expect(str_contains($document, '%%EOF'), 'Die PDF-Ausgabe wurde nicht vollständig abgeschlossen.');
 expect(str_contains($document, 'Beispielschule'), 'Der konfigurierte Schulname fehlt im PDF.');
 expect(str_contains($document, 'Alex Beispiel'), 'Die konfigurierte Schulleitung fehlt im PDF.');
+expect(str_contains($document, '(63071 Offenbach) Tj'), 'Postleitzahl und Wohnort stehen nicht gemeinsam in einer PDF-Zeile.');
+expect(
+    preg_match('/\(Alex Beispiel\) Tj.*?\(([^()]*)\) Tj/s', $document, $signature) === 1
+        && $signature[1] === 'Schulleitung',
+    'Unter dem Namen der Schulleitung steht nicht die Funktionsbezeichnung.'
+);
 expect(str_contains($document, 'schule@example.test'), 'Die konfigurierte E-Mail fehlt im PDF.');
 expect(!str_contains($document, 'Tumbrink'), 'Eine alte Schulleitung ist noch im PDF enthalten.');
+
+foreach ([
+    [['', '12345', ''], '12345'],
+    [['', '', 'Beispielort'], 'Beispielort'],
+    [['', '', ''], null],
+] as [$address, $expectedLine]) {
+    $pdfWithPartialAddress = new Schulverwaltung\AdmissionLetterPdf($settings);
+    $pdfWithPartialAddress->SetCompression(false);
+    $pdfWithPartialAddress->addLetter(array_replace($recipients[0], ['address' => $address]), $statusFilters);
+    $partialDocument = $pdfWithPartialAddress->Output('S');
+    if ($expectedLine !== null) {
+        expect(str_contains($partialDocument, '(' . $expectedLine . ') Tj'), 'Eine unvollständige Adresse wird nicht korrekt ausgegeben.');
+    } else {
+        expect(!str_contains($partialDocument, '() Tj'), 'Eine leere Adresse erzeugt eine leere PDF-Textzeile.');
+    }
+}
 
 $settings['logo_data'] = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0yQAAAAASUVORK5CYII=';
 $settings['logo_type'] = 'PNG';
