@@ -62,7 +62,7 @@ final class AdmissionLetters
             ? "s.schulform IN ('foerderstufe', 'gymnasium')"
             : 's.schulform = :school_form';
         $statement = $database->prepare(
-            'SELECT s.id, s.vorname, s.nachname, s.schulform, s.strasse, s.plz, s.ort,
+            'SELECT s.id, s.vorname, s.nachname, s.schulform, s.klasse, s.strasse, s.plz, s.ort,
                     e.id AS guardian_id, e.vorname AS guardian_vorname,
                     e.nachname AS guardian_nachname, e.beziehung AS guardian_beziehung, e.adresse_wie_schuelerin,
                     e.strasse AS guardian_strasse, e.plz AS guardian_plz,
@@ -118,9 +118,11 @@ final class AdmissionLetters
                 $groups[$key] = [
                     'student_name' => $studentName,
                     'school_form' => $row['schulform'],
+                    'class' => $row['klasse'],
                     'address' => $address,
                     'recipients' => [],
                     'salutations_by_relationship' => ['mutter' => [], 'vater' => [], 'andere' => []],
+                    'surnames_by_relationship' => ['mutter' => [], 'vater' => [], 'andere' => []],
                 ];
             }
 
@@ -142,6 +144,9 @@ final class AdmissionLetters
                 if (!in_array($salutation, $groups[$key]['salutations_by_relationship'][$category], true)) {
                     $groups[$key]['salutations_by_relationship'][$category][] = $salutation;
                 }
+                if ($surname !== '' && !in_array($surname, $groups[$key]['surnames_by_relationship'][$category], true)) {
+                    $groups[$key]['surnames_by_relationship'][$category][] = $surname;
+                }
             }
         }
 
@@ -150,10 +155,12 @@ final class AdmissionLetters
                 $group['recipients'][] = 'Erziehungsberechtigte der Schülerin ' . $group['student_name'];
             }
             $group['salutations'] = array_merge(...array_values($group['salutations_by_relationship']));
+            $group['guardian_salutation'] = implode("\n", $group['salutations']);
+            $group['guardian_surname'] = implode(' und ', array_unique(array_merge(...array_values($group['surnames_by_relationship']))));
             if ($group['salutations'] === []) {
                 $group['salutations'][] = 'Sehr geehrte Erziehungsberechtigte,';
             }
-            unset($group['salutations_by_relationship']);
+            unset($group['salutations_by_relationship'], $group['surnames_by_relationship']);
         }
         unset($group);
 

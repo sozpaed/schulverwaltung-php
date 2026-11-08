@@ -7,6 +7,18 @@ use Schulverwaltung\AdmissionLetters;
 require_once __DIR__ . '/../src/AdmissionLetters.php';
 require_once __DIR__ . '/../src/AdmissionLetterPdf.php';
 
+function defaultTemplate(array $filters): array
+{
+    $content = AdmissionLetters::letterContent($filters, '{{schuelerin}}', '{{schulname}}');
+    return [
+        'betreff' => $content['subject'],
+        'inhalt' => implode('', array_map(
+            static fn (string $paragraph): string => '<p>' . htmlspecialchars($paragraph, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '</p>',
+            $content['paragraphs']
+        )),
+    ];
+}
+
 function expect(bool $condition, string $message): void
 {
     if (!$condition) {
@@ -34,6 +46,7 @@ $rows = [
         'vorname' => 'Anna',
         'nachname' => 'Beispiel',
         'schulform' => 'gymnasium',
+        'klasse' => '5a',
         'strasse' => 'Schulstraße 1',
         'plz' => '63071',
         'ort' => 'Offenbach',
@@ -51,6 +64,7 @@ $rows = [
         'vorname' => 'Anna',
         'nachname' => 'Beispiel',
         'schulform' => 'gymnasium',
+        'klasse' => '5a',
         'strasse' => 'Schulstraße 1',
         'plz' => '63071',
         'ort' => 'Offenbach',
@@ -68,6 +82,7 @@ $rows = [
         'vorname' => 'Anna',
         'nachname' => 'Beispiel',
         'schulform' => 'gymnasium',
+        'klasse' => '5a',
         'strasse' => 'Schulstraße 1',
         'plz' => '63071',
         'ort' => 'Offenbach',
@@ -140,7 +155,7 @@ $settings = [
 ];
 $pdf = new Schulverwaltung\AdmissionLetterPdf($settings);
 $pdf->SetCompression(false);
-$pdf->addLetter($recipients[0] + ['student_name' => 'Anna Beispiel'], $statusFilters);
+$pdf->addLetter($recipients[0] + ['student_name' => 'Anna Beispiel'], defaultTemplate($statusFilters));
 $document = $pdf->Output('S');
 expect(str_starts_with($document, '%PDF-'), 'Die PDF-Ausgabe hat keinen gültigen PDF-Kopf.');
 expect(str_contains($document, '%%EOF'), 'Die PDF-Ausgabe wurde nicht vollständig abgeschlossen.');
@@ -169,7 +184,7 @@ foreach ([
 ] as [$recipient, $expectedSalutation, $unexpectedSalutation]) {
     $pdfForRecipient = new Schulverwaltung\AdmissionLetterPdf($settings);
     $pdfForRecipient->SetCompression(false);
-    $pdfForRecipient->addLetter($recipient, $statusFilters);
+    $pdfForRecipient->addLetter($recipient, defaultTemplate($statusFilters));
     $recipientDocument = $pdfForRecipient->Output('S');
     expect(str_contains($recipientDocument, $expectedSalutation), 'Die erwartete Anrede fehlt im PDF.');
     expect(!str_contains($recipientDocument, $unexpectedSalutation), 'Das PDF enthält eine falsche Anrede.');
@@ -182,7 +197,7 @@ foreach ([
 ] as [$address, $expectedLine]) {
     $pdfWithPartialAddress = new Schulverwaltung\AdmissionLetterPdf($settings);
     $pdfWithPartialAddress->SetCompression(false);
-    $pdfWithPartialAddress->addLetter(array_replace($recipients[0], ['address' => $address]), $statusFilters);
+    $pdfWithPartialAddress->addLetter(array_replace($recipients[0], ['address' => $address]), defaultTemplate($statusFilters));
     $partialDocument = $pdfWithPartialAddress->Output('S');
     if ($expectedLine !== null) {
         expect(str_contains($partialDocument, '(' . $expectedLine . ') Tj'), 'Eine unvollständige Adresse wird nicht korrekt ausgegeben.');
@@ -195,8 +210,8 @@ $settings['logo_data'] = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
 $settings['logo_type'] = 'PNG';
 $pdfWithLogo = new Schulverwaltung\AdmissionLetterPdf($settings);
 $pdfWithLogo->SetCompression(false);
-$pdfWithLogo->addLetter($recipients[0], $statusFilters);
-$pdfWithLogo->addLetter($recipients[1], $statusFilters);
+$pdfWithLogo->addLetter($recipients[0], defaultTemplate($statusFilters));
+$pdfWithLogo->addLetter($recipients[1], defaultTemplate($statusFilters));
 $logoDocument = $pdfWithLogo->Output('S');
 expect(str_starts_with($logoDocument, '%PDF-'), 'PDF mit konfiguriertem Logo konnte nicht erzeugt werden.');
 expect(substr_count($logoDocument, '/Subtype /Image') === 2, 'Das Logo wurde auf mehreren Seiten nicht wiederverwendet.');

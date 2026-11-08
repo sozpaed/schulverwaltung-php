@@ -23,14 +23,14 @@ function expectSelection(bool $condition, string $message): void
 
 $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $database->exec("CREATE TABLE schueler (
-    id INTEGER PRIMARY KEY, vorname TEXT, nachname TEXT, schulform TEXT,
+    id INTEGER PRIMARY KEY, vorname TEXT, nachname TEXT, schulform TEXT, klasse TEXT DEFAULT '',
     strasse TEXT, plz TEXT, ort TEXT, status TEXT, warteliste INTEGER
 )");
 $database->exec("CREATE TABLE erziehungsberechtigte (
     id INTEGER PRIMARY KEY, schueler_id INTEGER, vorname TEXT, nachname TEXT, beziehung TEXT,
     adresse_wie_schuelerin INTEGER, strasse TEXT, plz TEXT, ort TEXT, erziehungsberechtigt INTEGER
 )");
-$student = $database->prepare('INSERT INTO schueler VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$student = $database->prepare('INSERT INTO schueler (id, vorname, nachname, schulform, strasse, plz, ort, status, warteliste) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
 foreach ([
     [1, 'Anna', 'A', '', 'Weg 1', '12345', 'Ort', 'angenommen', 1],
     [2, 'Bea', 'B', 'foerderstufe', 'Weg 2', '12345', 'Ort', 'angenommen', 1],
@@ -74,11 +74,13 @@ $settings = [
     'street' => '', 'postal_code' => '', 'city' => '', 'phone' => '',
     'email' => '', 'website' => '', 'logo_data' => null, 'logo_type' => null,
 ];
+$database->exec('CREATE TABLE serienbriefvorlagen (schulform TEXT, briefart TEXT, betreff TEXT, inhalt TEXT, version INTEGER DEFAULT 1, PRIMARY KEY (schulform, briefart))');
+\Schulverwaltung\LetterTemplates::initialize($database);
 $pdf = new AdmissionLetterPdf($settings);
 $pdf->SetCompression(false);
 foreach ($recipients as $recipient) {
     $letterFilters = AdmissionLetters::filtersForRecipient($filters, $recipient);
-    $pdf->addLetter($recipient, $letterFilters);
+    $pdf->addLetter($recipient, \Schulverwaltung\LetterTemplates::get($database, $letterFilters['school_form'], $letterFilters['filter_value']));
 }
 $document = $pdf->Output('S');
 expectSelection(str_contains($document, 'die F' . chr(0xf6) . 'rderstufe'), 'Der Förderstufenbrief fehlt.');
@@ -90,7 +92,7 @@ $letterFilters = AdmissionLetters::filtersForRecipient($filters, $recipients[0])
 expectSelection($letterFilters['school_form'] === 'keine', 'Eine leere Schulform wird nicht für den Brief umgesetzt.');
 $pdf = new AdmissionLetterPdf($settings);
 $pdf->SetCompression(false);
-$pdf->addLetter($recipients[0], $letterFilters);
+$pdf->addLetter($recipients[0], \Schulverwaltung\LetterTemplates::get($database, $letterFilters['school_form'], 'warteliste'));
 $document = $pdf->Output('S');
 expectSelection(str_contains($document, 'Warteliste'), 'Der Wartelistenbrief ohne Schulform fehlt.');
 expectSelection(!str_contains($document, 'Gymnasium') && !str_contains($document, 'F' . chr(0xf6) . 'rderstufe'), 'Der Brief ohne Schulform enthält eine falsche Schulform.');

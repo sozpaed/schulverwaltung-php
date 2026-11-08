@@ -494,6 +494,19 @@ button:active,
     gap: 6px;
 }
 
+.letter-editor {
+    min-height: 16rem;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    overflow-wrap: anywhere;
+}
+
+textarea[hidden] {
+    display: none;
+}
+
 .edit-link,
 .detail-link,
 .delete-link {

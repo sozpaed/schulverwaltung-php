@@ -14,6 +14,7 @@ $username = '';
 $isActive = true;
 $isSuperuser = false;
 $canExport = false;
+$canEditLetterTemplates = false;
 $canDeleteCatalogs = false;
 $canDeleteStudents = false;
 $errors = [];
@@ -59,6 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $canExport = !array_key_exists('can_export', $_POST)
             ? false
             : ($_POST['can_export'] === '1' ? true : null);
+        $canEditLetterTemplates = !array_key_exists('can_edit_letter_templates', $_POST)
+            ? false
+            : ($_POST['can_edit_letter_templates'] === '1' ? true : null);
         $canDeleteCatalogs = !array_key_exists('can_delete_catalogs', $_POST)
             ? false
             : ($_POST['can_delete_catalogs'] === '1' ? true : null);
@@ -66,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ? false
             : ($_POST['can_delete_students'] === '1' ? true : null);
 
-        if ($isActive === null || $isSuperuser === null || $canExport === null || $canDeleteCatalogs === null || $canDeleteStudents === null) {
+        if ($isActive === null || $isSuperuser === null || $canExport === null || $canEditLetterTemplates === null || $canDeleteCatalogs === null || $canDeleteStudents === null) {
             $errors[] = 'Ungültige Berechtigungsauswahl.';
         }
 
@@ -82,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($errors === []) {
             $insertStatement = $database->prepare(
-                'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students)
-                 VALUES (:username, :password_hash, :is_active, :is_superuser, :can_export, :can_delete_catalogs, :can_delete_students)'
+                'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students)
+                 VALUES (:username, :password_hash, :is_active, :is_superuser, :can_export, :can_edit_letter_templates, :can_delete_catalogs, :can_delete_students)'
             );
             try {
                 $insertStatement->execute([
@@ -92,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'is_active' => (int) $isActive,
                     'is_superuser' => (int) $isSuperuser,
                     'can_export' => (int) $canExport,
+                    'can_edit_letter_templates' => (int) $canEditLetterTemplates,
                     'can_delete_catalogs' => (int) $canDeleteCatalogs,
                     'can_delete_students' => (int) $canDeleteStudents,
                 ]);
@@ -168,6 +173,10 @@ $csrfToken = Auth::csrfToken();
             <p>
                 <input id="can_export" name="can_export" type="checkbox" value="1"<?= $canExport ? ' checked' : '' ?>>
                 <label for="can_export">Datenexport erlauben</label>
+            </p>
+            <p>
+                <input id="can_edit_letter_templates" name="can_edit_letter_templates" type="checkbox" value="1"<?= $canEditLetterTemplates ? ' checked' : '' ?>>
+                <label for="can_edit_letter_templates">Serienbriefvorlagen bearbeiten erlauben</label>
             </p>
             <p>
                 <input id="can_delete_catalogs" name="can_delete_catalogs" type="checkbox" value="1"<?= $canDeleteCatalogs ? ' checked' : '' ?>>

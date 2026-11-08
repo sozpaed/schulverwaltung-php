@@ -26,7 +26,7 @@ angelegten Entwicklungsdatenbank ausgeführt werden.
 
 ## Voraussetzungen für den späteren Betrieb
 
-- PHP mit `PDO`, `pdo_mysql` und `openssl`
+- PHP mit `PDO`, `pdo_mysql`, `openssl`, `dom` und `iconv`
 - MariaDB ab 10.5 oder MySQL 8.4 (einschließlich Percona Server for MySQL 8.4)
   mit InnoDB-Unterstützung
 - HTTPS im Produktivbetrieb
@@ -250,6 +250,9 @@ und kann in der MariaDB-Konsole mit dem Anwendungsbenutzer eingespielt werden:
 USE schulverwaltung_dev;
 SOURCE C:/dev/schulverwaltung-php/schulverwaltung-php/database/seed.sql;
 ```
+
+Bei manueller Einrichtung nach der Datenbankkonfiguration zusätzlich
+`php bin/initialize-letter-templates.php` im Projektverzeichnis ausführen.
 
 Bei einer frischen Hosting-Installation wird eine eigens im Hosting-Panel
 angelegte, leere Datenbank in `public/setup.php` konfiguriert. Der
@@ -617,9 +620,35 @@ gemeinsamen Brief zuerst die Mutter. Andere Kontaktpersonen und Fälle ohne
 passende Kontaktperson erhalten eine neutrale Anrede. Brieftexte und Empfänger
 sollten vor dem Versand geprüft werden. Ein hinterlegtes Schullogo erscheint
 oben rechts im PDF. Die PDF-Erstellung verwendet die lokal mitgelieferte FPDF-Bibliothek;
-deren Lizenz liegt unter `src/vendor/fpdf/LICENSE.txt`. Filterung und
-PDF-Erstellung benötigen keine Datenbankänderung. Auch PDF-Exporte werden in
+deren Lizenz liegt unter `src/vendor/fpdf/LICENSE.txt`. PDF-Exporte werden in
 `export_protokolle` protokolliert.
+
+Der Button **Editor** steht Benutzern mit dem separat in der Benutzerverwaltung
+vergebenen Recht **Serienbriefvorlagen bearbeiten** zur Verfügung, auch ohne
+Exportrecht. Je Kombination aus Schulform (Keine, Förderstufe, Gymnasium) und
+Briefart (drei Statuswerte oder Warteliste) gibt es eine eigene Vorlage.
+Beim Export mit „Beide“ wird für jede Schülerin die Vorlage ihrer Schulform
+verwendet. Der Editor unterstützt Absätze, Fett und Kursiv sowie eine
+PDF-Vorschau mit Beispieldaten. Die persönliche Anrede bleibt automatisch
+vor dem Brieftext; die Platzhalter `{{schuelerin}}`, `{{schulname}}`,
+`{{klasse}}`, `{{erziehungsberechtigter_nachname}}` und
+`{{erziehungsberechtigter_anrede}}` können zusätzlich in Betreff und Brieftext
+verwendet werden. Bei einem gemeinsamen Brief werden unterschiedliche
+Nachnamen mit „und“ verbunden und gleiche Nachnamen nur einmal ausgegeben;
+die Anreden erscheinen in der Reihenfolge Mutter, Vater. Fehlende Angaben
+werden leer eingesetzt. Vorlagenänderungen betreffen alle späteren Exporte.
+
+Für bestehende Installationen vor der Aktualisierung die Datenbank sichern und
+`database/migrations/20261108_letter_templates.sql` einmalig mit passenden
+ALTER- und CREATE-Rechten ausführen. Anschließend auf dem Server aus dem
+Projektverzeichnis `php bin/initialize-letter-templates.php` ausführen; das
+Skript legt die zwölf bisherigen Texte als Vorlagen an und überschreibt keine
+bereits vorhandenen Vorlagen. Ohne diese Initialisierung sind Serienbriefe
+nicht nutzbar. MariaDB/MySQL führen Schemaänderungen unmittelbar aus; nach
+Fehlern den Datenbankzustand prüfen, bevor die Migration erneut gestartet wird.
+Bei Neuinstallationen übernimmt der Installer die Initialisierung. Das neue
+Bearbeitungsrecht ist zunächst für alle Benutzer deaktiviert und muss durch
+einen Administrator vergeben werden.
 
 Die Statistikseite enthält Tabellen und farbige Ringdiagramme nach Status,
 Klasse und Schulform. Der äußere Ring zeigt die Gesamtzahl, der mittlere Ring

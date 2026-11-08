@@ -76,8 +76,15 @@ if ($recipients === []) {
 }
 
 $pdf = new AdmissionLetterPdf($settings);
+$templates = [];
 foreach ($recipients as $recipient) {
-    $pdf->addLetter($recipient, AdmissionLetters::filtersForRecipient($filters, $recipient));
+    $letterFilters = AdmissionLetters::filtersForRecipient($filters, $recipient);
+    $form = $letterFilters['school_form'];
+    $type = $letterFilters['filter_type'] === 'warteliste' ? 'warteliste' : $letterFilters['filter_value'];
+    if (!isset($templates[$form])) {
+        $templates[$form] = \Schulverwaltung\LetterTemplates::get($database, $form, $type);
+    }
+    $pdf->addLetter($recipient, $templates[$form]);
 }
 $document = $pdf->Output('S');
 $studentCount = count(array_unique(array_column($rows, 'id')));

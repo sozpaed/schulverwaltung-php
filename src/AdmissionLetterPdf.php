@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Schulverwaltung;
 
 require_once __DIR__ . '/vendor/fpdf/fpdf.php';
+require_once __DIR__ . '/LetterTemplates.php';
 
 use RuntimeException;
 
@@ -67,8 +68,16 @@ final class AdmissionLetterPdf extends \FPDF
         $this->Cell(170, 4, $this->pdfText(implode(' · ', $contact)), 0, 0, 'C');
     }
 
-    public function addLetter(array $recipient, array $filters): void
+    public function addLetter(array $recipient, array $template): void
     {
+        LetterTemplates::validate($template['betreff'], $template['inhalt']);
+        $values = [
+            'schuelerin' => $recipient['student_name'],
+            'schulname' => $this->settings['school_name'],
+            'klasse' => $recipient['class'],
+            'erziehungsberechtigter_nachname' => $recipient['guardian_surname'],
+            'erziehungsberechtigter_anrede' => $recipient['guardian_salutation'],
+        ];
         $this->AddPage();
         $this->SetFont('Arial', '', 8);
         $this->SetTextColor(100, 116, 139);
@@ -99,12 +108,11 @@ final class AdmissionLetterPdf extends \FPDF
         $this->SetXY(130, 64);
         $this->Cell(60, 5, date('d.m.Y'), 0, 0, 'R');
 
-        $content = AdmissionLetters::letterContent($filters, $recipient['student_name'], $this->settings['school_name']);
         $subjectY = max($this->GetY() + 14, 99);
         $this->SetXY(20, $subjectY);
         $this->SetFont('Arial', 'B', 13);
         $this->SetTextColor(...self::BRAND_COLOR);
-        $this->MultiCell(170, 7, $this->pdfText($content['subject']));
+        $this->MultiCell(170, 7, $this->pdfText(LetterTemplates::replace($template['betreff'], $values)));
 
         $this->Ln(7);
         $this->SetFont('Arial', '', 11);
@@ -113,16 +121,41 @@ final class AdmissionLetterPdf extends \FPDF
             $this->MultiCell(170, 6, $this->pdfText($salutation));
         }
         $this->Ln(4);
-        foreach ($content['paragraphs'] as $paragraph) {
-            $this->MultiCell(170, 6, $this->pdfText($paragraph));
-            $this->Ln(4);
+        $body = LetterTemplates::parse($template['inhalt']);
+        foreach ($body->documentElement->childNodes as $node) {
+            $this->writeTemplateNode($node, $values, false, false);
+            if ($node instanceof \DOMElement && $node->tagName === 'p') {
+                $this->Ln(10);
+            }
         }
+        if ($this->GetX() > 20) {
+            $this->Ln(10);
+        }
+        $this->SetFont('Arial', '', 11);
         $this->Cell(170, 6, $this->pdfText('Mit freundlichen Grüßen'), 0, 1);
         $this->Ln(8);
         $this->SetFont('Arial', 'B', 11);
         $this->Cell(170, 6, $this->pdfText($this->settings['head_name']), 0, 1);
         $this->SetFont('Arial', '', 10);
         $this->Cell(170, 5, $this->pdfText('Schulleitung'), 0, 1);
+    }
+
+    private function writeTemplateNode(\DOMNode $node, array $values, bool $bold, bool $italic): void
+    {
+        if ($node instanceof \DOMText) {
+            $this->SetFont('Arial', ($bold ? 'B' : '') . ($italic ? 'I' : ''), 11);
+            $this->Write(6, $this->pdfText(LetterTemplates::replace($node->textContent, $values)));
+            return;
+        }
+        if ($node instanceof \DOMElement && $node->tagName === 'br') {
+            $this->Ln(6);
+            return;
+        }
+        if ($node instanceof \DOMElement) {
+            foreach ($node->childNodes as $child) {
+                $this->writeTemplateNode($child, $values, $bold || $node->tagName === 'strong', $italic || $node->tagName === 'em');
+            }
+        }
     }
 
     private function senderLine(): string

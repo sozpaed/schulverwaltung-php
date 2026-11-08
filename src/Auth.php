@@ -25,7 +25,7 @@ final class Auth
             [$userFailures, $ipFailures] = $throttle->failureCounts();
             $failureCount = max($userFailures, $ipFailures) + 1;
             $statement = $database->prepare(
-                'SELECT id, username, password_hash, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students,
+                'SELECT id, username, password_hash, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students,
                         totp_secret, totp_enabled, totp_last_counter, sitzungs_version
                  FROM app_users
                  WHERE username = :username'
@@ -81,6 +81,7 @@ final class Auth
             'username' => $user['username'],
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
+            'can_edit_letter_templates' => (bool) $user['can_edit_letter_templates'],
             'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'can_delete_students' => (bool) $user['can_delete_students'],
             'sitzungs_version' => (int) $user['sitzungs_version'],
@@ -110,7 +111,7 @@ final class Auth
         }
 
         $statement = $database->prepare(
-            'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students, totp_enabled, sitzungs_version
+            'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students, totp_enabled, sitzungs_version
              FROM app_users
              WHERE id = :id'
         );
@@ -134,6 +135,7 @@ final class Auth
             'username' => $user['username'],
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
+            'can_edit_letter_templates' => (bool) $user['can_edit_letter_templates'],
             'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'can_delete_students' => (bool) $user['can_delete_students'],
             'totp_enabled' => (bool) $user['totp_enabled'],

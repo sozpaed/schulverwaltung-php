@@ -44,6 +44,7 @@ $checks = [
         && function_exists('openssl_encrypt')
         && function_exists('openssl_decrypt'),
     'PHP-Sessions' => extension_loaded('session'),
+    'DOM/XML und iconv' => extension_loaded('dom') && function_exists('iconv'),
     'Sichere Zufallswerte und Passwort-Hashes' => function_exists('random_bytes')
         && function_exists('password_hash')
         && function_exists('password_verify'),
@@ -204,6 +205,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new RuntimeException('Die Basis-Auswahlliste konnte nicht gelesen werden.');
                 }
                 $database->exec($seed);
+                require_once __DIR__ . '/../src/AdmissionLetters.php';
+                require_once __DIR__ . '/../src/LetterTemplates.php';
+                \Schulverwaltung\LetterTemplates::initialize($database);
 
                 $createAdmin = $database->prepare(
                     'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export)

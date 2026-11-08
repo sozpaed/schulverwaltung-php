@@ -13,7 +13,7 @@ if ($user === null) {
     exit;
 }
 
-if (!$user['can_export']) {
+if (!$user['can_export'] && !$user['can_edit_letter_templates']) {
     http_response_code(403);
     exit('Du bist nicht berechtigt, Serienbriefe zu erstellen.');
 }
@@ -40,6 +40,10 @@ $settings = SchoolSettings::get($database);
     <p><a href="/">Zur Startseite</a></p>
     <h1>Serienbriefe als PDF</h1>
     <?= renderAccountMenu($user) ?>
+    <?php if ($user['can_edit_letter_templates']): ?>
+        <p><a class="button-link" href="/exporte/vorlagen.php">Editor</a></p>
+    <?php endif; ?>
+    <?php if ($user['can_export']): ?>
     <p>Bitte prüfe die Brieftexte und Empfänger vor dem Versand.
         Die Schulform wird jeweils zuerst ausgewählt.</p>
     <?php if ($settings['school_name'] === '' || $settings['head_name'] === ''): ?>
@@ -82,6 +86,7 @@ $settings = SchoolSettings::get($database);
         <p>Filter: Warteliste (Ja)</p>
         <button type="submit">Serienbrief-PDF für die Warteliste laden</button>
     </form>
+    <?php endif; ?>
 </main>
 </body>
 </html>

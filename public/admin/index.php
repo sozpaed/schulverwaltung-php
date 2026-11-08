@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../src/Admin.php';
 Admin::requireAdministrator($user);
 
 $users = $database->query(
-    'SELECT id, username, is_active, is_superuser, can_export, can_delete_catalogs, can_delete_students, erstellt_am
+    'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students, erstellt_am
      FROM app_users
      ORDER BY username, id'
 )->fetchAll();
@@ -48,6 +48,7 @@ $users = $database->query(
                 <th scope="col">Status</th>
                 <th scope="col">Administrator</th>
                 <th scope="col">Exportrecht</th>
+                <th scope="col">Briefvorlagen bearbeiten</th>
                 <th scope="col">Auswahllisten löschen</th>
                 <th scope="col">Schülerinnen löschen</th>
                 <th scope="col">Erstellt am</th>
@@ -61,6 +62,7 @@ $users = $database->query(
                     <td><?= (bool) $listedUser['is_active'] ? 'Aktiv' : 'Deaktiviert' ?></td>
                     <td><?= (bool) $listedUser['is_superuser'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_export'] ? 'Ja' : 'Nein' ?></td>
+                    <td><?= (bool) $listedUser['can_edit_letter_templates'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_delete_catalogs'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_delete_students'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= escape($listedUser['erstellt_am']) ?></td>
