@@ -64,7 +64,7 @@ final class AdmissionLetters
         $statement = $database->prepare(
             'SELECT s.id, s.vorname, s.nachname, s.schulform, s.strasse, s.plz, s.ort,
                     e.id AS guardian_id, e.vorname AS guardian_vorname,
-                    e.nachname AS guardian_nachname, e.adresse_wie_schuelerin,
+                    e.nachname AS guardian_nachname, e.beziehung AS guardian_beziehung, e.adresse_wie_schuelerin,
                     e.strasse AS guardian_strasse, e.plz AS guardian_plz,
                     e.ort AS guardian_ort
              FROM schueler s
@@ -120,6 +120,7 @@ final class AdmissionLetters
                     'school_form' => $row['schulform'],
                     'address' => $address,
                     'recipients' => [],
+                    'salutations_by_relationship' => ['mutter' => [], 'vater' => [], 'andere' => []],
                 ];
             }
 
@@ -128,6 +129,19 @@ final class AdmissionLetters
                 if ($guardianName !== '' && !in_array($guardianName, $groups[$key]['recipients'], true)) {
                     $groups[$key]['recipients'][] = $guardianName;
                 }
+                $relationship = $row['guardian_beziehung'];
+                $surname = trim($row['guardian_nachname']);
+                $salutation = match (true) {
+                    $relationship === 'mutter' && $surname !== '' => 'Sehr geehrte Frau ' . $surname . ',',
+                    $relationship === 'vater' && $surname !== '' => 'Sehr geehrter Herr ' . $surname . ',',
+                    default => 'Sehr geehrte Erziehungsberechtigte,',
+                };
+                $category = in_array($relationship, ['mutter', 'vater'], true) && $surname !== ''
+                    ? $relationship
+                    : 'andere';
+                if (!in_array($salutation, $groups[$key]['salutations_by_relationship'][$category], true)) {
+                    $groups[$key]['salutations_by_relationship'][$category][] = $salutation;
+                }
             }
         }
 
@@ -135,6 +149,11 @@ final class AdmissionLetters
             if ($group['recipients'] === []) {
                 $group['recipients'][] = 'Erziehungsberechtigte der Schülerin ' . $group['student_name'];
             }
+            $group['salutations'] = array_merge(...array_values($group['salutations_by_relationship']));
+            if ($group['salutations'] === []) {
+                $group['salutations'][] = 'Sehr geehrte Erziehungsberechtigte,';
+            }
+            unset($group['salutations_by_relationship']);
         }
         unset($group);
 

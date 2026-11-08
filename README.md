@@ -611,7 +611,10 @@ eingetragene Schulform; bei fehlender Schulform sind die Mustertexte neutral.
 Alle als erziehungsberechtigt markierten Kontaktpersonen erhalten
 den Brief; bei gleicher Adresse werden sie gemeinsam aufgeführt, bei
 unterschiedlichen Adressen entstehen separate Briefe. Wenn keine passende
-Kontaktperson vorhanden ist, wird die Adresse der Schülerin verwendet. Die Texte
+Kontaktperson vorhanden ist, wird die Adresse der Schülerin verwendet. Mütter
+und Väter werden mit Frau bzw. Herr und ihrem Nachnamen angesprochen, bei einem
+gemeinsamen Brief zuerst die Mutter. Andere Kontaktpersonen und Fälle ohne
+passende Kontaktperson erhalten eine neutrale Anrede. Die Texte
 sind zunächst als **Muster** gekennzeichnet und müssen vor dem Versand geprüft
 werden. Die PDF-Erstellung verwendet die lokal mitgelieferte FPDF-Bibliothek;
 deren Lizenz liegt unter `src/vendor/fpdf/LICENSE.txt`. Filterung und

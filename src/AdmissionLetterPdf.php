@@ -112,11 +112,9 @@ final class AdmissionLetterPdf extends \FPDF
         $this->Ln(7);
         $this->SetFont('Arial', '', 11);
         $this->SetTextColor(32, 51, 72);
-        $this->MultiCell(
-            170,
-            6,
-            $this->pdfText('Sehr geehrte Erziehungsberechtigte,')
-        );
+        foreach ($recipient['salutations'] as $salutation) {
+            $this->MultiCell(170, 6, $this->pdfText($salutation));
+        }
         $this->Ln(4);
         foreach ($content['paragraphs'] as $paragraph) {
             $this->MultiCell(170, 6, $this->pdfText($paragraph));

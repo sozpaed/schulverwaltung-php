@@ -40,6 +40,7 @@ $rows = [
         'guardian_id' => 10,
         'guardian_vorname' => 'Mara',
         'guardian_nachname' => 'Beispiel',
+        'guardian_beziehung' => 'mutter',
         'adresse_wie_schuelerin' => 1,
         'guardian_strasse' => '',
         'guardian_plz' => null,
@@ -56,6 +57,7 @@ $rows = [
         'guardian_id' => 11,
         'guardian_vorname' => 'Paul',
         'guardian_nachname' => 'Beispiel',
+        'guardian_beziehung' => 'vater',
         'adresse_wie_schuelerin' => 0,
         'guardian_strasse' => 'Schulstraße 1',
         'guardian_plz' => '63071',
@@ -72,6 +74,7 @@ $rows = [
         'guardian_id' => 12,
         'guardian_vorname' => 'Lea',
         'guardian_nachname' => 'Andere',
+        'guardian_beziehung' => 'vormund',
         'adresse_wie_schuelerin' => 0,
         'guardian_strasse' => 'Nebenstraße 2',
         'guardian_plz' => '63071',
@@ -84,6 +87,22 @@ expect(count($recipients) === 2, 'Gemeinsame Adressen wurden nicht gebündelt.')
 expect(count($recipients[0]['recipients']) === 2, 'Empfänger mit gleicher Adresse wurden nicht zusammengeführt.');
 expect($recipients[0]['school_form'] === 'gymnasium', 'Die Schulform der Schülerin fehlt in der Empfängergruppe.');
 expect($recipients[1]['address'][0] === 'Nebenstraße 2', 'Eine separate Erziehungsberechtigtenadresse wurde ignoriert.');
+expect($recipients[0]['salutations'] === ['Sehr geehrte Frau Beispiel,', 'Sehr geehrter Herr Beispiel,'], 'Die Eltern werden nicht in der richtigen Reihenfolge angesprochen.');
+expect($recipients[1]['salutations'] === ['Sehr geehrte Erziehungsberechtigte,'], 'Für Vormünder fehlt die neutrale Anrede.');
+$reversedRecipients = AdmissionLetters::groupRecipients([$rows[1], $rows[0]]);
+expect($reversedRecipients[0]['salutations'] === $recipients[0]['salutations'], 'Die Anrede hängt von der Eingangsreihenfolge ab.');
+expect(AdmissionLetters::groupRecipients([$rows[1]])[0]['salutations'] === ['Sehr geehrter Herr Beispiel,'], 'Ein einzelner Vater wird nicht korrekt angesprochen.');
+expect(AdmissionLetters::groupRecipients([$rows[0]])[0]['salutations'] === ['Sehr geehrte Frau Beispiel,'], 'Eine einzelne Mutter wird nicht korrekt angesprochen.');
+$separateFather = array_replace($rows[1], ['guardian_strasse' => 'Andere Straße 3']);
+$separate = AdmissionLetters::groupRecipients([$rows[0], $separateFather]);
+expect($separate[0]['salutations'] === ['Sehr geehrte Frau Beispiel,'] && $separate[1]['salutations'] === ['Sehr geehrter Herr Beispiel,'], 'Getrennte Adressen erhalten nicht ihre jeweilige Anrede.');
+$mixed = AdmissionLetters::groupRecipients([$rows[0], array_replace($rows[2], ['adresse_wie_schuelerin' => 1])]);
+expect($mixed[0]['salutations'] === ['Sehr geehrte Frau Beispiel,', 'Sehr geehrte Erziehungsberechtigte,'], 'Gemischte Empfänger werden nicht vollständig angesprochen.');
+$differentNames = AdmissionLetters::groupRecipients([
+    array_replace($rows[1], ['guardian_nachname' => 'Vatername']),
+    array_replace($rows[0], ['guardian_nachname' => 'Müller']),
+]);
+expect($differentNames[0]['salutations'] === ['Sehr geehrte Frau Müller,', 'Sehr geehrter Herr Vatername,'], 'Unterschiedliche Nachnamen werden nicht korrekt verwendet.');
 
 $schoolName = 'Beispielschule';
 $accepted = AdmissionLetters::letterContent($statusFilters, 'Anna Beispiel', $schoolName);
@@ -129,12 +148,30 @@ expect(str_contains($document, 'Beispielschule'), 'Der konfigurierte Schulname f
 expect(str_contains($document, 'Alex Beispiel'), 'Die konfigurierte Schulleitung fehlt im PDF.');
 expect(str_contains($document, '(63071 Offenbach) Tj'), 'Postleitzahl und Wohnort stehen nicht gemeinsam in einer PDF-Zeile.');
 expect(
+    preg_match('/\(Sehr geehrte Frau Beispiel,\) Tj.*?\(Sehr geehrter Herr Beispiel,\) Tj/s', $document) === 1,
+    'Die persönlichen Anreden stehen nicht in der richtigen Reihenfolge im PDF.'
+);
+expect(
     preg_match('/\(Alex Beispiel\) Tj.*?\(([^()]*)\) Tj/s', $document, $signature) === 1
         && $signature[1] === 'Schulleitung',
     'Unter dem Namen der Schulleitung steht nicht die Funktionsbezeichnung.'
 );
 expect(str_contains($document, 'schule@example.test'), 'Die konfigurierte E-Mail fehlt im PDF.');
 expect(!str_contains($document, 'Tumbrink'), 'Eine alte Schulleitung ist noch im PDF enthalten.');
+
+foreach ([
+    [$separate[0], '(Sehr geehrte Frau Beispiel,) Tj', '(Sehr geehrter Herr Beispiel,) Tj'],
+    [$separate[1], '(Sehr geehrter Herr Beispiel,) Tj', '(Sehr geehrte Frau Beispiel,) Tj'],
+    [$recipients[1], '(Sehr geehrte Erziehungsberechtigte,) Tj', '(Sehr geehrte Frau Beispiel,) Tj'],
+    [$differentNames[0], '(Sehr geehrte Frau M' . chr(0xfc) . 'ller,) Tj', '(Sehr geehrte Erziehungsberechtigte,) Tj'],
+] as [$recipient, $expectedSalutation, $unexpectedSalutation]) {
+    $pdfForRecipient = new Schulverwaltung\AdmissionLetterPdf($settings);
+    $pdfForRecipient->SetCompression(false);
+    $pdfForRecipient->addLetter($recipient, $statusFilters);
+    $recipientDocument = $pdfForRecipient->Output('S');
+    expect(str_contains($recipientDocument, $expectedSalutation), 'Die erwartete Anrede fehlt im PDF.');
+    expect(!str_contains($recipientDocument, $unexpectedSalutation), 'Das PDF enthält eine falsche Anrede.');
+}
 
 foreach ([
     [['', '12345', ''], '12345'],

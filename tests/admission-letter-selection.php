@@ -27,7 +27,7 @@ $database->exec("CREATE TABLE schueler (
     strasse TEXT, plz TEXT, ort TEXT, status TEXT, warteliste INTEGER
 )");
 $database->exec("CREATE TABLE erziehungsberechtigte (
-    id INTEGER PRIMARY KEY, schueler_id INTEGER, vorname TEXT, nachname TEXT,
+    id INTEGER PRIMARY KEY, schueler_id INTEGER, vorname TEXT, nachname TEXT, beziehung TEXT,
     adresse_wie_schuelerin INTEGER, strasse TEXT, plz TEXT, ort TEXT, erziehungsberechtigt INTEGER
 )");
 $student = $database->prepare('INSERT INTO schueler VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -41,9 +41,9 @@ foreach ([
     $student->execute($row);
 }
 $database->exec("INSERT INTO erziehungsberechtigte VALUES
-    (1, 2, 'Person', 'Eins', 1, '', NULL, '', 1),
-    (2, 2, 'Person', 'Zwei', 1, '', NULL, '', 1),
-    (3, 3, 'Person', 'Drei', 1, '', NULL, '', 0)");
+    (1, 2, 'Person', 'Eins', 'vater', 1, '', NULL, '', 1),
+    (2, 2, 'Person', 'Zwei', 'mutter', 1, '', NULL, '', 1),
+    (3, 3, 'Person', 'Drei', 'mutter', 1, '', NULL, '', 0)");
 
 foreach ([
     ['keine', 'status', 'angenommen', [1]],
@@ -66,7 +66,9 @@ foreach ([
 $filters = AdmissionLetters::validateFilters('beide', 'status', 'angenommen');
 $recipients = AdmissionLetters::groupRecipients(AdmissionLetters::findRecipients($database, $filters));
 expectSelection(count($recipients[0]['recipients']) === 2, 'Gemeinsame Empfänger wurden nicht gebündelt.');
+expectSelection($recipients[0]['salutations'] === ['Sehr geehrte Frau Zwei,', 'Sehr geehrter Herr Eins,'], 'Die Beziehungen werden nicht aus der Datenbank übernommen.');
 expectSelection($recipients[1]['recipients'] === ['Erziehungsberechtigte der Schülerin Clara C'], 'Fallback ohne Erziehungsberechtigte fehlt.');
+expectSelection($recipients[1]['salutations'] === ['Sehr geehrte Erziehungsberechtigte,'], 'Die neutrale Anrede ohne Erziehungsberechtigte fehlt.');
 $settings = [
     'school_name' => 'Beispielschule', 'head_name' => 'Beispiel',
     'street' => '', 'postal_code' => '', 'city' => '', 'phone' => '',
