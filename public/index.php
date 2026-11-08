@@ -110,9 +110,7 @@ $schoolName = $user === null ? '' : SchoolSettings::get($database)['school_name'
             <ul class="dashboard-links-secondary">
                 <li><a href="/kataloge/">Auswahllisten pflegen</a></li>
                 <?php if ($user['is_superuser']): ?>
-                    <li><a href="/admin/">Benutzerverwaltung</a></li>
                     <li><a href="/administration/">Administration</a></li>
-                    <li><a href="/import/">Import</a></li>
                 <?php endif; ?>
                 <?php if ($user['can_export']): ?>
                     <li><a href="/exporte/">Daten exportieren</a></li>

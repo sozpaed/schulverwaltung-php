@@ -458,7 +458,7 @@ ausgeführt werden.
 
 Die **Benutzerverwaltung** ist nur für aktive Administratoren erreichbar.
 Nach dem ersten Administrator-Setup ab- und wieder anmelden. Der Link
-**Benutzerverwaltung** erscheint auf der Startseite. Dort können Konten angelegt, bearbeitet, aktiviert,
+**Benutzerverwaltung** ist über **Administration** auf der Startseite erreichbar. Dort können Konten angelegt, bearbeitet, aktiviert,
 deaktiviert und gelöscht sowie Administrator- und Exportrechte vergeben oder
 entzogen werden. Zusätzlich können separate Rechte zum Löschen von
 Auswahllisteneinträgen und Schülerinnen vergeben werden; beide sind zunächst
@@ -527,6 +527,8 @@ Administrator das Recht in der Benutzerverwaltung vergeben.
 ### Administration der Schule
 
 Administratoren erreichen die **Administration** über die Startseite. Dort
+führen eigene Buttons zur **Benutzerverwaltung**, zum **Import** und zu
+**Angaben zur Schule**. Unter **Angaben zur Schule**
 lassen sich der Name der Schule, der Name der Schulleitung und optionale
 Absenderangaben für Serienbriefe eintragen. Ein eigenes Logo kann als PNG
 oder JPEG hochgeladen oder wieder entfernt werden (höchstens 1 MB und
@@ -600,7 +602,7 @@ Angezeigt werden nur zusammengefasste Werte, keine Namen oder Einzeldatensätze.
 
 ### Neue Schülerinnen und Erziehungsberechtigte aus CSV importieren
 
-Administratoren können von der Startseite die Importseite öffnen und eine
+Administratoren können über **Administration** die Importseite öffnen und eine
 UTF-8-CSV-Datei mit Semikolon-Trennung hochladen. Die Kopfzeile muss die Felder
 `E-Mail-Adresse Erziehungsberechtigter`, `Vorname Erziehungsberechtigter`,
 `Nachname Erziehungsberechtigter`, `Mobil Erziehungsberechtigter`,

@@ -31,6 +31,7 @@ $users = $database->query(
         </svg>
     </a>
     <p><a href="/">Zur Startseite</a></p>
+    <p><a href="/administration/">Zur Administration</a></p>
     <h1>Benutzerverwaltung</h1>
     <?= renderAccountMenu($user) ?>
     <p><a href="/admin/neu.php">Benutzer anlegen</a></p>
