@@ -470,6 +470,25 @@ button:active,
     }
 }
 
+.record-edit .record-navigation {
+    width: min(100%, 720px);
+    margin-left: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+}
+
+.record-edit .record-navigation .button-link {
+    display: grid;
+    place-items: center;
+    justify-self: stretch;
+    text-align: center;
+}
+
+.record-edit .record-navigation-current {
+    grid-column: auto;
+    grid-row: auto;
+}
+
 .student-actions {
     display: inline-flex;
     gap: 6px;
