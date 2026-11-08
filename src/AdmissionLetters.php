@@ -132,7 +132,7 @@ final class AdmissionLetters
         return array_values($groups);
     }
 
-    public static function letterContent(array $filters, string $studentName): array
+    public static function letterContent(array $filters, string $studentName, string $schoolName): array
     {
         $schoolForm = $filters['school_label'];
         $schoolAccusative = $filters['school_form'] === 'gymnasium'
@@ -147,7 +147,7 @@ final class AdmissionLetters
                 'subject' => 'Aufnahmeverfahren – Warteliste ' . $schoolForm,
                 'paragraphs' => [
                     'Für ' . $studentName . ' können wir derzeit noch keinen festen Platz ' . $schoolLocation
-                        . ' an der Marienschule anbieten. Wir haben ' . $studentName . ' auf die Warteliste gesetzt.',
+                        . ' an unserer Schule ' . $schoolName . ' anbieten. Wir haben ' . $studentName . ' auf die Warteliste gesetzt.',
                     'Sollte ein Platz frei werden, melden wir uns bei Ihnen. Bitte verstehen Sie dieses Schreiben '
                         . 'nicht als verbindliche Aufnahmezusage.',
                 ],
@@ -158,7 +158,7 @@ final class AdmissionLetters
             'in_pruefung' => [
                 'subject' => 'Aufnahmeverfahren – ' . $schoolForm,
                 'paragraphs' => [
-                    'Vielen Dank für Ihr Interesse an der Marienschule. Die Prüfung der Bewerbung von '
+                    'Vielen Dank für Ihr Interesse an unserer Schule ' . $schoolName . '. Die Prüfung der Bewerbung von '
                         . $studentName . ' für ' . $schoolAccusative . ' ist noch nicht abgeschlossen.',
                     'Sobald eine Entscheidung getroffen wurde, erhalten Sie eine weitere Nachricht. Dieses '
                         . 'Schreiben ist keine Aufnahmezusage.',
@@ -169,7 +169,7 @@ final class AdmissionLetters
                 'paragraphs' => [
                     'Wir freuen uns, Ihnen mitteilen zu können, dass wir ' . $studentName . ' in '
                         . $schoolAccusative
-                        . ' an der Marienschule aufnehmen können.',
+                        . ' an unserer Schule ' . $schoolName . ' aufnehmen können.',
                     'Weitere Informationen zum Schulbeginn und zu den nächsten Schritten erhalten Sie gesondert.',
                 ],
             ],

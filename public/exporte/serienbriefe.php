@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Auth;
+use Schulverwaltung\SchoolSettings;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../../src/SchoolSettings.php';
 
 if ($user === null) {
     header('Location: /');
@@ -17,6 +19,7 @@ if (!$user['can_export']) {
 }
 
 $csrfToken = Auth::csrfToken();
+$settings = SchoolSettings::get($database);
 ?>
 <!doctype html>
 <html lang="de">
@@ -38,6 +41,9 @@ $csrfToken = Auth::csrfToken();
     <?= renderAccountMenu($user) ?>
     <p>Die Texte sind zunächst Muster und müssen vor einem Versand geprüft werden.
         Die Schulform wird jeweils zuerst ausgewählt.</p>
+    <?php if ($settings['school_name'] === '' || $settings['head_name'] === ''): ?>
+        <p role="alert">Name der Schule und Name der Schulleitung müssen vor der PDF-Erstellung in der Administration hinterlegt werden.</p>
+    <?php endif; ?>
     <form method="post" action="/exporte/serienbrief.php">
         <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
         <input type="hidden" name="filter_type" value="status">

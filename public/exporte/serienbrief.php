@@ -5,10 +5,12 @@ declare(strict_types=1);
 use Schulverwaltung\AdmissionLetterPdf;
 use Schulverwaltung\AdmissionLetters;
 use Schulverwaltung\Auth;
+use Schulverwaltung\SchoolSettings;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
 require_once __DIR__ . '/../../src/AdmissionLetters.php';
 require_once __DIR__ . '/../../src/AdmissionLetterPdf.php';
+require_once __DIR__ . '/../../src/SchoolSettings.php';
 
 if ($user === null) {
     header('Location: /');
@@ -42,6 +44,12 @@ try {
     exit('Die Filterauswahl ist ungültig. Bitte gehe zurück und wähle die Filter erneut aus.');
 }
 
+$settings = SchoolSettings::get($database);
+if ($settings['school_name'] === '' || $settings['head_name'] === '') {
+    http_response_code(400);
+    exit('Bitte zuerst Name der Schule und Name der Schulleitung in der Administration hinterlegen.');
+}
+
 $rows = AdmissionLetters::findRecipients($database, $filters);
 $recipients = AdmissionLetters::groupRecipients($rows);
 if ($recipients === []) {
@@ -66,7 +74,7 @@ if ($recipients === []) {
     exit;
 }
 
-$pdf = new AdmissionLetterPdf(__DIR__ . '/../assets/marienschule-logo.png');
+$pdf = new AdmissionLetterPdf($settings);
 foreach ($recipients as $recipient) {
     $pdf->addLetter($recipient, $filters);
 }

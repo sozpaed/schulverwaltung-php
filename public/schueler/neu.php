@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ((int) $input['davon_an_der_marienschule'] > (int) $input['anzahl_geschwister']) {
-            $errors[] = 'Die Geschwister an der Marienschule dürfen nicht mehr als alle Geschwister sein.';
+            $errors[] = 'Die Geschwister an dieser Schule dürfen nicht mehr als alle Geschwister sein.';
         }
 
         $grades = [];
@@ -432,7 +432,7 @@ $average = $enteredGrades === []
                 <div class="form-grid form-grid--two">
                     <p><label for="anzahl_geschwister">Anzahl Geschwister</label>
                         <input id="anzahl_geschwister" name="anzahl_geschwister" type="number" min="0" max="4294967295" value="<?= escape($input['anzahl_geschwister']) ?>"></p>
-                    <p><label for="davon_an_der_marienschule">Davon an der Marienschule</label>
+                    <p><label for="davon_an_der_marienschule">Davon an dieser Schule</label>
                         <input id="davon_an_der_marienschule" name="davon_an_der_marienschule" type="number" min="0" max="4294967295" value="<?= escape($input['davon_an_der_marienschule']) ?>"></p>
                 </div>
                 <p><label for="freundin">Freundin/Freund</label>

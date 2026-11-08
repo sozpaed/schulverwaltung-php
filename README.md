@@ -524,6 +524,23 @@ werden unmittelbar ausgeführt; bei einem Fehler den Zustand beider Änderungen
 prüfen und nicht die gesamte Migration blind wiederholen. Danach kann ein
 Administrator das Recht in der Benutzerverwaltung vergeben.
 
+### Administration der Schule
+
+Administratoren erreichen die **Administration** über die Startseite. Dort
+lassen sich der Name der Schule, der Name der Schulleitung und optionale
+Absenderangaben für Serienbriefe eintragen. Ein eigenes Logo kann als PNG
+oder JPEG hochgeladen oder wieder entfernt werden (höchstens 1 MB und
+2500 × 2500 Pixel). Die Einstellungen und das Logo werden in der Datenbank
+gespeichert und sind Teil der Datenbanksicherung.
+
+Bei Neuinstallationen sind die Einstellungen zunächst leer. Bei bestehenden
+Installationen muss vor Verwendung dieser Version nach einer Datensicherung
+`database/migrations/20261108_school_settings.sql` einmalig ausgeführt werden.
+Auch dort bleiben die Einstellungen zunächst leer; bestehende Daten werden
+nicht vorbelegt. Nach der Migration müssen Schulname und Schulleitung in der
+Administration eingetragen werden, bevor Serienbrief-PDFs erstellt werden
+können. Die übrigen Angaben und das Logo sind optional.
+
 ### Daten exportieren
 
 Angemeldete Benutzer mit dem Recht `can_export` können unter **Daten exportieren**
@@ -539,7 +556,8 @@ in einer kommagetrennten Spalte. Der Export der Erziehungsberechtigten und der
 Gespräche enthält jeweils auch den vollständigen Namen der zugehörigen Schülerin;
 im Gesprächsexport stehen außerdem die Namen der
 zugeordneten Erziehungsberechtigten kommagetrennt in einer Spalte. Die
-CSV-Spaltenüberschriften verwenden die weibliche Form; bestehende Auswertungen,
+CSV-Spaltenüberschriften verwenden die weibliche Form. Die Spalte „Geschwister
+an der Marienschule“ heißt nun „Geschwister an dieser Schule“; bestehende Auswertungen,
 die die bisherigen Überschriften erwarten, müssen entsprechend angepasst werden.
 
 Exportrechte sind standardmäßig deaktiviert und können in der Benutzerverwaltung

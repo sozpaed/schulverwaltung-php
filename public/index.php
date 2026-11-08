@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Auth;
+use Schulverwaltung\SchoolSettings;
 
 require_once __DIR__ . '/../src/security_headers.php';
 
@@ -20,6 +21,7 @@ if (!is_file(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php') && !$databas
 }
 
 require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/../src/SchoolSettings.php';
 
 $error = '';
 $sessionExpired = !empty($_SESSION['session_expired']);
@@ -56,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrfToken = Auth::csrfToken();
+$schoolName = $user === null ? '' : SchoolSettings::get($database)['school_name'];
 ?>
 <!doctype html>
 <html lang="de">
@@ -96,7 +99,7 @@ $csrfToken = Auth::csrfToken();
             <button type="submit">Anmelden</button>
         </form>
     <?php else: ?>
-        <h1>Schulverwaltung</h1>
+        <h1>Schulverwaltung<?= $schoolName !== '' ? ' – ' . escape($schoolName) : '' ?></h1>
         <?= renderAccountMenu($user) ?>
         <nav class="dashboard-links" aria-label="Hauptnavigation">
             <ul class="dashboard-links-primary">
@@ -108,6 +111,7 @@ $csrfToken = Auth::csrfToken();
                 <li><a href="/kataloge/">Auswahllisten pflegen</a></li>
                 <?php if ($user['is_superuser']): ?>
                     <li><a href="/admin/">Benutzerverwaltung</a></li>
+                    <li><a href="/administration/">Administration</a></li>
                     <li><a href="/import/">Import</a></li>
                 <?php endif; ?>
                 <?php if ($user['can_export']): ?>

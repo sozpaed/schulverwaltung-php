@@ -26,7 +26,7 @@ $exports = [
         'headers' => [
             'ID', 'Vorname', 'Nachname', 'Geburtsdatum', 'Straße', 'PLZ', 'Wohnort',
             'Geburtsort', 'Religion', 'Staatsangehörigkeit', 'Grundschule',
-            'Anzahl Geschwister', 'Geschwister an der Marienschule', 'Freundin/Freund',
+            'Anzahl Geschwister', 'Geschwister an dieser Schule', 'Freundin/Freund',
             'Deutsch', 'Mathematik', 'Sachkunde', 'AV', 'SV', 'Status', 'Schulform',
             'Klasse', 'Warteliste', 'Erstellt am', 'Aktualisiert am',
             'Erziehungsberechtigte',
