@@ -3,6 +3,18 @@
 Das Repository-Hauptverzeichnis enthält die aktive, frameworkfreie
 PHP-Anwendung mit MariaDB- oder MySQL-Datenbank.
 
+## Lizenz
+
+Der eigene Projektcode steht unter der **GNU Affero General Public License,
+Version 3.0 (AGPL-3.0-only)**. Der vollständige Lizenztext befindet sich in
+[LICENSE](LICENSE). Kommerzielle Nutzung ist im Rahmen dieser Lizenz erlaubt.
+
+Mitgelieferte Drittanbieterbestandteile behalten ihre jeweiligen Lizenzen und
+Lizenzhinweise:
+
+- FPDF: [src/vendor/fpdf/LICENSE.txt](src/vendor/fpdf/LICENSE.txt)
+- qrcodejs: [public/assets/vendor/qrcodejs/LICENSE](public/assets/vendor/qrcodejs/LICENSE)
+
 ## Datenbankschema
 
 `database/schema.sql` legt das Datenbankschema für Benutzer, Schülerinnen,
@@ -504,6 +516,14 @@ Das Zahnradsymbol öffnet die
 Detailansicht mit Stammdaten und Kontaktpersonen; Erziehungsberechtigte können
 dort hinzugefügt und bearbeitet werden. Optionale Übernahmefelder synchronisieren
 Adresse, Religion oder Staatsangehörigkeit aus dem Datensatz der Schülerin.
+In der Schülerinnenakte und beim Bearbeiten führen die Pfeile zum vorherigen
+oder nächsten Datensatz gemäß den zuletzt in der Schülerinnenübersicht
+gewählten Filtern. Bei Kontaktpersonen umfasst die Navigation aus der
+Schülerinnenakte nur deren Kontaktpersonen; aus der Erziehungsberechtigtenliste
+umfasst sie die Kontaktpersonen aller zuletzt gefilterten Schülerinnen, sortiert
+nach Schülerin und anschließend Kontaktperson. Passt der aktuelle Datensatz
+nicht mehr zum Filter, werden keine Nachbarn angezeigt. Ungespeicherte Änderungen
+gehen beim Wechsel verloren; bei aktiviertem JavaScript erfolgt eine Rückfrage.
 Aufnahmegespräche lassen sich ebenfalls in der Schülerinnenakte erfassen und
 bearbeiten sowie über die zentrale Gesprächsliste suchen und bearbeiten.
 Marketingkanäle können mehreren Gesprächen zugeordnet werden.

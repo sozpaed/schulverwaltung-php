@@ -174,7 +174,7 @@ $relationships = guardianRelationships();
                     <td>
                         <span class="student-actions">
                             <?= renderEditLink(
-                                '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $guardian['schueler_id'] . '&id=' . (int) $guardian['id'],
+                                '/schueler/erziehungsberechtigter.php?schueler_id=' . (int) $guardian['schueler_id'] . '&id=' . (int) $guardian['id'] . '&von=liste',
                                 'Kontaktperson bearbeiten'
                             ) ?>
                             <?php if ($user['can_delete_students']): ?>

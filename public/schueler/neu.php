@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Schulverwaltung\Auth;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../../src/Maintenance.php';
+require_once __DIR__ . '/../../src/StudentNavigation.php';
 
 if ($user === null) {
     header('Location: /');
@@ -316,7 +318,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $statement->execute($values);
 
-            header('Location: /schueler/');
+            header('Location: ' . ($editId === null
+                ? '/schueler/'
+                : studentOverviewUrl($_SESSION['student_navigation_filter'] ?? [])));
             exit;
         }
     }
@@ -340,6 +344,7 @@ $average = $enteredGrades === []
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?= escape($csrfToken) ?>">
     <link rel="stylesheet" href="/assets/app.css">
+    <?php if ($editId !== null): ?><script src="/assets/record-navigation.js" defer></script><?php endif; ?>
     <script src="/assets/catalog-add.js" defer></script>
     <script src="/assets/grade-average.js" defer></script>
     <title><?= $editId === null ? 'Schülerin anlegen' : 'Schülerinnendatensatz bearbeiten' ?> – Schulverwaltung</title>
@@ -352,9 +357,17 @@ $average = $enteredGrades === []
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/schueler/">Zur Schülerinnenübersicht</a></p>
-    <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
+    <p><a href="<?= escape(studentOverviewUrl($_SESSION['student_navigation_filter'] ?? [])) ?>">Zur Schülerinnenübersicht</a></p>
+    <?php if ($editId === null): ?><p><a href="/kataloge/">Auswahllisten pflegen</a></p><?php endif; ?>
     <h1><?= $editId === null ? 'Schülerin anlegen' : 'Schülerinnendatensatz bearbeiten' ?></h1>
+    <?php if ($editId !== null): ?>
+        <?= renderRecordNavigation(
+            $existingStudent,
+            \Schulverwaltung\StudentNavigation::neighbors($database, $_SESSION['student_navigation_filter'] ?? [], (int) $editId),
+            '/schueler/bearbeiten.php'
+        ) ?>
+        <p>Beim Wechsel zu einem anderen Datensatz gehen ungespeicherte Änderungen verloren.</p>
+    <?php endif; ?>
     <?= renderAccountMenu($user) ?>
 
     <?php if ($errors !== []): ?>
@@ -368,7 +381,7 @@ $average = $enteredGrades === []
         </div>
     <?php endif; ?>
 
-        <form method="post">
+        <form method="post"<?= $editId !== null ? ' data-record-form' : '' ?><?= $editId !== null && $_SERVER['REQUEST_METHOD'] === 'POST' ? ' data-record-dirty' : '' ?>>
             <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
             <fieldset>
                 <legend>Stammdaten</legend>

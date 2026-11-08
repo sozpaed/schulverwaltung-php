@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Maintenance;
+use Schulverwaltung\StudentNavigation;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
 require_once __DIR__ . '/../../src/Maintenance.php';
+require_once __DIR__ . '/../../src/StudentNavigation.php';
 
 if ($user === null) {
     header('Location: /');
@@ -37,8 +39,6 @@ if ($maintenanceValue !== '') {
         exit('Ungültiger Wartungsfilter.');
     }
 }
-$maintenanceCondition = $maintenance === null ? '' : ' AND (' . $maintenance['condition'] . ')';
-
 $statusLabels = [
     'abgelehnt' => 'Abgelehnt',
     'angenommen' => 'Angenommen',
@@ -82,30 +82,14 @@ if ($pageValue === false || $pageValue < 1) {
 }
 
 $pageSize = 25;
-$conditions = [
-    '(:search = \'\' OR s.vorname LIKE :first_name OR s.nachname LIKE :last_name OR s.ort LIKE :search_city)',
+$studentFilter = [
+    'q' => $search,
+    'status' => $statusValue,
+    'klasse' => $classValue,
+    'grundschule' => $schoolValue,
+    'wartung' => $maintenanceValue,
 ];
-$queryParameters = [
-    'search' => $search,
-    'first_name' => '%' . $search . '%',
-    'last_name' => '%' . $search . '%',
-    'search_city' => '%' . $search . '%',
-];
-if ($statusValue !== '') {
-    $conditions[] = 's.status = :status';
-    $queryParameters['status'] = $statusValue;
-}
-if ($classValue !== '') {
-    $conditions[] = 's.klasse = :class';
-    $queryParameters['class'] = $classValue === '__leer' ? '' : $classValue;
-}
-if ($schoolValue === '__leer') {
-    $conditions[] = 's.grundschule_id IS NULL';
-} elseif ($schoolValue !== '') {
-    $conditions[] = 's.grundschule_id = :school_id';
-    $queryParameters['school_id'] = $schoolValue;
-}
-$whereClause = implode(' AND ', $conditions) . $maintenanceCondition;
+[$whereClause, $queryParameters] = StudentNavigation::studentFilter($studentFilter);
 
 $countStatement = $database->prepare(
     'SELECT COUNT(*)
@@ -120,7 +104,6 @@ if ($pageValue > $pageCount) {
     http_response_code(404);
     exit('Diese Seite existiert nicht.');
 }
-
 $offset = ($pageValue - 1) * $pageSize;
 $statement = $database->prepare(
     'SELECT s.id, s.vorname, s.nachname, s.ort, s.klasse, s.status,
@@ -128,7 +111,7 @@ $statement = $database->prepare(
      FROM schueler s
      LEFT JOIN grundschulen g ON g.id = s.grundschule_id
     WHERE ' . $whereClause . '
-    ORDER BY s.nachname, s.vorname, s.id
+    ORDER BY ' . StudentNavigation::STUDENT_ORDER . '
     LIMIT :page_size OFFSET :offset'
 );
 foreach ($queryParameters as $name => $value) {
@@ -138,6 +121,7 @@ $statement->bindValue('page_size', $pageSize, PDO::PARAM_INT);
 $statement->bindValue('offset', $offset, PDO::PARAM_INT);
 $statement->execute();
 $students = $statement->fetchAll();
+$_SESSION['student_navigation_filter'] = $studentFilter;
 
 $activeFilters = $search !== '' || $statusValue !== '' || $classValue !== '' || $schoolValue !== '';
 $resetUrl = $maintenance === null

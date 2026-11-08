@@ -428,6 +428,40 @@ button:active,
     transform: translateY(0);
 }
 
+.record-navigation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+}
+
+.record-navigation .button-link {
+    overflow-wrap: anywhere;
+}
+
+.record-navigation .button-link:last-child {
+    justify-self: end;
+}
+
+.record-navigation-current {
+    padding: 9px 17px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .record-navigation {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .record-navigation-current {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+}
+
 .student-actions {
     display: inline-flex;
     gap: 6px;

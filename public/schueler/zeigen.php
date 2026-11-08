@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../../src/Maintenance.php';
+require_once __DIR__ . '/../../src/StudentNavigation.php';
 
 if ($user === null) {
     header('Location: /');
@@ -90,8 +92,13 @@ $conversationSchoolFormLabels = [
             <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
         </svg>
     </a>
-    <p><a href="/schueler/">Zur Schülerinnenübersicht</a></p>
+    <p><a href="<?= escape(studentOverviewUrl($_SESSION['student_navigation_filter'] ?? [])) ?>">Zur Schülerinnenübersicht</a></p>
     <h1><?= escape($student['vorname'] . ' ' . $student['nachname']) ?></h1>
+    <?= renderRecordNavigation(
+        $student,
+        \Schulverwaltung\StudentNavigation::neighbors($database, $_SESSION['student_navigation_filter'] ?? [], (int) $studentId),
+        '/schueler/zeigen.php'
+    ) ?>
     <?= renderAccountMenu($user) ?>
 
     <section>

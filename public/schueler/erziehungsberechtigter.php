@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Schulverwaltung\Auth;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../../src/Maintenance.php';
+require_once __DIR__ . '/../../src/StudentNavigation.php';
 
 if ($user === null) {
     header('Location: /');
@@ -285,6 +287,7 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
     <meta name="csrf-token" content="<?= escape($csrfToken) ?>">
     <link rel="stylesheet" href="/assets/app.css">
     <script src="/assets/catalog-add.js" defer></script>
+    <?php if ($guardianId !== null): ?><script src="/assets/record-navigation.js" defer></script><?php endif; ?>
     <title><?= escape($pageTitle) ?> – Schulverwaltung</title>
 </head>
 <body>
@@ -296,8 +299,25 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
         </svg>
     </a>
     <p><a href="/schueler/zeigen.php?id=<?= (int) $studentId ?>">Zur Schülerinnenakte</a></p>
-    <p><a href="/kataloge/">Auswahllisten pflegen</a></p>
+    <?php if ($guardianId === null): ?><p><a href="/kataloge/">Auswahllisten pflegen</a></p><?php endif; ?>
     <h1><?= escape($pageTitle) ?></h1>
+    <?php if ($guardianId !== null): ?>
+        <?php $fromGuardianList = ($_GET['von'] ?? '') === 'liste'; ?>
+        <?= renderRecordNavigation(
+            $existingGuardian,
+            \Schulverwaltung\StudentNavigation::neighbors(
+                $database,
+                $_SESSION['student_navigation_filter'] ?? [],
+                (int) $guardianId,
+                true,
+                $fromGuardianList ? null : (int) $studentId
+            ),
+            '/schueler/erziehungsberechtigter.php',
+            true,
+            $fromGuardianList
+        ) ?>
+        <p>Beim Wechsel zu einem anderen Datensatz gehen ungespeicherte Änderungen verloren.</p>
+    <?php endif; ?>
     <p>Kontaktperson für <?= escape($student['vorname'] . ' ' . $student['nachname']) ?>.</p>
     <?= renderAccountMenu($user) ?>
 
@@ -312,7 +332,7 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
         </div>
     <?php endif; ?>
 
-    <form method="post">
+    <form method="post"<?= $guardianId !== null ? ' data-record-form' : '' ?><?= $guardianId !== null && $_SERVER['REQUEST_METHOD'] === 'POST' ? ' data-record-dirty' : '' ?>>
         <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
         <fieldset>
             <legend>Person</legend>
