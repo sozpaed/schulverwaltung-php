@@ -472,7 +472,7 @@ button:active,
 
 .record-edit .record-navigation {
     width: min(100%, 720px);
-    margin-left: auto;
+    margin-inline: auto;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch;
 }
