@@ -27,6 +27,9 @@ Admin::requireAdministrator($user);
         <ul class="dashboard-links-secondary">
             <li><a href="/administration/schule.php">Angaben zur Schule</a></li>
             <li><a href="/admin/">Benutzerverwaltung</a></li>
+            <li><a href="/admin/gruppen.php">Berechtigungsgruppen verwalten</a></li>
+            <li><a href="/admin/anmeldungen.php">Anmeldeprotokoll anzeigen</a></li>
+            <li><a href="/admin/2fa-protokoll.php">2FA-Rücksetzungen anzeigen</a></li>
             <li><a href="/import/">Import</a></li>
         </ul>
     </nav>
