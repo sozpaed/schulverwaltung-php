@@ -144,6 +144,18 @@ $marketingChannels = $database->query(
      GROUP BY k.id, k.name
      ORDER BY k.id'
 )->fetchAll(PDO::FETCH_ASSOC);
+$standardChannels = ['Tag der offenen Tür', 'Forscherinnennachmittag', 'Workshop', 'Instagram'];
+$channelRows = [];
+foreach ($standardChannels as $name) {
+    $channelRows[mb_strtolower($name)] = ['name' => $name, 'gesamt' => 0, 'foerderstufe' => 0, 'gymnasium' => 0];
+}
+foreach ($marketingChannels as $channel) {
+    $key = mb_strtolower($channel['name']);
+    $channelRows[$key] = array_key_exists($key, $channelRows)
+        ? ['name' => $channelRows[$key]['name']] + $channel
+        : $channel;
+}
+$marketingChannels = array_values($channelRows);
 ?>
 <!doctype html>
 <html lang="de">
@@ -221,6 +233,28 @@ $marketingChannels = $database->query(
             </article>
         <?php endforeach; ?>
     </section>
+    <h2>Erstkontakt</h2>
+    <p>Gezählt werden Schülerinnen, bei denen in mindestens einem Gespräch der Marketingkanal genannt wurde. Die vier Standardkanäle stehen immer oben; weitere Marketingkanäle aus den Auswahllisten folgen automatisch in der Reihenfolge ihrer Anlage.</p>
+    <div class="table-wrapper">
+        <table class="statistics-table">
+            <thead><tr>
+                <th scope="col">Erstkontakt</th>
+                <th scope="col">Anzahl Gesamt</th>
+                <th scope="col">Förderstufe</th>
+                <th scope="col">Gymnasium</th>
+            </tr></thead>
+            <tbody>
+            <?php foreach ($marketingChannels as $channel): ?>
+                <tr>
+                    <th scope="row"><?= escape($channel['name']) ?></th>
+                    <td><?= number_format((int) $channel['gesamt'], 0, ',', '.') ?></td>
+                    <td><?= number_format((int) $channel['foerderstufe'], 0, ',', '.') ?></td>
+                    <td><?= number_format((int) $channel['gymnasium'], 0, ',', '.') ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
     <h2>Weitere Werte</h2>
     <p>Bei Erziehungsberechtigten und Gesprächen wird die Warteliste anhand der zugeordneten Schülerin gezählt.</p>
     <div class="table-wrapper">
@@ -244,32 +278,6 @@ $marketingChannels = $database->query(
         </table>
     </div>
     <p>„Bereinigt“ bedeutet Anzahl Gesamt abzüglich der Datensätze auf der Warteliste.</p>
-    <h2>Erstkontakt</h2>
-    <p>Gezählt werden Schülerinnen, bei denen in mindestens einem Gespräch der Marketingkanal genannt wurde. Neue Kanäle erscheinen automatisch in der Reihenfolge ihrer Anlage.</p>
-    <?php if ($marketingChannels === []): ?>
-        <p>Es sind keine Marketingkanäle vorhanden.</p>
-    <?php else: ?>
-        <div class="table-wrapper">
-            <table class="statistics-table">
-                <thead><tr>
-                    <th scope="col">Erstkontakt</th>
-                    <th scope="col">Anzahl Gesamt</th>
-                    <th scope="col">Förderstufe</th>
-                    <th scope="col">Gymnasium</th>
-                </tr></thead>
-                <tbody>
-                <?php foreach ($marketingChannels as $channel): ?>
-                    <tr>
-                        <th scope="row"><?= escape($channel['name']) ?></th>
-                        <td><?= number_format((int) $channel['gesamt'], 0, ',', '.') ?></td>
-                        <td><?= number_format((int) $channel['foerderstufe'], 0, ',', '.') ?></td>
-                        <td><?= number_format((int) $channel['gymnasium'], 0, ',', '.') ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endif; ?>
 </main>
 </body>
 </html>
