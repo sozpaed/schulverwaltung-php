@@ -99,6 +99,7 @@ $statement->bindValue('page_size', $pageSize, PDO::PARAM_INT);
 $statement->bindValue('offset', ($page - 1) * $pageSize, PDO::PARAM_INT);
 $statement->execute();
 $guardians = $statement->fetchAll();
+$_SESSION['guardian_navigation_filter'] = ['q' => $search, 'wartung' => $maintenanceValue];
 
 $relationships = guardianRelationships();
 ?>

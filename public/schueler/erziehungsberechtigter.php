@@ -307,10 +307,13 @@ $pageTitle = $guardianId === null ? 'Kontaktperson hinzufügen' : 'Kontaktperson
             $existingGuardian,
             \Schulverwaltung\StudentNavigation::neighbors(
                 $database,
-                $_SESSION['student_navigation_filter'] ?? [],
+                $fromGuardianList
+                    ? ($_SESSION['guardian_navigation_filter'] ?? [])
+                    : ($_SESSION['student_navigation_filter'] ?? []),
                 (int) $guardianId,
                 true,
-                $fromGuardianList ? null : (int) $studentId
+                $fromGuardianList ? null : (int) $studentId,
+                $fromGuardianList
             ),
             '/schueler/erziehungsberechtigter.php',
             true,

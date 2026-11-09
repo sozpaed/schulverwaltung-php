@@ -33,7 +33,8 @@ $db->exec('CREATE TABLE schueler (
     grundschule_id INTEGER, geburtsdatum TEXT
 )');
 $db->exec('CREATE TABLE erziehungsberechtigte (
-    id INTEGER PRIMARY KEY, schueler_id INTEGER NOT NULL, vorname TEXT NOT NULL, nachname TEXT NOT NULL
+    id INTEGER PRIMARY KEY, schueler_id INTEGER NOT NULL, vorname TEXT NOT NULL, nachname TEXT NOT NULL,
+    email TEXT NOT NULL DEFAULT \'\'
 )');
 $insertStudent = $db->prepare('INSERT INTO schueler VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 for ($id = 1; $id <= 30; $id++) {
@@ -41,7 +42,7 @@ for ($id = 1; $id <= 30; $id++) {
 }
 $insertStudent->execute([31, 'Anna', 'Name25', 'Köln', 'angenommen', '', null, null]);
 $insertStudent->execute([32, 'Anna', 'Name25', 'Bonn', 'in_pruefung', '5a', 1, null]);
-$insertGuardian = $db->prepare('INSERT INTO erziehungsberechtigte VALUES (?, ?, ?, ?)');
+$insertGuardian = $db->prepare('INSERT INTO erziehungsberechtigte (id, schueler_id, vorname, nachname) VALUES (?, ?, ?, ?)');
 foreach ([[1, 25, 'Alex', 'Z'], [2, 25, 'Alex', 'Z'], [3, 32, 'Berta', 'A'], [4, 26, 'Clara', 'A'], [5, 31, 'Dora', 'A']] as $guardian) {
     $insertGuardian->execute($guardian);
 }
@@ -65,6 +66,9 @@ expectNavigation((int) $neighbors['next']['schueler_id'] === 32, 'Zugehörige Sc
 $neighbors = StudentNavigation::neighbors($db, $filter, 2, true, 25);
 expectNavigation(neighborId($neighbors, 'previous') === 1 && neighborId($neighbors, 'next') === null, 'Navigation aus der Schülerinnenakte überschreitet die Schülerin.');
 expectNavigation(StudentNavigation::neighbors($db, $filter, 5, true) === ['previous' => null, 'next' => null], 'Kontaktperson einer ausgeschlossenen Schülerin hat Nachbarn.');
+$neighbors = StudentNavigation::neighbors($db, ['q' => 'Name25'], 1, true, null, true);
+expectNavigation(neighborId($neighbors, 'previous') === 5 && neighborId($neighbors, 'next') === 2, 'Navigation der Kontaktpersonenliste falsch.');
+expectNavigation(neighborId(StudentNavigation::neighbors($db, ['q' => 'Dora'], 5, true, null, true), 'previous') === null, 'Suchfilter der Kontaktpersonenliste falsch.');
 
 $html = renderRecordNavigation(
     ['vorname' => '<Anna>', 'nachname' => '&'],

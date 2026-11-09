@@ -44,9 +44,45 @@ final class StudentNavigation
         return [implode(' AND ', $conditions), $parameters];
     }
 
-    public static function neighbors(PDO $database, array $filter, int $id, bool $guardian = false, ?int $studentId = null): array
+    public static function guardianFilter(array $filter): array
     {
-        [$where, $parameters] = self::studentFilter($filter);
+        $search = $filter['q'] ?? '';
+        $like = '%' . $search . '%';
+        $conditions = ['(:search = \'\'
+            OR e.vorname LIKE :guardian_first_name
+            OR e.nachname LIKE :guardian_last_name
+            OR s.vorname LIKE :student_first_name
+            OR s.nachname LIKE :student_last_name
+            OR e.email LIKE :email)'];
+        $parameters = [
+            'search' => $search,
+            'guardian_first_name' => $like,
+            'guardian_last_name' => $like,
+            'student_first_name' => $like,
+            'student_last_name' => $like,
+            'email' => $like,
+        ];
+        if (($filter['wartung'] ?? '') !== '') {
+            $definition = Maintenance::definition('erziehungsberechtigte', $filter['wartung']);
+            if ($definition === null) {
+                throw new \InvalidArgumentException('Ungültiger Wartungsfilter.');
+            }
+            $conditions[] = '(' . $definition['condition'] . ')';
+        }
+        return [implode(' AND ', $conditions), $parameters];
+    }
+
+    public static function neighbors(
+        PDO $database,
+        array $filter,
+        int $id,
+        bool $guardian = false,
+        ?int $studentId = null,
+        bool $guardianList = false
+    ): array {
+        [$where, $parameters] = $guardian && $guardianList
+            ? self::guardianFilter($filter)
+            : self::studentFilter($filter);
         if ($guardian && $studentId !== null) {
             $where = 's.id = :navigation_student';
             $parameters = ['navigation_student' => $studentId];
@@ -55,7 +91,7 @@ final class StudentNavigation
         $idColumn = $guardian ? 'e.id' : 's.id';
         $table = $guardian ? 'erziehungsberechtigte' : 'schueler';
         $order = $guardian && $studentId === null
-            ? self::STUDENT_ORDER . ', e.nachname, e.vorname, e.id'
+            ? ($guardianList ? 'e.nachname, e.vorname, e.id' : self::STUDENT_ORDER . ', e.nachname, e.vorname, e.id')
             : ($guardian ? 'e.nachname, e.vorname, e.id' : self::STUDENT_ORDER);
         $studentColumns = $guardian ? ', p.schueler_id AS previous_student_id, n.schueler_id AS next_student_id' : '';
         $statement = $database->prepare(
