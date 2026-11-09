@@ -1,4 +1,4 @@
-# PHP-Neuimplementierung
+# Schulverwaltung PHP-Neuimplementierung
 
 Das Repository-Hauptverzeichnis enthält die aktive, frameworkfreie
 PHP-Anwendung mit MariaDB- oder MySQL-Datenbank.
