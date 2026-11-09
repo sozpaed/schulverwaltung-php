@@ -131,6 +131,19 @@ $furtherValues['Schülerinnen'] = [
     'total' => $totalStudents,
     'waitlist' => $waitlistStudents,
 ];
+
+$marketingChannels = $database->query(
+    'SELECT k.name,
+            COUNT(DISTINCT g.schueler_id) AS gesamt,
+            COUNT(DISTINCT CASE WHEN s.schulform = \'foerderstufe\' THEN s.id END) AS foerderstufe,
+            COUNT(DISTINCT CASE WHEN s.schulform = \'gymnasium\' THEN s.id END) AS gymnasium
+     FROM marketing_kanaele k
+     LEFT JOIN gespraech_marketing_kanaele gk ON gk.marketing_kanal_id = k.id
+     LEFT JOIN gespraeche g ON g.id = gk.gespraech_id
+     LEFT JOIN schueler s ON s.id = g.schueler_id
+     GROUP BY k.id, k.name
+     ORDER BY k.id'
+)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!doctype html>
 <html lang="de">
@@ -231,6 +244,32 @@ $furtherValues['Schülerinnen'] = [
         </table>
     </div>
     <p>„Bereinigt“ bedeutet Anzahl Gesamt abzüglich der Datensätze auf der Warteliste.</p>
+    <h2>Erstkontakt</h2>
+    <p>Gezählt werden Schülerinnen, bei denen in mindestens einem Gespräch der Marketingkanal genannt wurde. Neue Kanäle erscheinen automatisch in der Reihenfolge ihrer Anlage.</p>
+    <?php if ($marketingChannels === []): ?>
+        <p>Es sind keine Marketingkanäle vorhanden.</p>
+    <?php else: ?>
+        <div class="table-wrapper">
+            <table class="statistics-table">
+                <thead><tr>
+                    <th scope="col">Erstkontakt</th>
+                    <th scope="col">Anzahl Gesamt</th>
+                    <th scope="col">Förderstufe</th>
+                    <th scope="col">Gymnasium</th>
+                </tr></thead>
+                <tbody>
+                <?php foreach ($marketingChannels as $channel): ?>
+                    <tr>
+                        <th scope="row"><?= escape($channel['name']) ?></th>
+                        <td><?= number_format((int) $channel['gesamt'], 0, ',', '.') ?></td>
+                        <td><?= number_format((int) $channel['foerderstufe'], 0, ',', '.') ?></td>
+                        <td><?= number_format((int) $channel['gymnasium'], 0, ',', '.') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
 </main>
 </body>
 </html>
