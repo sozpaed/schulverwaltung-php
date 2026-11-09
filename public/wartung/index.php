@@ -11,6 +11,10 @@ if ($user === null) {
     header('Location: /');
     exit;
 }
+if (!$user['can_view_maintenance']) {
+    http_response_code(403);
+    exit('Du bist nicht berechtigt, die Wartungsübersicht einzusehen.');
+}
 
 $studentDefinitions = Maintenance::studentDefinitions();
 $guardianDefinitions = Maintenance::guardianDefinitions();

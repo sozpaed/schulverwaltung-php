@@ -40,8 +40,12 @@ if ($action === 'promote') {
 
     $statement = $database->prepare(
         'UPDATE app_users
-         SET sitzungs_version = sitzungs_version + (is_superuser <> 1 OR can_export <> 1),
-             is_superuser = 1, can_export = 1
+         SET sitzungs_version = sitzungs_version + (
+                 is_superuser <> 1 OR can_export <> 1
+                 OR can_view_maintenance <> 1 OR can_view_statistics <> 1
+             ),
+             is_superuser = 1, can_export = 1,
+             can_view_maintenance = 1, can_view_statistics = 1
          WHERE id = :id'
     );
     $statement->execute(['id' => $existingUser['id']]);
@@ -69,8 +73,10 @@ if ($password === false || $passwordLength === false || $passwordLength < 12 || 
 }
 
 $statement = $database->prepare(
-    'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export)
-     VALUES (:username, :password_hash, 1, 1, 1)'
+    'INSERT INTO app_users (
+        username, password_hash, is_active, is_superuser, can_export,
+        can_view_maintenance, can_view_statistics
+     ) VALUES (:username, :password_hash, 1, 1, 1, 1, 1)'
 );
 
 try {

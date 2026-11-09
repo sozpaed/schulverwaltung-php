@@ -17,9 +17,9 @@ if ($user === null) {
     exit;
 }
 
-if (!$user['can_export']) {
+if (!$user['can_export'] && !$user['can_edit_letter_templates']) {
     http_response_code(403);
-    exit('Du bist nicht berechtigt, Daten zu exportieren.');
+    exit('Du bist nicht berechtigt, Serienbriefe zu erstellen.');
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

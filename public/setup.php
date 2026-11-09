@@ -210,8 +210,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 \Schulverwaltung\LetterTemplates::initialize($database);
 
                 $createAdmin = $database->prepare(
-                    'INSERT INTO app_users (username, password_hash, is_active, is_superuser, can_export)
-                     VALUES (:username, :password_hash, 1, 1, 1)'
+                    'INSERT INTO app_users (
+                        username, password_hash, is_active, is_superuser, can_export,
+                        can_view_maintenance, can_view_statistics
+                     ) VALUES (:username, :password_hash, 1, 1, 1, 1, 1)'
                 );
                 $createAdmin->execute([
                     'username' => $username,

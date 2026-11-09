@@ -124,7 +124,7 @@ $relationships = guardianRelationships();
     <?php if ($maintenance !== null): ?>
         <p>Wartung: <strong><?= escape($maintenance['label']) ?></strong>
             – nur Datensätze mit fehlender Angabe werden angezeigt.
-            <a href="/wartung/">Zur Wartungsübersicht</a></p>
+            <?php if ($user['can_view_maintenance']): ?><a href="/wartung/">Zur Wartungsübersicht</a><?php endif; ?></p>
     <?php endif; ?>
     <p>Neue Kontaktpersonen werden weiterhin in der jeweiligen Schülerinnenakte angelegt.</p>
 

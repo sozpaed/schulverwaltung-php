@@ -118,11 +118,13 @@ $schoolName = SchoolSettings::schoolName($database);
                 <?php endif; ?>
             </ul>
             <ul class="dashboard-links-maintenance">
-                <li><a class="maintenance-link" href="/wartung/">Wartung</a></li>
+                <?php if ($user['can_view_maintenance']): ?>
+                    <li><a class="maintenance-link" href="/wartung/">Wartung</a></li>
+                <?php endif; ?>
                 <?php if ($user['can_export'] || $user['can_edit_letter_templates']): ?>
                     <li><a class="maintenance-link" href="/exporte/serienbriefe.php">Serienbriefe</a></li>
                 <?php endif; ?>
-                <?php if ($user['can_export']): ?>
+                <?php if ($user['can_view_statistics']): ?>
                     <li><a class="maintenance-link" href="/exporte/statistik.php">Statistik</a></li>
                 <?php endif; ?>
             </ul>

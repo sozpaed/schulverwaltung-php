@@ -43,7 +43,7 @@ $settings = SchoolSettings::get($database);
     <?php if ($user['can_edit_letter_templates']): ?>
         <p><a class="button-link" href="/exporte/vorlagen.php">Editor</a></p>
     <?php endif; ?>
-    <?php if ($user['can_export']): ?>
+    <?php if ($user['can_export'] || $user['can_edit_letter_templates']): ?>
     <p>Bitte prüfe die Brieftexte und Empfänger vor dem Versand.
         Die Schulform wird jeweils zuerst ausgewählt.</p>
     <?php if ($settings['school_name'] === '' || $settings['head_name'] === ''): ?>

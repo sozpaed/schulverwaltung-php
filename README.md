@@ -623,9 +623,15 @@ oben rechts im PDF. Die PDF-Erstellung verwendet die lokal mitgelieferte FPDF-Bi
 deren Lizenz liegt unter `src/vendor/fpdf/LICENSE.txt`. PDF-Exporte werden in
 `export_protokolle` protokolliert.
 
-Der Button **Editor** steht Benutzern mit dem separat in der Benutzerverwaltung
-vergebenen Recht **Serienbriefvorlagen bearbeiten** zur Verfügung, auch ohne
-Exportrecht. Je Kombination aus Schulform (Keine, Förderstufe, Gymnasium) und
+Der Button **Serienbriefe** und der PDF-Export stehen Benutzern mit dem Recht
+**Datenexport** oder **Serienbriefvorlagen bearbeiten** zur Verfügung. Der
+Button **Editor** erfordert zusätzlich das Recht **Serienbriefvorlagen
+bearbeiten**; es kann unabhängig vom Exportrecht vergeben werden. Die Rechte
+**Wartungsübersicht ansehen** und **Statistik ansehen** werden ebenfalls
+unabhängig in der Benutzerverwaltung vergeben. Bestehende Konten erhalten bei
+der Migration weiterhin Zugriff auf Wartung; das bisherige Statistikrecht wird
+aus dem bisherigen Exportrecht übernommen.
+Je Kombination aus Schulform (Keine, Förderstufe, Gymnasium) und
 Briefart (drei Statuswerte oder Warteliste) gibt es eine eigene Vorlage.
 Beim Export mit „Beide“ wird für jede Schülerin die Vorlage ihrer Schulform
 verwendet. Der Editor unterstützt Absätze, Fett und Kursiv sowie eine
@@ -649,6 +655,18 @@ Fehlern den Datenbankzustand prüfen, bevor die Migration erneut gestartet wird.
 Bei Neuinstallationen übernimmt der Installer die Initialisierung. Das neue
 Bearbeitungsrecht ist zunächst für alle Benutzer deaktiviert und muss durch
 einen Administrator vergeben werden.
+Für bestehende Installationen anschließend
+`database/migrations/20261109_access_permissions.sql` ausführen. Die Migration
+übernimmt die bisherigen Zugriffe: bestehende Benutzer behalten den Zugriff
+auf die Wartungsübersicht; das Statistikrecht wird aus dem bisherigen
+Exportrecht abgeleitet. Danach können Administratoren in der Benutzerverwaltung
+Wartung und Statistik unabhängig zuweisen. Bei Neuinstallationen sind diese
+Rechte beim ersten Administratorkonto aktiviert.
+
+Administratoren können unter **Benutzerverwaltung → Berechtigungsgruppen**
+Gruppen mit mehreren Rechten anlegen und bearbeiten. Benutzer können mehreren
+Gruppen angehören; Gruppenrechte addieren sich zu den direkt vergebenen
+Benutzerrechten. Änderungen an Gruppenrechten und Zuordnungen wirken unmittelbar.
 
 Die Statistikseite enthält Tabellen und farbige Ringdiagramme nach Status,
 Klasse und Schulform. Der äußere Ring zeigt die Gesamtzahl, der mittlere Ring

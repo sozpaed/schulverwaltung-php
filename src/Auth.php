@@ -6,6 +6,8 @@ namespace Schulverwaltung;
 
 use PDO;
 
+require_once __DIR__ . '/PermissionGroups.php';
+
 final class Auth
 {
     private const DUMMY_PASSWORD_HASH = '$2y$10$IfUPGKIx2zLYHIOi454ZE.snvcuK0N7ZQeEB9.Zlk5AIulTZbLyYm';
@@ -25,7 +27,8 @@ final class Auth
             [$userFailures, $ipFailures] = $throttle->failureCounts();
             $failureCount = max($userFailures, $ipFailures) + 1;
             $statement = $database->prepare(
-                'SELECT id, username, password_hash, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students,
+                'SELECT id, username, password_hash, is_active, is_superuser, can_export, can_edit_letter_templates,
+                        can_view_maintenance, can_view_statistics, can_delete_catalogs, can_delete_students,
                         totp_secret, totp_enabled, totp_last_counter, sitzungs_version
                  FROM app_users
                  WHERE username = :username'
@@ -67,6 +70,8 @@ final class Auth
             return false;
         }
 
+        $user = PermissionGroups::effectivePermissions($database, $user);
+
         if (random_int(1, 100) === 1) {
             LoginThrottle::cleanup($database);
         }
@@ -82,6 +87,8 @@ final class Auth
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
             'can_edit_letter_templates' => (bool) $user['can_edit_letter_templates'],
+            'can_view_maintenance' => (bool) $user['can_view_maintenance'],
+            'can_view_statistics' => (bool) $user['can_view_statistics'],
             'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'can_delete_students' => (bool) $user['can_delete_students'],
             'sitzungs_version' => (int) $user['sitzungs_version'],
@@ -111,7 +118,9 @@ final class Auth
         }
 
         $statement = $database->prepare(
-            'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students, totp_enabled, sitzungs_version
+            'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates,
+                    can_view_maintenance, can_view_statistics, can_delete_catalogs, can_delete_students,
+                    totp_enabled, sitzungs_version
              FROM app_users
              WHERE id = :id'
         );
@@ -123,6 +132,7 @@ final class Auth
             self::expireSession();
             return null;
         }
+        $user = PermissionGroups::effectivePermissions($database, $user);
 
         if (SessionPolicy::shouldRegenerate($now, $sessionUser['erneuert_am'])) {
             if (!session_regenerate_id(true)) {
@@ -136,6 +146,8 @@ final class Auth
             'is_superuser' => (bool) $user['is_superuser'],
             'can_export' => (bool) $user['can_export'],
             'can_edit_letter_templates' => (bool) $user['can_edit_letter_templates'],
+            'can_view_maintenance' => (bool) $user['can_view_maintenance'],
+            'can_view_statistics' => (bool) $user['can_view_statistics'],
             'can_delete_catalogs' => (bool) $user['can_delete_catalogs'],
             'can_delete_students' => (bool) $user['can_delete_students'],
             'totp_enabled' => (bool) $user['totp_enabled'],

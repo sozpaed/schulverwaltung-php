@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use Schulverwaltung\Admin;
 use Schulverwaltung\Auth;
+use Schulverwaltung\PermissionGroups;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
 require_once __DIR__ . '/../../src/Admin.php';
+require_once __DIR__ . '/../../src/PermissionGroups.php';
 
 Admin::requireAdministrator($user);
 
@@ -21,7 +23,7 @@ if ($targetId === false) {
 }
 
 $userStatement = $database->prepare(
-    'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students FROM app_users WHERE id = :id'
+    'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_view_maintenance, can_view_statistics, can_delete_catalogs, can_delete_students FROM app_users WHERE id = :id'
 );
 $userStatement->execute(['id' => $targetId]);
 $targetUser = $userStatement->fetch();
@@ -36,8 +38,12 @@ $isActive = (bool) $targetUser['is_active'];
 $isSuperuser = (bool) $targetUser['is_superuser'];
 $canExport = (bool) $targetUser['can_export'];
 $canEditLetterTemplates = (bool) $targetUser['can_edit_letter_templates'];
+$canViewMaintenance = (bool) $targetUser['can_view_maintenance'];
+$canViewStatistics = (bool) $targetUser['can_view_statistics'];
 $canDeleteCatalogs = (bool) $targetUser['can_delete_catalogs'];
 $canDeleteStudents = (bool) $targetUser['can_delete_students'];
+$groups = $database->query('SELECT id, name FROM berechtigungsgruppen ORDER BY name, id')->fetchAll();
+$selectedGroups = PermissionGroups::forUser($database, (int) $targetId);
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -83,6 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $canEditLetterTemplates = !array_key_exists('can_edit_letter_templates', $_POST)
             ? false
             : ($_POST['can_edit_letter_templates'] === '1' ? true : null);
+        $canViewMaintenance = !array_key_exists('can_view_maintenance', $_POST)
+            ? false
+            : ($_POST['can_view_maintenance'] === '1' ? true : null);
+        $canViewStatistics = !array_key_exists('can_view_statistics', $_POST)
+            ? false
+            : ($_POST['can_view_statistics'] === '1' ? true : null);
         $canDeleteCatalogs = !array_key_exists('can_delete_catalogs', $_POST)
             ? false
             : ($_POST['can_delete_catalogs'] === '1' ? true : null);
@@ -90,8 +102,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ? false
             : ($_POST['can_delete_students'] === '1' ? true : null);
 
-        if ($isActive === null || $isSuperuser === null || $canExport === null || $canEditLetterTemplates === null || $canDeleteCatalogs === null || $canDeleteStudents === null) {
+        if ($isActive === null || $isSuperuser === null || $canExport === null || $canEditLetterTemplates === null
+            || $canViewMaintenance === null || $canViewStatistics === null
+            || $canDeleteCatalogs === null || $canDeleteStudents === null) {
             $errors[] = 'Ungültige Berechtigungsauswahl.';
+        }
+        try {
+            $selectedGroups = PermissionGroups::validateSelection($database, $_POST['gruppen'] ?? []);
+        } catch (InvalidArgumentException $exception) {
+            $errors[] = $exception->getMessage();
         }
 
         if (
@@ -131,6 +150,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'is_superuser' => (int) $isSuperuser,
                 'can_export' => (int) $canExport,
                 'can_edit_letter_templates' => (int) $canEditLetterTemplates,
+                'can_view_maintenance' => (int) $canViewMaintenance,
+                'can_view_statistics' => (int) $canViewStatistics,
                 'can_delete_catalogs' => (int) $canDeleteCatalogs,
                 'can_delete_students' => (int) $canDeleteStudents,
                 'id' => $targetId,
@@ -138,6 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'version_superuser' => (int) $isSuperuser,
                 'version_export' => (int) $canExport,
                 'version_templates' => (int) $canEditLetterTemplates,
+                'version_maintenance' => (int) $canViewMaintenance,
+                'version_statistics' => (int) $canViewStatistics,
                 'version_catalogs' => (int) $canDeleteCatalogs,
                 'version_students' => (int) $canDeleteStudents,
                 'version_password' => (int) ($password !== ''),
@@ -153,17 +176,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          is_active <> :version_active OR is_superuser <> :version_superuser
                          OR can_export <> :version_export OR can_delete_catalogs <> :version_catalogs
                          OR can_edit_letter_templates <> :version_templates
+                         OR can_view_maintenance <> :version_maintenance
+                         OR can_view_statistics <> :version_statistics
                          OR can_delete_students <> :version_students OR :version_password = 1
                      ),
                      username = :username, is_active = :is_active,
                      is_superuser = :is_superuser, can_export = :can_export,
                      can_edit_letter_templates = :can_edit_letter_templates,
+                     can_view_maintenance = :can_view_maintenance,
+                     can_view_statistics = :can_view_statistics,
                      can_delete_catalogs = :can_delete_catalogs, can_delete_students = :can_delete_students' . $passwordSql . '
                  WHERE id = :id'
             );
             try {
+                $database->beginTransaction();
                 $updateStatement->execute($parameters);
+                PermissionGroups::replaceMemberships($database, (int) $targetId, $selectedGroups);
+                $database->commit();
             } catch (PDOException $exception) {
+                if ($database->inTransaction()) {
+                    $database->rollBack();
+                }
                 if ($exception->getCode() !== '23000') {
                     throw $exception;
                 }
@@ -227,7 +260,7 @@ $csrfToken = Auth::csrfToken();
             <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password">
         </p>
         <fieldset>
-            <legend>Berechtigungen</legend>
+            <legend>Direkte Berechtigungen</legend>
             <p>
                 <input id="is_active" name="is_active" type="checkbox" value="1"<?= $isActive ? ' checked' : '' ?>>
                 <label for="is_active">Benutzerkonto aktiv</label>
@@ -245,6 +278,14 @@ $csrfToken = Auth::csrfToken();
                 <label for="can_edit_letter_templates">Serienbriefvorlagen bearbeiten erlauben</label>
             </p>
             <p>
+                <input id="can_view_maintenance" name="can_view_maintenance" type="checkbox" value="1"<?= $canViewMaintenance ? ' checked' : '' ?>>
+                <label for="can_view_maintenance">Wartungsübersicht ansehen erlauben</label>
+            </p>
+            <p>
+                <input id="can_view_statistics" name="can_view_statistics" type="checkbox" value="1"<?= $canViewStatistics ? ' checked' : '' ?>>
+                <label for="can_view_statistics">Statistik ansehen erlauben</label>
+            </p>
+            <p>
                 <input id="can_delete_catalogs" name="can_delete_catalogs" type="checkbox" value="1"<?= $canDeleteCatalogs ? ' checked' : '' ?>>
                 <label for="can_delete_catalogs">Auswahllisteneinträge löschen erlauben</label>
             </p>
@@ -253,6 +294,19 @@ $csrfToken = Auth::csrfToken();
                 <label for="can_delete_students">Schülerinnen löschen erlauben</label>
             </p>
         </fieldset>
+        <?php if ($groups !== []): ?>
+            <fieldset>
+                <legend>Berechtigungsgruppen</legend>
+                <p>Gruppenrechte addieren sich zu den direkt ausgewählten Rechten.</p>
+                <?php foreach ($groups as $group): ?>
+                    <p>
+                        <input id="gruppe_<?= (int) $group['id'] ?>" name="gruppen[]" type="checkbox"
+                               value="<?= (int) $group['id'] ?>"<?= in_array((int) $group['id'], $selectedGroups, true) ? ' checked' : '' ?>>
+                        <label for="gruppe_<?= (int) $group['id'] ?>"><?= escape($group['name']) ?></label>
+                    </p>
+                <?php endforeach; ?>
+            </fieldset>
+        <?php endif; ?>
         <button type="submit">Änderungen speichern</button>
     </form>
 </main>

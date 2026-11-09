@@ -12,7 +12,7 @@ if ($user === null) {
     exit;
 }
 
-if (!$user['can_export']) {
+if (!$user['can_view_statistics']) {
     http_response_code(403);
     exit('Du bist nicht berechtigt, Statistiken einzusehen.');
 }

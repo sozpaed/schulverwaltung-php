@@ -3,17 +3,24 @@
 declare(strict_types=1);
 
 use Schulverwaltung\Admin;
+use Schulverwaltung\PermissionGroups;
 
 require_once __DIR__ . '/../../src/bootstrap.php';
 require_once __DIR__ . '/../../src/Admin.php';
+require_once __DIR__ . '/../../src/PermissionGroups.php';
 
 Admin::requireAdministrator($user);
 
 $users = $database->query(
-    'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_delete_catalogs, can_delete_students, erstellt_am
+    'SELECT id, username, is_active, is_superuser, can_export, can_edit_letter_templates, can_view_maintenance, can_view_statistics, can_delete_catalogs, can_delete_students, erstellt_am
      FROM app_users
      ORDER BY username, id'
 )->fetchAll();
+$groupNames = PermissionGroups::listForUsers($database, $users);
+foreach ($users as &$listedUser) {
+    $listedUser = PermissionGroups::effectivePermissions($database, $listedUser);
+}
+unset($listedUser);
 ?>
 <!doctype html>
 <html lang="de">
@@ -36,6 +43,7 @@ $users = $database->query(
     <h1>Benutzerverwaltung</h1>
     <?= renderAccountMenu($user) ?>
     <p><a href="/admin/neu.php">Benutzer anlegen</a></p>
+    <p><a href="/admin/gruppen.php">Berechtigungsgruppen verwalten</a></p>
     <p><a href="/admin/anmeldungen.php">Anmeldeprotokoll anzeigen</a></p>
     <p><a href="/admin/2fa-protokoll.php">2FA-Rücksetzungen anzeigen</a></p>
     <?php if ($users === []): ?>
@@ -47,10 +55,13 @@ $users = $database->query(
                 <th scope="col">Benutzername</th>
                 <th scope="col">Status</th>
                 <th scope="col">Administrator</th>
-                <th scope="col">Exportrecht</th>
-                <th scope="col">Briefvorlagen bearbeiten</th>
-                <th scope="col">Auswahllisten löschen</th>
-                <th scope="col">Schülerinnen löschen</th>
+                <th scope="col">Berechtigungsgruppen</th>
+                <th scope="col">Exportrecht (effektiv)</th>
+                <th scope="col">Briefvorlagen bearbeiten (effektiv)</th>
+                <th scope="col">Wartung ansehen (effektiv)</th>
+                <th scope="col">Statistik ansehen (effektiv)</th>
+                <th scope="col">Auswahllisten löschen (effektiv)</th>
+                <th scope="col">Schülerinnen löschen (effektiv)</th>
                 <th scope="col">Erstellt am</th>
                 <th scope="col">Aktionen</th>
             </tr>
@@ -61,8 +72,11 @@ $users = $database->query(
                     <td><?= escape($listedUser['username']) ?></td>
                     <td><?= (bool) $listedUser['is_active'] ? 'Aktiv' : 'Deaktiviert' ?></td>
                     <td><?= (bool) $listedUser['is_superuser'] ? 'Ja' : 'Nein' ?></td>
+                    <td><?= escape(implode(', ', $groupNames[(int) $listedUser['id']] ?? [])) ?: '–' ?></td>
                     <td><?= (bool) $listedUser['can_export'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_edit_letter_templates'] ? 'Ja' : 'Nein' ?></td>
+                    <td><?= (bool) $listedUser['can_view_maintenance'] ? 'Ja' : 'Nein' ?></td>
+                    <td><?= (bool) $listedUser['can_view_statistics'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_delete_catalogs'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= (bool) $listedUser['can_delete_students'] ? 'Ja' : 'Nein' ?></td>
                     <td><?= escape($listedUser['erstellt_am']) ?></td>
