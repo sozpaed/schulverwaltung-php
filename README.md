@@ -69,11 +69,19 @@ verwendet andernfalls die nicht versionierte `config.php` im Projekt-Hauptverzei
 | `DB_PASSWORD` | Ja | Passwort des Datenbankbenutzers; darf leer sein |
 
 Die Zugangsdaten gehören nicht ins Repository. Für eine frische Installation
-musst du keine Konfigurationsdatei kopieren: Rufe `/setup.php` auf und gib die
-Datenbank- und Administratordaten dort ein. Der Assistent legt `config.php`
-automatisch im Projekt-Hauptverzeichnis an, außerhalb von `public/`. `config.php`
-wird von Git ignoriert. Stelle bei Host Europe `public/` als öffentliches
-Webverzeichnis ein.
+musst du keine Konfigurationsdatei kopieren. Lege vor dem Aufruf von `/setup.php`
+im Projekt-Hauptverzeichnis eine Datei `install.token` mit einem zufälligen,
+geheimen Token an. Erzeuge ihn zum Beispiel mit
+`php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"` und schreibe die Ausgabe in
+die Datei. Erstelle sie am besten direkt auf dem Server, nicht im lokalen
+Repository. Die Datei liegt außerhalb von `public/`, wird von Git ignoriert und
+sollte nur für den PHP-Prozess lesbar sein. Rufe anschließend `/setup.php` auf,
+gib das Token sowie
+die Datenbank- und Administratordaten ein. Ohne lesbare Token-Datei antwortet
+`setup.php` mit Status 404; ein falsches Token wird abgewiesen. Nach erfolgreicher
+Installation wird `install.token` automatisch gelöscht. Der Assistent legt
+`config.php` ebenfalls im Projekt-Hauptverzeichnis an, außerhalb von `public/`.
+Stelle bei Host Europe `public/` als öffentliches Webverzeichnis ein.
 
 > **Wichtig: Datenbankbenutzer.** Verwende für die Datenbankverbindung **niemals
 > `root` oder ein anderes Administratorkonto des Datenbankservers**, sondern einen
@@ -114,6 +122,7 @@ Webverzeichnis `/www/de.meine-domain.verwaltung/web` ist:
 |---|---|
 | Inhalt von `public/` (inkl. `.htaccess`, `assets/`, `setup.php`) | `/www/de.meine-domain.verwaltung/web/` |
 | `src/`, `database/`, `bin/` | `/www/de.meine-domain.verwaltung/` |
+| `install.token` (vorübergehend, nicht versionieren) | `/www/de.meine-domain.verwaltung/` |
 | `config.php` (vom Installer erzeugt) | `/www/de.meine-domain.verwaltung/` |
 | `storage/` (TOTP-Schlüssel, wird automatisch angelegt) | `/www/de.meine-domain.verwaltung/storage/` |
 
@@ -122,6 +131,9 @@ Hinweise:
 - Den Ordner `public` nicht als Ganzes hochladen, sondern nur seinen Inhalt
   nach `web/`. Sonst entsteht `web/public/` und die Pfade stimmen nicht.
 - Nicht hochladen: `.git` und eine lokale `config.php`.
+- Vor der Installation `install.token` im Projektverzeichnis außerhalb von
+  `web/` anlegen; nach erfolgreicher Installation wird die Datei automatisch
+  gelöscht. Prüfe dies und entferne sie bei Bedarf manuell.
 - Das Projektverzeichnis (hier `/www/de.meine-domain.verwaltung/`)
   muss für PHP beschreibbar sein, damit `setup.php` `config.php` anlegen kann.
 - Nach der Installation `setup.php` aus `web/` löschen.
@@ -259,9 +271,10 @@ angelegte, leere Datenbank in `public/setup.php` konfiguriert. Der
 Assistent verlangt PHP 8.1 oder neuer sowie MariaDB 10.5 oder neuer oder MySQL
 8.4. Er verändert
 oder löscht keine vorhandenen Tabellen und setzt deshalb eine leere Datenbank
-voraus. Nach erfolgreicher Einrichtung antwortet
-`setup.php` mit Status 404 und sperrt sich über die vorhandene
-`config.php`; ändere anschließend die Schreibrechte der Konfigurationsdatei nach
+voraus. Ohne `install.token` antwortet `setup.php` bereits vor der Installation
+mit Status 404. Nach erfolgreicher Einrichtung wird die Token-Datei gelöscht und
+`setup.php` antwortet mit Status 404, weil die `config.php` vorhanden ist; ändere
+anschließend die Schreibrechte der Konfigurationsdatei nach
 Möglichkeit auf nur lesbar für den PHP-Prozess. Die Zugangsdaten werden bei der
 Übertragung ausschließlich über HTTPS geschützt, daher muss HTTPS vor der
 Installation aktiv sein.

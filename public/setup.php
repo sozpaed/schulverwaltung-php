@@ -7,7 +7,10 @@ use Schulverwaltung\Database;
 
 $projectRoot = dirname(__DIR__);
 require_once $projectRoot . '/src/security_headers.php';
+require_once $projectRoot . '/src/InstallToken.php';
 $configPath = $projectRoot . DIRECTORY_SEPARATOR . 'config.php';
+$installTokenPath = $projectRoot . DIRECTORY_SEPARATOR . 'install.token';
+$installToken = \Schulverwaltung\InstallToken::load($installTokenPath);
 $databaseEnvironmentIsConfigured = true;
 foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $setting) {
     if (getenv($setting) === false) {
@@ -16,7 +19,7 @@ foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as $setting) {
     }
 }
 
-if (is_file($configPath) || $databaseEnvironmentIsConfigured) {
+if (is_file($configPath) || $databaseEnvironmentIsConfigured || $installToken === null) {
     http_response_code(404);
     exit;
 }
@@ -60,6 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Auth::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
         http_response_code(400);
         $errors[] = 'Das Formular ist abgelaufen. Bitte lade die Seite neu und versuche es erneut.';
+    } elseif (!\Schulverwaltung\InstallToken::matches($installToken, $_POST['install_token'] ?? null)) {
+        http_response_code(403);
+        $errors[] = 'Das Installations-Token ist ungültig.';
     } elseif (!$compatibilityPassed) {
         http_response_code(500);
         $errors[] = 'Die Hosting-Umgebung erfüllt nicht alle Voraussetzungen. Behebe die fehlgeschlagenen Prüfungen und lade die Seite erneut.';
@@ -224,6 +230,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new RuntimeException('Die Installation ist angelegt, aber config.php konnte nicht aktiviert werden.');
                 }
                 $temporaryConfigPath = null;
+                if (is_file($installTokenPath) && !@unlink($installTokenPath)) {
+                    error_log('Das Installations-Token konnte nach erfolgreicher Installation nicht gelöscht werden.');
+                }
                 session_regenerate_id(true);
                 header('Location: /?installed=1', true, 303);
                 exit;
@@ -291,6 +300,14 @@ $postedString = static function (string $name, string $default = ''): string {
     <?php if ($compatibilityPassed): ?>
         <form method="post" autocomplete="off">
             <input type="hidden" name="csrf_token" value="<?= escape($csrfToken) ?>">
+            <fieldset>
+                <legend>Installationsfreigabe</legend>
+                <p>
+                    <label for="install_token">Einmaliges Installations-Token</label>
+                    <input id="install_token" name="install_token" type="password"
+                           autocomplete="off" required>
+                </p>
+            </fieldset>
             <fieldset>
                 <legend>Datenbankverbindung</legend>
                 <p>

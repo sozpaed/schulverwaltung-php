@@ -1,5 +1,6 @@
 /storage/
 /backup/
 /config.php
+/install.token
 /.config-setup-*.php
 *.ps1
