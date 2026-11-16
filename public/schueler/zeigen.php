@@ -146,10 +146,20 @@ $conversationSchoolFormLabels = [
                         <td><?= escape($conversationSchoolFormLabels[$conversation['gewuenschte_schulform']] ?? 'Unbekannt') ?></td>
                         <td><?= escape($conversation['aufnahmeempfehlung'] === '' ? 'Offen' : ucfirst($conversation['aufnahmeempfehlung'])) ?></td>
                         <td><?= escape($conversation['username'] ?? 'Unbekannt') ?></td>
-                        <td><?= renderEditLink(
-                            '/schueler/gespraech.php?schueler_id=' . (int) $student['id'] . '&id=' . (int) $conversation['id'],
-                            'Gespräch bearbeiten'
-                        ) ?></td>
+                        <td>
+                            <span class="student-actions">
+                                <?= renderEditLink(
+                                    '/schueler/gespraech.php?schueler_id=' . (int) $student['id'] . '&id=' . (int) $conversation['id'],
+                                    'Gespräch bearbeiten'
+                                ) ?>
+                                <?php if ($user['can_delete_students']): ?>
+                                    <?= renderDeleteLink(
+                                        '/gespraeche/loeschen.php?id=' . (int) $conversation['id'] . '&von=akte',
+                                        'Gespräch löschen vom ' . date('d.m.Y H:i', strtotime($conversation['datum']))
+                                    ) ?>
+                                <?php endif; ?>
+                            </span>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

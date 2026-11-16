@@ -147,6 +147,13 @@ $recommendations = [
                                 '/schueler/gespraech.php?schueler_id=' . (int) $conversation['schueler_id'] . '&id=' . (int) $conversation['id'],
                                 'Gespräch bearbeiten'
                             ) ?>
+                            <?php if ($user['can_delete_students']): ?>
+                                <?= renderDeleteLink(
+                                    '/gespraeche/loeschen.php?id=' . (int) $conversation['id'] . '&von=liste',
+                                    'Gespräch löschen: ' . $conversation['vorname'] . ' ' . $conversation['nachname']
+                                        . ' vom ' . date('d.m.Y H:i', strtotime($conversation['datum']))
+                                ) ?>
+                            <?php endif; ?>
                             <?= renderStudentDetailLink(
                                 (int) $conversation['schueler_id'],
                                 $conversation['vorname'] . ' ' . $conversation['nachname']

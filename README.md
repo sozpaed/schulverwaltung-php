@@ -550,8 +550,10 @@ werden. Solange Kontaktpersonen oder Gespräche zugeordnet sind, blockiert die
 Datenbank das Löschen; zugehörige Daten werden nicht automatisch gelöscht. Die
 Kontaktpersonen können mit demselben Recht in der Schülerinnenakte oder der
 Kontaktpersonenübersicht nach Bestätigung gelöscht werden; die Schülerin und
-ihre Gespräche bleiben dabei erhalten. Für Gespräche bietet die Anwendung
-derzeit keine Löschfunktion.
+ihre Gespräche bleiben dabei erhalten. Mit demselben Recht können auch Gespräche
+in der Schülerinnenakte oder der Gesprächsliste nach Bestätigung gelöscht
+werden. Dabei werden deren Marketingkanal-Zuordnungen mit gelöscht; die
+Schülerin und ihre anderen Gespräche bleiben erhalten.
 
 Für bestehende Datenbanken vor dem Einsatz der Löschfunktion zuerst eine
 Sicherung anlegen und dann
